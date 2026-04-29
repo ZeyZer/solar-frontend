@@ -1,13 +1,121 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -----------------------------
+   Global baseline (tokens)
+------------------------------ */
+@layer base {
+  body {
+    @apply bg-canvas text-ink antialiased;
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* -----------------------------
+   Reusable UI classes (tokens)
+------------------------------ */
+@layer components {
+  .container-app {
+    @apply mx-auto max-w-7xl px-4 sm:px-6;
+  }
+
+  .card {
+    @apply rounded-card border-2 border-gentle bg-green shadow-card;
+  }
+
+  .cardHeader {
+    @apply flex items-start justify-between gap-3 border-b-2 border-teal-100 px-4 py-3;
+  }
+
+  .cardTitle {
+    @apply text-h3 font-semibold text-black;
+  }
+
+  .cardBody {
+    @apply px-3 py-3 sm:px-4 sm:py-4;
+  }
+
+
+
+  .cardAlt {
+    @apply rounded-card border-0 border-gentle bg-white ;
+  }
+
+  .cardHeaderAlt {
+    @apply flex items-start justify-between gap-3 border-b-2 border-green px-4 py-3;
+  }
+
+  .cardTitleAlt {
+    @apply text-h3 font-semibold text-black;
+  }
+
+  .cardTitle--pdf {
+    @apply text-base leading-tight font-semibold text-black;
+  }
+
+  .cardAlt2 {
+    @apply rounded-card border-2 border-gentle bg-white shadow-card;
+  }
+
+  .mode-pdf-flat {
+    @apply shadow-none;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
+  .mode-pdf-tight {
+    @apply p-2.5;
+  }
+
+  .mode-pdf-copy {
+    @apply leading-snug;
+  }
+
+  .cardAlt2--pdf {
+    @apply mode-pdf-flat;
+  }
+
+  .cardHeaderAlt--pdf {
+    @apply px-3 py-2;
+  }
+  
+
+
+  .sectionTitle {
+    @apply text-h2 text-ink;
+  }
+
+  .sectionHelp {
+    @apply mt-1 text-body text-muted;
+  }
+
+  .muted {
+    @apply text-muted;
+  }
+
+  .smallPrint {
+    @apply text-micro text-muted;
+  }
+
+  .statBubble {
+    @apply rounded-card bg-soft px-6 py-4 text-center;
+  }
+
+  .statValue {
+    @apply text-statLg text-ink;
+  }
+
+  .statLabel {
+    @apply mt-1 text-small text-muted;
+  }
+
+  .btnPrimary {
+    @apply rounded-card bg-ink px-4 py-2 text-sm font-semibold text-white hover:opacity-95;
+  }
+
+  .btnGhost {
+    @apply rounded-card border border-line bg-white px-4 py-2 text-sm font-semibold text-ink hover:bg-canvas;
+  }
 }
