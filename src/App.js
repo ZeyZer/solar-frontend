@@ -4628,7 +4628,17 @@ function App() {
   const isPdfRoute = window.location.hash.startsWith("#/quote-pdf");
 
   // Which screen are we showing: the step-by-step form, or the quote page?
-  const [page, setPage] = useState(() => (savedState?.page ? savedState.page : "form"));
+  const [page, setPage] = useState(() => {
+    if (window.location.hash === "#/quote-pdf" || window.location.pathname === "/quote-pdf") {
+      return "quote-pdf";
+    }
+
+    if (savedState?.page === "quote-pdf") {
+      return "form";
+    }
+
+    return savedState?.page || "form";
+  });
 
   const [step, setStep] = useState(() =>
     savedState && typeof savedState.step === "number" ? savedState.step : 1
@@ -4711,21 +4721,28 @@ function App() {
 
     async function loadPdfData() {
       try {
-        const hashQuery = window.location.hash.split("?")[1] || "";
-        const params = new URLSearchParams(hashQuery);
-        const pdfId = params.get("pdfId");
+        console.log("PDF page is loading quote data");
+        console.log("PDF API_BASE:", API_BASE);
+        console.log("PDF fetch URL:", `${API_BASE}/api/quote/pdf-data`);
 
-        if (!pdfId) {
-          throw new Error("Missing PDF ID.");
-        }
+        const resp = await fetch(`${API_BASE}/api/quote/pdf-data`);
 
-        const resp = await fetch(`${API_BASE}/api/quote/pdf-data/${pdfId}`);
+        console.log("PDF data response status:", resp.status);
 
         if (!resp.ok) {
+          const text = await resp.text();
+          console.error("PDF data response body:", text);
           throw new Error("Failed to load PDF data");
         }
 
         const data = await resp.json();
+
+        console.log("PDF data loaded:", {
+          hasQuote: !!data.quote,
+          hasForm: !!data.form,
+          roofsCount: Array.isArray(data.roofs) ? data.roofs.length : 0,
+        });
+
         setPdfQuote(data.quote || null);
         setPdfForm(data.form || null);
         setPdfRoofs(data.roofs || []);
@@ -5076,20 +5093,16 @@ function App() {
       setError("Please enter at least 1 panel across your roof spaces.");
       return;
     }
-    
-    let es;
 
     try {
       setLoading(true);
       setProgress({ pct: 0, label: "Preparing your quote…" });
       startFakeProgress(12000);
 
-      const progressId = crypto.randomUUID();
       const cleanedTariffBefore = cleanTariffObject(form.tariffBefore, "before");
       const cleanedTariffAfter = cleanTariffObject(form.tariffAfter, "after");
 
       const payload = {
-        progressId,
         name: form.name,
         email: form.email,
         address: derivedAddress,
@@ -5134,35 +5147,6 @@ function App() {
       // 2) Start listening for backend progress updates (SSE)
       setProgress({ pct: 5, step: "starting", label: "Starting…" });
 
-      const progressUrl = `${API_BASE}/api/quote/progress/${progressId}`;
-      es = new EventSource(progressUrl);
-
-      es.onopen = () => {
-        console.log("✅ SSE connected", progressId);
-      };
-
-      es.onerror = (e) => {
-        // Don’t fail the whole flow if SSE breaks.
-        console.log("❌ SSE error", e);
-      };
-
-      es.addEventListener("progress", (e) => {
-        try {
-          const data = JSON.parse(e.data);
-
-          setProgress((p) => ({
-            ...p,
-            // ✅ never go backwards / never “stick” at a low pct
-            pct: typeof data.pct === "number" ? Math.max(p.pct, data.pct) : p.pct,
-            label: data.label || p.label,
-            step: data.step || p.step,
-          }));
-        } catch {}
-      });
-
-      es.addEventListener("done", () => {
-        es?.close?.();
-      }); 
 
       console.log("SENDING tariffBefore:", payload.tariffBefore);
       console.log("SENDING tariffAfter:", payload.tariffAfter);
@@ -5199,7 +5183,6 @@ function App() {
       stopFakeProgress();
       alert(err?.message || "Something went wrong.");
     } finally {
-      es?.close?.();
       stopFakeProgress();
       setLoading(false);
     }
@@ -5224,24 +5207,29 @@ function App() {
   if (isPdfRoute) {
     if (!pdfQuote || !pdfForm) {
       return (
-        <div style={{ padding: 40, fontFamily: "sans-serif" }}>
-          Loading PDF…
+        <div
+          id="pdf-loading"
+          style={{ padding: 40, fontFamily: "sans-serif" }}
+        >
+          Loading PDF quote...
         </div>
       );
     }
 
     return (
-      <QuotePage
-        quote={pdfQuote}
-        form={pdfForm}
-        roofs={pdfRoofs}
-        onEdit={() => {}}
-        onBackToForm={() => {}}
-        onDownloadPdf={() => {}}
-        onUpdateQuote={() => {}}
-        onOpenTariffModal={() => {}}
-        pdfMode={true}
-      />
+      <div id="pdf-ready" data-pdf-ready="true">
+        <QuotePage
+          quote={pdfQuote}
+          form={pdfForm}
+          roofs={pdfRoofs}
+          onEdit={() => {}}
+          onBackToForm={() => {}}
+          onDownloadPdf={() => {}}
+          onUpdateQuote={() => {}}
+          onOpenTariffModal={() => {}}
+          pdfMode={true}
+        />
+      </div>
     );
   }
 
