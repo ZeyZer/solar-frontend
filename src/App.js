@@ -1472,18 +1472,49 @@ function QuotePage({
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     const monthly = quote?.financialSeries?.monthly || {};
-    const monthlyLoad = quote?.hourlyModel?.monthlyLoadKWh || Array(12).fill(0);
 
-    const baseline = monthly.monthlyBaseline || Array(12).fill(0);
-    const afterImportAndStanding = monthly.monthlyAfterImportAndStanding || Array(12).fill(0);
-    const exportCredit = monthly.monthlyExportCredit || Array(12).fill(0);
+    const asArray12 = (value) => {
+      if (Array.isArray(value)) {
+        return months.map((_, i) => Number(value[i] || 0));
+      }
+      return Array(12).fill(0);
+    };
+
+    const monthlyLoad = asArray12(
+      quote?.hourlyModel?.monthlyLoadKWh ||
+      quote?.monthlyLoadKWh
+    );
+
+    const baseline = asArray12(
+      monthly.monthlyBaseline ||
+      monthly.baselineMonthlyCost
+    );
+
+    const afterImportAndStanding = asArray12(
+      monthly.monthlyAfterImportAndStanding ||
+      monthly.systemMonthlyCostBeforeSEG
+    );
+
+    const exportCredit = asArray12(
+      monthly.monthlyExportCredit ||
+      monthly.exportCreditMonthly
+    );
+
+    const afterNet = asArray12(
+      monthly.monthlyAfterNet ||
+      monthly.systemMonthlyNet ||
+      monthly.monthlyAfter
+    );
 
     return months.map((month, i) => {
       const demandKWh = Number(monthlyLoad[i] || 0);
       const oldBill = Number(baseline[i] || 0);
       const newImportCost = Number(afterImportAndStanding[i] || 0);
       const segIncome = Number(exportCredit[i] || 0);
-      const newBill = newImportCost - segIncome;
+
+      const fallbackNewBill = newImportCost - segIncome;
+      const newBill = Number(afterNet[i] || fallbackNewBill || 0);
+
       const monthlySavings = oldBill - newBill;
 
       return {
