@@ -11,6 +11,15 @@ import ConfigChoiceCard from "./ui/ProductTile.js"
 import { getMcsTableData } from "./utils/mcsTableData";
 import McsPerformanceTable from "./components/McsPerformanceTable";
 import McsPerformanceModal from "./components/McsPerformanceModal";
+import {
+  API_BASE,
+  generateQuote,
+  recalculateQuote,
+  getPdfQuoteData,
+  downloadQuotePdf,
+  emailQuoteLead,
+  requestCallLead,
+} from "./api/quoteApi";
 
 
 /**
@@ -58,11 +67,6 @@ const CONTACT_EMAIL = (INSTALLER && INSTALLER.contactEmail) || PLATFORM.contactE
  * =========================================================
  */
 const STORAGE_KEY = "zeyzer_quote_state";
-const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:4000"; //https://solar-backend-vp7n.onrender.com OR http://localhost:4000
-const API_URL = `${API_BASE}/api/quote`;
-const LEAD_EMAIL_URL = `${API_BASE}/api/lead/email-quote`;
-const LEAD_CALL_URL  = `${API_BASE}/api/lead/request-call`;
-const PDF_URL = `${API_BASE}/api/quote/pdf`;
 
 const TOTAL_STEPS = 5;
 
@@ -1456,16 +1460,7 @@ function QuotePage({
       marketingConsent,
     };
 
-    const resp = await fetch(LEAD_EMAIL_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!resp.ok) {
-      const text = await resp.text();
-      throw new Error(text || "Failed to send email quote.");
-    }
+    await emailQuoteLead(payload);
   }
 
   function buildMonthlySavingsRows(quote) {
@@ -1549,16 +1544,7 @@ function QuotePage({
       marketingConsent,
     };
 
-    const resp = await fetch(LEAD_CALL_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!resp.ok) {
-      const text = await resp.text();
-      throw new Error(text || "Failed to request a call.");
-    }
+    await requestCallLead(payload);
   }
 
   // TARIFF RECALCULATIONS
@@ -1590,24 +1576,14 @@ function QuotePage({
         },
       };
 
-      const resp = await fetch(`${API_BASE}/api/quote/recalc`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quote,
-          tariffBefore: tb,
-          tariffAfter: ta,
-          input: recalcInput,
-          batteryRecommendationLifetimeYears,
-        }),
+      const updated = await recalculateQuote({
+        quote,
+        tariffBefore: tb,
+        tariffAfter: ta,
+        input: recalcInput,
+        batteryRecommendationLifetimeYears,
       });
 
-      if (!resp.ok) {
-        const text = await resp.text();
-        throw new Error(text || "Failed to recalculate.");
-      }
-
-      const updated = await resp.json();
       onUpdateQuote(updated);
       setNeedsRecalc(false);
       setUpdatedSections(["financials", "optimisations", "performance"]);
@@ -4756,17 +4732,7 @@ function App() {
         console.log("PDF API_BASE:", API_BASE);
         console.log("PDF fetch URL:", `${API_BASE}/api/quote/pdf-data`);
 
-        const resp = await fetch(`${API_BASE}/api/quote/pdf-data`);
-
-        console.log("PDF data response status:", resp.status);
-
-        if (!resp.ok) {
-          const text = await resp.text();
-          console.error("PDF data response body:", text);
-          throw new Error("Failed to load PDF data");
-        }
-
-        const data = await resp.json();
+        const data = await getPdfQuoteData();
 
         console.log("PDF data loaded:", {
           hasQuote: !!data.quote,
@@ -4858,42 +4824,17 @@ function App() {
     setTariffModalOpen(false);
   }
 
-
   // Full Financials Pop-up
   const progressPercent = (step / TOTAL_STEPS) * 100;
 
   // PDF CREATION
   const handleDownloadPdf = async () => {
     try {
-      const res = await fetch(PDF_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          quote,
-          form,
-          roofs
-        })
+      await downloadQuotePdf({
+        quote,
+        form,
+        roofs,
       });
-
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("PDF response error:", text);
-        throw new Error(`PDF request failed: ${res.status}`);
-      }
-
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "solar-quote.pdf";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-
-      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Failed to download PDF", err);
       alert(`Sorry, the PDF could not be generated.\n\n${err.message}`);
@@ -5183,23 +5124,9 @@ function App() {
       console.log("SENDING tariffAfter:", payload.tariffAfter);
       console.log("SENDING tariff:", payload.tariff);
 
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const data = await generateQuote(payload);
 
-
-      if (!res.ok) {
-        let message = "Something went wrong while getting your estimate. Please try again.";
-        try {
-          const errorBody = await res.json();
-          if (errorBody && errorBody.error) message = errorBody.error;
-        } catch {}
-        throw new Error(message);
-      }
-
-      const data = await res.json();
+    
 
       // ✅ Complete progress nicely before switching page
       stopFakeProgress();
