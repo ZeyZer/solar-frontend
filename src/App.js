@@ -30,31 +30,12 @@ import {
   calculateIRR,
   buildMonthlySavingsRows,
   toNumber,
-  formatMoney,
-  formatKWh,
-  formatWholeNumber,
 } from "./utils/quoteFormatting";
 
-
-/**
- * =========================================================
- * Helpers (postcode formatting + validation)
- * =========================================================
- */
-
-function formatPostcodeInput(value) {
-  if (!value) return "";
-  const cleaned = value.toUpperCase().replace(/\s+/g, "");
-  if (cleaned.length <= 3) return cleaned;
-  return `${cleaned.slice(0, -3)} ${cleaned.slice(-3)}`;
-}
-
-function isValidUkPostcode(value) {
-  if (!value) return false;
-  const formatted = formatPostcodeInput(value).trim();
-  const re = /^[A-Z]{1,2}\d[A-Z\d]?\s\d[A-Z]{2}$/;
-  return re.test(formatted);
-}
+import {
+  formatPostcodeInput,
+  isValidUkPostcode,
+} from "./utils/postcodeUtils";
 
 // ===========================
 // Platform + Installer Config
