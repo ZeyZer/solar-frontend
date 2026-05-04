@@ -26,6 +26,15 @@ import {
   cleanTariffObject,
 } from "./utils/tariffUtils";
 
+import {
+  calculateIRR,
+  buildMonthlySavingsRows,
+  toNumber,
+  formatMoney,
+  formatKWh,
+  formatWholeNumber,
+} from "./utils/quoteFormatting";
+
 
 /**
  * =========================================================
@@ -543,31 +552,6 @@ function TariffModal({
   );
 }
 
-
-// ================================
-// IRR calculation (Newton method)
-// ================================
-function calculateIRR(cashflows, guess = 0.08) {
-  let rate = guess;
-
-  for (let iter = 0; iter < 100; iter++) {
-    let npv = 0;
-    let dnpv = 0;
-
-    for (let t = 0; t < cashflows.length; t++) {
-      npv += cashflows[t] / Math.pow(1 + rate, t);
-      dnpv -= (t * cashflows[t]) / Math.pow(1 + rate, t + 1);
-    }
-
-    const newRate = rate - npv / dnpv;
-    if (!isFinite(newRate)) return null;
-
-    if (Math.abs(newRate - rate) < 1e-6) return newRate;
-    rate = newRate;
-  }
-
-  return null;
-}
 
 //================
 // Energy Flows
@@ -1341,16 +1325,6 @@ function QuotePage({
     irrPct = irr != null ? irr * 100 : null;
   }
 
-  // % bill saving should use bill savings / bill before solar
-  // IMPORTANT: bill-before-solar should come from annualBaseline if available (and parseable)
-  const toNumber = (v) => {
-    if (v == null) return 0;
-    if (typeof v === "number") return v;
-    const cleaned = String(v).replace(/[^0-9.-]/g, "");
-    const n = Number(cleaned);
-    return Number.isFinite(n) ? n : 0;
-  };
-
   const baselineAnnualBill =
     toNumber(quote?.financialSeries?.monthly?.annualBaseline) ||
     (toNumber(form?.monthlyBill) * 12);
@@ -1386,66 +1360,6 @@ function QuotePage({
     await emailQuoteLead(payload);
   }
 
-  function buildMonthlySavingsRows(quote) {
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-    const monthly = quote?.financialSeries?.monthly || {};
-
-    const asArray12 = (value) => {
-      if (Array.isArray(value)) {
-        return months.map((_, i) => Number(value[i] || 0));
-      }
-      return Array(12).fill(0);
-    };
-
-    const monthlyLoad = asArray12(
-      quote?.hourlyModel?.monthlyLoadKWh ||
-      quote?.monthlyLoadKWh
-    );
-
-    const baseline = asArray12(
-      monthly.monthlyBaseline ||
-      monthly.baselineMonthlyCost
-    );
-
-    const afterImportAndStanding = asArray12(
-      monthly.monthlyAfterImportAndStanding ||
-      monthly.systemMonthlyCostBeforeSEG
-    );
-
-    const exportCredit = asArray12(
-      monthly.monthlyExportCredit ||
-      monthly.exportCreditMonthly
-    );
-
-    const afterNet = asArray12(
-      monthly.monthlyAfterNet ||
-      monthly.systemMonthlyNet ||
-      monthly.monthlyAfter
-    );
-
-    return months.map((month, i) => {
-      const demandKWh = Number(monthlyLoad[i] || 0);
-      const oldBill = Number(baseline[i] || 0);
-      const newImportCost = Number(afterImportAndStanding[i] || 0);
-      const segIncome = Number(exportCredit[i] || 0);
-
-      const fallbackNewBill = newImportCost - segIncome;
-      const newBill = Number(afterNet[i] || fallbackNewBill || 0);
-
-      const monthlySavings = oldBill - newBill;
-
-      return {
-        month,
-        demandKWh: Math.round(demandKWh),
-        oldBill: Number(oldBill.toFixed(2)),
-        newImportCost: Number(newImportCost.toFixed(2)),
-        segIncome: Number(segIncome.toFixed(2)),
-        newBill: Number(newBill.toFixed(2)),
-        monthlySavings: Number(monthlySavings.toFixed(2)),
-      };
-    });
-  }
 
   async function onRequestCallLead({ name, email, phone, marketingConsent }) {
     const payload = {
