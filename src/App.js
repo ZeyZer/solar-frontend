@@ -21,6 +21,11 @@ import {
   requestCallLead,
 } from "./api/quoteApi";
 
+import {
+  DEFAULT_TARIFF,
+  cleanTariffObject,
+} from "./utils/tariffUtils";
+
 
 /**
  * =========================================================
@@ -80,88 +85,6 @@ function loadSavedState() {
   }
 }
 
-const DEFAULT_TARIFF = {
-  tariffType: "standard",
-
-  importPrice: 0.28,
-  standingChargePerDay: 0.60,
-
-  // export only really matters "after", but keep it here so the object always has the key
-  segPrice: 0.12,
-
-  // overnight
-  importNight: 0.08,
-  importDay: 0.28,
-  nightStartHour: 0,
-  nightEndHour: 7,
-
-  // flux
-  importOffPeak: 0.10,
-  importPeak: 0.40,
-  exportOffPeak: 0.05,
-  exportPeak: 0.30,
-  offPeakStartHour: 2,
-  offPeakEndHour: 5,
-  peakStartHour: 16,
-  peakEndHour: 19,
-
-  // dispatch toggles
-  exportFromBatteryEnabled: true,
-};
-
-function cleanTariffObject(raw, kind = "after") {
-  const source = raw && typeof raw === "object" ? raw : {};
-
-  const cleaned = {
-    ...DEFAULT_TARIFF,
-  };
-
-  const allowedKeys = [
-    "tariffType",
-    "importPrice",
-    "standingChargePerDay",
-    "segPrice",
-    "importNight",
-    "importDay",
-    "nightStartHour",
-    "nightEndHour",
-    "importOffPeak",
-    "importPeak",
-    "exportOffPeak",
-    "exportPeak",
-    "offPeakStartHour",
-    "offPeakEndHour",
-    "peakStartHour",
-    "peakEndHour",
-    "exportFromBatteryEnabled",
-    "allowGridCharging",
-    "allowEnergyTrading",
-    "energyInflationRate",
-  ];
-
-  for (const key of allowedKeys) {
-    if (source[key] !== undefined) {
-      cleaned[key] = source[key];
-    }
-  }
-
-  // These nested keys were accidentally created by the old tariff modal logic.
-  // Do not allow them to be sent to the backend.
-  delete cleaned.before;
-  delete cleaned.after;
-  delete cleaned.tariff;
-
-  if (kind === "before") {
-    delete cleaned.segPrice;
-    delete cleaned.exportOffPeak;
-    delete cleaned.exportPeak;
-    delete cleaned.exportFromBatteryEnabled;
-    delete cleaned.allowGridCharging;
-    delete cleaned.allowEnergyTrading;
-  }
-
-  return cleaned;
-}
 
 
 /**
