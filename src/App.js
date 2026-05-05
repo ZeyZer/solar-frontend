@@ -1,16 +1,12 @@
 import React, { useEffect, useState, useRef} from "react";
 import "./App.css";
-import SectionHeader from "./ui/SectionHeader.js";
-import Card from "./ui/Card.js";
-import CardAlt from "./ui/CardAlt.js";
-import CardAlt2 from "./ui/CardAlt2.js";
-import ButtonLink from "./ui/ButtonLink.js";
-import { Stat, StatGrid } from "./ui/Stat.js";
-import QuoteHeader from "./ui/QuoteHeader";
-import ConfigChoiceCard from "./ui/ProductTile.js"
-import { getMcsTableData } from "./utils/mcsTableData";
-import McsPerformanceTable from "./components/McsPerformanceTable";
-import McsPerformanceModal from "./components/McsPerformanceModal";
+
+import {
+  PLATFORM,
+  INSTALLER,
+  CONTACT_EMAIL,
+} from "./config/siteConfig";
+
 import {
   API_BASE,
   generateQuote,
@@ -41,26 +37,6 @@ import {
 } from "./components/RoofWizardHelpers";
 
 import RoofWizardModal from "./components/RoofWizardModal";
-
-
-// ===========================
-// Platform + Installer Config
-// ===========================
-const PLATFORM = {
-  toolName: "Zeyzer Solar",
-  headline: "Instant Solar Estimate For Your Home",
-  subheadline:
-    "Get a personalised price, savings and payback estimate in under 60 seconds.",
-  contactEmail: "hello@zeyzersolar.com",
-  trustBadges: [
-    "✅ No-obligation estimate",
-    "⚡ Takes under 60 seconds",
-    "🔒 Your data is kept private",
-  ],
-};
-
-const INSTALLER = null;
-const CONTACT_EMAIL = (INSTALLER && INSTALLER.contactEmail) || PLATFORM.contactEmail;
 
 /**
  * =========================================================
