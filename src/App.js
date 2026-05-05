@@ -47,12 +47,18 @@ import {
   loadSavedState,
 } from "./utils/appStateUtils";
 
+import useFakeQuoteProgress from "./hooks/useFakeQuoteProgress";
+
 
 function App() {
   const savedState = loadSavedState();
-  const [progress, setProgress] = useState({ pct: 0, label: "Preparing your quote…" });
-  const fakeTimerRef = useRef(null);
-  const fakeStartRef = useRef(0);
+  const {
+  progress,
+    setProgress,
+    startFakeProgress,
+    stopFakeProgress,
+    completeProgress,
+  } = useFakeQuoteProgress();
   const isPdfRoute = window.location.hash.startsWith("#/quote-pdf");
 
   // Which screen are we showing: the step-by-step form, or the quote page?
@@ -386,39 +392,6 @@ function App() {
     closeRoofModal();
   }
 
-
-  /**
-   * =========================================================
-   * PROGRESS BAR FAKE
-   * =========================================================
-   */
-  function startFakeProgress(durationMs = 12000) {
-    stopFakeProgress();
-    fakeStartRef.current = Date.now();
-
-    fakeTimerRef.current = setInterval(() => {
-      const elapsed = Date.now() - fakeStartRef.current;
-      const t = Math.min(1, elapsed / durationMs);
-
-      // Ease-out curve, ends around 92% (so it doesn’t hit 100 before quote arrives)
-      const eased = 1 - Math.pow(1 - t, 3);
-      const pct = Math.round(92 * eased);
-
-      setProgress((p) => ({
-        ...p,
-        pct: Math.max(p.pct, pct),
-        label: pct < 35 ? "Fetching local solar data…" : pct < 75 ? "Simulating usage & battery…" : "Finalising your quote…",
-      }));
-    }, 250);
-  }
-
-  function stopFakeProgress() {
-    if (fakeTimerRef.current) {
-      clearInterval(fakeTimerRef.current);
-      fakeTimerRef.current = null;
-    }
-  }
-
   /**
    * =========================================================
    * Change handlers
@@ -542,7 +515,7 @@ function App() {
 
       // ✅ Complete progress nicely before switching page
       stopFakeProgress();
-      setProgress((p) => ({ ...p, pct: 100, label: "Quote ready!" }));
+      completeProgress();
 
       // Small delay so user perceives completion
       await new Promise((r) => setTimeout(r, 450));
