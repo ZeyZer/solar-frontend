@@ -42,12 +42,12 @@ import {
   STORAGE_KEY,
   TOTAL_STEPS,
   DEFAULT_FORM,
-  DEFAULT_ROOFS,
-  EMPTY_DRAFT_ROOF,
   loadSavedState,
 } from "./utils/appStateUtils";
 
 import useFakeQuoteProgress from "./hooks/useFakeQuoteProgress";
+
+import useRoofWizard from "./hooks/useRoofWizard";
 
 
 function App() {
@@ -100,18 +100,31 @@ function App() {
     };
   });
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   // Roof Pop-up Section
-  const [roofModalOpen, setRoofModalOpen] = useState(false);
-  const [roofWizardStep, setRoofWizardStep] = useState(0);
-  const [editingRoofId, setEditingRoofId] = useState(null);
+  const {
+    roofModalOpen,
 
-  const [draftRoof, setDraftRoof] = useState(EMPTY_DRAFT_ROOF);
+    roofWizardStep,
+    setRoofWizardStep,
 
+    editingRoofId,
+    draftRoof,
+    setDraftRoof,
 
-  // ✅ Roofs are stored in their own state (NOT in form.roofs)
-  const [roofs, setRoofs] = useState(() => {
-    if (savedState?.roofs?.length) return savedState.roofs;
-    return DEFAULT_ROOFS();
+    roofs,
+    setRoofs,
+
+    openAddRoofModal,
+    openEditRoofModal,
+    closeRoofModal,
+    saveRoofFromDraft,
+    resetRoofs,
+  } = useRoofWizard({
+    savedRoofs: savedState?.roofs,
+    setError,
   });
 
   const [quote, setQuote] = useState(() => (savedState?.quote ? savedState.quote : null));
@@ -121,10 +134,6 @@ function App() {
       ? savedState.rentingBlocked
       : false
   );
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
 
   // Tariff modal state
   const [tariffModalOpen, setTariffModalOpen] = useState(false);
@@ -238,10 +247,6 @@ function App() {
     setTariffModalOpen(false);
   }
 
-  function closeTariffModal() {
-    setTariffModalOpen(false);
-  }
-
   // Full Financials Pop-up
   const progressPercent = (step / TOTAL_STEPS) * 100;
 
@@ -312,7 +317,7 @@ function App() {
     setStep(1);
     setStarted(true);
     setForm(DEFAULT_FORM);
-    setRoofs(DEFAULT_ROOFS()); // ✅ reset roofs too
+    resetRoofs(); // ✅ reset roofs too
     setPage("form");
   }
 
@@ -328,7 +333,7 @@ function App() {
     setRentingBlocked(false);
     setLoading(false);
     setError("");
-    setRoofs(DEFAULT_ROOFS());
+    resetRoofs();
     setPage("form");
   }
 
@@ -340,56 +345,12 @@ function App() {
     setStep((prev) => Math.max(prev - 1, 1));
   }
 
-  function openAddRoofModal() {
-    setEditingRoofId(null);
-    setDraftRoof(EMPTY_DRAFT_ROOF());
-    setRoofWizardStep(0);
-    setRoofModalOpen(true);
-    setError("");
-  }
-
-  function openEditRoofModal(roof) {
-    setEditingRoofId(roof.id);
-    setDraftRoof({ ...roof });     // copy existing values into the draft
-    setRoofWizardStep(0);
-    setRoofModalOpen(true);
-    setError("");
-  }
-
-  function closeRoofModal() {
-    setRoofModalOpen(false);
-    setEditingRoofId(null);
-  }
-
   function editAnswers(goToStepNumber) {
     setPage("form");
     setStep(goToStepNumber);
 
     // Optional: scroll to top so the user sees the step
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function saveRoofFromDraft() {
-    // basic validation: must have answers (you can tighten later)
-    if (!draftRoof.orientation || !draftRoof.tilt || !draftRoof.shading) {
-      setError("Please complete the roof questions.");
-      return;
-    }
-    if (!draftRoof.panels || Number(draftRoof.panels) <= 0) {
-      setError("Please enter at least 1 panel for this roof.");
-      return;
-    }
-
-    setRoofs((prev) => {
-      // editing existing
-      if (editingRoofId) {
-        return prev.map((r) => (r.id === editingRoofId ? { ...draftRoof } : r));
-      }
-      // adding new
-      return [...prev, { ...draftRoof }];
-    });
-
-    closeRoofModal();
   }
 
   /**
