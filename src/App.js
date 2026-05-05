@@ -5064,19 +5064,6 @@ function App() {
                             </div>
                           </div>
                         )}
-
-                        {/* ===========================
-                            TARIFF WIZARD MODAL (Quiz)
-                          =========================== */}
-                        <TariffModal
-                          open={tariffModalOpen}
-                          tariffEditMode={tariffEditMode}
-                          switchTariffMode={switchTariffMode}
-                          draftTariff={draftTariff}
-                          setDraftTariff={setDraftTariff}
-                          onClose={() => setTariffModalOpen(false)}
-                          onSave={saveTariffFromDraft}
-                        />
                     </div>
 
                     {page !== "quote" && (quote || loading) && (
@@ -5195,6 +5182,9 @@ function App() {
         )}
       </>
      )}
+      {/* ===========================
+          TARIFF WIZARD MODAL (Quiz)
+       =========================== */}
       <TariffModal
         open={tariffModalOpen}
         tariffEditMode={tariffEditMode}
