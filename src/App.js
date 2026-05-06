@@ -49,6 +49,8 @@ import useRoofWizard from "./hooks/useRoofWizard";
 
 import usePdfQuoteData from "./hooks/usePdfQuoteData";
 
+import usePersistedQuoteState from "./hooks/usePersistedQuoteState";
+
 
 function App() {
   const savedState = loadSavedState();
@@ -156,6 +158,17 @@ function App() {
   const [needsRecalc, setNeedsRecalc] = useState(false);
   const [updatedSections, setUpdatedSections] = useState([]);
 
+  usePersistedQuoteState({
+    isPdfRoute,
+    page,
+    step,
+    started,
+    form,
+    roofs,
+    quote,
+    rentingBlocked,
+  });
+
   function openTariffModal(mode = "after") {
     setTariffEditMode(mode);
 
@@ -244,16 +257,6 @@ function App() {
    * Persist state
    * =========================================================
    */
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ started, step, form, rentingBlocked, quote, roofs, page })
-      );
-    } catch (e) {
-      console.warn("Failed to save state", e);
-    }
-  }, [started, step, form, rentingBlocked, quote, roofs, page]);
 
   useEffect(() => {
     if (window.location.pathname === "/quote-pdf") {
