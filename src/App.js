@@ -8,9 +8,7 @@ import {
 } from "./config/siteConfig";
 
 import {
-  API_BASE,
   generateQuote,
-  getPdfQuoteData,
   downloadQuotePdf,
 } from "./api/quoteApi";
 
@@ -49,6 +47,8 @@ import useFakeQuoteProgress from "./hooks/useFakeQuoteProgress";
 
 import useRoofWizard from "./hooks/useRoofWizard";
 
+import usePdfQuoteData from "./hooks/usePdfQuoteData";
+
 
 function App() {
   const savedState = loadSavedState();
@@ -59,11 +59,18 @@ function App() {
     stopFakeProgress,
     completeProgress,
   } = useFakeQuoteProgress();
-  const isPdfRoute = window.location.hash.startsWith("#/quote-pdf");
+
+  const {
+    isPdfRoute,
+    pdfQuote,
+    pdfForm,
+    pdfRoofs,
+    pdfError,
+  } = usePdfQuoteData();
 
   // Which screen are we showing: the step-by-step form, or the quote page?
   const [page, setPage] = useState(() => {
-    if (window.location.hash === "#/quote-pdf" || window.location.pathname === "/quote-pdf") {
+    if (isPdfRoute) {
       return "quote-pdf";
     }
 
@@ -144,39 +151,6 @@ function App() {
     ...DEFAULT_TARIFF,
     ...(form?.tariffAfter || {})
   }));
-
-  // PDF USE STATES
-  const [pdfQuote, setPdfQuote] = useState(null);
-  const [pdfForm, setPdfForm] = useState(null);
-  const [pdfRoofs, setPdfRoofs] = useState([]);
-
-  useEffect(() => {
-    if (!isPdfRoute) return;
-
-    async function loadPdfData() {
-      try {
-        console.log("PDF page is loading quote data");
-        console.log("PDF API_BASE:", API_BASE);
-        console.log("PDF fetch URL:", `${API_BASE}/api/quote/pdf-data`);
-
-        const data = await getPdfQuoteData();
-
-        console.log("PDF data loaded:", {
-          hasQuote: !!data.quote,
-          hasForm: !!data.form,
-          roofsCount: Array.isArray(data.roofs) ? data.roofs.length : 0,
-        });
-
-        setPdfQuote(data.quote || null);
-        setPdfForm(data.form || null);
-        setPdfRoofs(data.roofs || []);
-      } catch (err) {
-        console.error("Failed to load PDF data:", err);
-      }
-    }
-
-    loadPdfData();
-  }, [isPdfRoute]);
 
   // DIRTY STATE STUFF
   const [needsRecalc, setNeedsRecalc] = useState(false);
@@ -509,31 +483,35 @@ function App() {
   */
 
   if (isPdfRoute) {
-    if (!pdfQuote || !pdfForm) {
+    if (pdfError) {
       return (
-        <div
-          id="pdf-loading"
-          style={{ padding: 40, fontFamily: "sans-serif" }}
-        >
-          Loading PDF quote...
+        <div style={{ padding: 32 }}>
+          <h1>Unable to load PDF quote</h1>
+          <p>{pdfError}</p>
         </div>
       );
     }
 
+    if (!pdfQuote || !pdfForm) {
+      return <div>Loading PDF quote...</div>;
+    }
+
     return (
-      <div id="pdf-ready" data-pdf-ready="true">
-        <QuotePage
-          quote={pdfQuote}
-          form={pdfForm}
-          roofs={pdfRoofs}
-          onEdit={() => {}}
-          onBackToForm={() => {}}
-          onDownloadPdf={() => {}}
-          onUpdateQuote={() => {}}
-          onOpenTariffModal={() => {}}
-          pdfMode={true}
-        />
-      </div>
+      <QuotePage
+        quote={pdfQuote}
+        form={pdfForm}
+        roofs={pdfRoofs}
+        pdfMode
+        onEdit={() => {}}
+        onBackToForm={() => {}}
+        onDownloadPdf={() => {}}
+        onUpdateQuote={() => {}}
+        onOpenTariffModal={() => {}}
+        contactEmail={CONTACT_EMAIL}
+        updatedSections={[]}
+        batteryRecommendationLifetimeYears={25}
+        setBatteryRecommendationLifetimeYears={() => {}}
+      />
     );
   }
 
