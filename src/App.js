@@ -15,7 +15,6 @@ import {
 
 // UTILS //
 import {
-  STORAGE_KEY,
   TOTAL_STEPS,
   DEFAULT_FORM,
   loadSavedState,
@@ -44,6 +43,8 @@ import useAppPageEffects from "./hooks/useAppPageEffects";
 import useTariffModal from "./hooks/useTariffModal";
 import useFormHandlers from "./hooks/useFormHandlers";
 import useQuoteSubmit from "./hooks/useQuoteSubmit";
+import useAppNavigation from "./hooks/useAppNavigation";
+
 
 
 function App() {
@@ -191,52 +192,23 @@ function App() {
    * Navigation helpers
    * =========================================================
    */
-  function startEstimate() {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {}
-
-    setQuote(null);
-    setRentingBlocked(false);
-    setError("");
-    setStep(1);
-    setStarted(true);
-    setForm(DEFAULT_FORM);
-    resetRoofs(); // ✅ reset roofs too
-    setPage("form");
-  }
-
-  function goToHome() {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {}
-
-    setStarted(false);
-    setStep(1);
-    setForm(DEFAULT_FORM);
-    setQuote(null);
-    setRentingBlocked(false);
-    setLoading(false);
-    setError("");
-    resetRoofs();
-    setPage("form");
-  }
-
-  function handleNext() {
-    setStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
-  }
-
-  function handlePrev() {
-    setStep((prev) => Math.max(prev - 1, 1));
-  }
-
-  function editAnswers(goToStepNumber) {
-    setPage("form");
-    setStep(goToStepNumber);
-
-    // Optional: scroll to top so the user sees the step
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+  const {
+    startEstimate,
+    goToHome,
+    handleNext,
+    handlePrev,
+    editAnswers,
+  } = useAppNavigation({
+    setQuote,
+    setRentingBlocked,
+    setError,
+    setStep,
+    setStarted,
+    setForm,
+    resetRoofs,
+    setPage,
+    setLoading,
+  });
 
   /**
    * =========================================================
