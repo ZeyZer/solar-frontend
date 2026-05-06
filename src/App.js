@@ -7,11 +7,6 @@ import {
   CONTACT_EMAIL,
 } from "./config/siteConfig";
 
-import {
-  downloadQuotePdf,
-} from "./api/quoteApi";
-
-
 
 // UTILS //
 import {
