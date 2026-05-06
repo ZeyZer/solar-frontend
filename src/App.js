@@ -76,10 +76,6 @@ function App() {
 
   // Which screen are we showing: the step-by-step form, or the quote page?
   const [page, setPage] = useState(() => {
-    if (isPdfRoute) {
-      return "quote-pdf";
-    }
-
     if (savedState?.page === "quote-pdf") {
       return "form";
     }
@@ -174,10 +170,7 @@ function App() {
   });
 
   useAppPageEffects({
-    isPdfRoute,
     page,
-    setStarted,
-    setPage,
   });
 
   function openTariffModal(mode = "after") {
