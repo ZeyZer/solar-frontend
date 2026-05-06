@@ -29,6 +29,8 @@ import TariffModal from "./components/TariffModal";
 
 import QuotePage from "./components/QuotePage";
 
+import PdfQuoteRoute from "./components/PdfQuoteRoute";
+
 import {
   getRoofThumbsForRoof,
   RoofSummaryRow,
@@ -468,34 +470,13 @@ function App() {
   */
 
   if (isPdfRoute) {
-    if (pdfError) {
-      return (
-        <div style={{ padding: 32 }}>
-          <h1>Unable to load PDF quote</h1>
-          <p>{pdfError}</p>
-        </div>
-      );
-    }
-
-    if (!pdfQuote || !pdfForm) {
-      return <div>Loading PDF quote...</div>;
-    }
-
     return (
-      <QuotePage
-        quote={pdfQuote}
-        form={pdfForm}
-        roofs={pdfRoofs}
-        pdfMode
-        onEdit={() => {}}
-        onBackToForm={() => {}}
-        onDownloadPdf={() => {}}
-        onUpdateQuote={() => {}}
-        onOpenTariffModal={() => {}}
+      <PdfQuoteRoute
+        pdfQuote={pdfQuote}
+        pdfForm={pdfForm}
+        pdfRoofs={pdfRoofs}
+        pdfError={pdfError}
         contactEmail={CONTACT_EMAIL}
-        updatedSections={[]}
-        batteryRecommendationLifetimeYears={25}
-        setBatteryRecommendationLifetimeYears={() => {}}
       />
     );
   }
@@ -588,26 +569,12 @@ function App() {
               onDownloadPdf={handleDownloadPdf}
               onUpdateQuote={setQuote}
               onOpenTariffModal={(mode) => openTariffModal(mode)}
-              pdfMode = {false}
+              pdfMode={false}
               needsRecalc={needsRecalc}
               setNeedsRecalc={setNeedsRecalc}
               updatedSections={updatedSections}
               setUpdatedSections={setUpdatedSections}
             />
-          ) : page === "quote-pdf" ? (
-            pdfQuote && pdfForm ? (
-              <QuotePage
-                quote={pdfQuote}
-                form={pdfForm}
-                roofs={pdfRoofs}
-                onUpdateQuote={() => {}}
-                pdfMode={true}
-              />
-            ) : (
-              <div style={{ padding: "40px", fontSize: "18px" }}>
-                Loading PDF quote...
-              </div>
-            )
           ) : (
             <>
               <div className="mobile-tool-topbar">
