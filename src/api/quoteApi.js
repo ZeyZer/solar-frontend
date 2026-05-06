@@ -43,8 +43,10 @@ export async function recalculateQuote(payload) {
   );
 }
 
-export async function getPdfQuoteData() {
-  const resp = await fetch(`${API_BASE}/api/quote/pdf-data`);
+export async function getPdfQuoteData(pdfId) {
+  const query = pdfId ? `?id=${encodeURIComponent(pdfId)}` : "";
+
+  const resp = await fetch(`${API_BASE}/api/quote/pdf-data${query}`);
 
   if (!resp.ok) {
     const message = await readErrorResponse(

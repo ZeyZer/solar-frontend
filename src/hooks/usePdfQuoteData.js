@@ -1,8 +1,45 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   getPdfQuoteData,
 } from "../api/quoteApi";
+
+function getPdfRouteInfo() {
+  if (typeof window === "undefined") {
+    return {
+      isPdfRoute: false,
+      pdfId: "",
+    };
+  }
+
+  const hash = window.location.hash || "";
+
+  const isPdfRoute = hash.startsWith("#/quote-pdf");
+
+  if (!isPdfRoute) {
+    return {
+      isPdfRoute: false,
+      pdfId: "",
+    };
+  }
+
+  const queryIndex = hash.indexOf("?");
+
+  if (queryIndex === -1) {
+    return {
+      isPdfRoute: true,
+      pdfId: "",
+    };
+  }
+
+  const queryString = hash.slice(queryIndex + 1);
+  const params = new URLSearchParams(queryString);
+
+  return {
+    isPdfRoute: true,
+    pdfId: params.get("id") || "",
+  };
+}
 
 export default function usePdfQuoteData() {
   const [pdfQuote, setPdfQuote] = useState(null);
@@ -10,9 +47,10 @@ export default function usePdfQuoteData() {
   const [pdfRoofs, setPdfRoofs] = useState([]);
   const [pdfError, setPdfError] = useState("");
 
-  const isPdfRoute =
-    typeof window !== "undefined" &&
-    window.location.hash === "#/quote-pdf";
+  const {
+    isPdfRoute,
+    pdfId,
+  } = useMemo(() => getPdfRouteInfo(), []);
 
   useEffect(() => {
     if (!isPdfRoute) return;
@@ -23,7 +61,11 @@ export default function usePdfQuoteData() {
       try {
         setPdfError("");
 
-        const data = await getPdfQuoteData();
+        if (!pdfId) {
+          throw new Error("Missing PDF ID.");
+        }
+
+        const data = await getPdfQuoteData(pdfId);
 
         if (cancelled) return;
 
@@ -43,10 +85,11 @@ export default function usePdfQuoteData() {
     return () => {
       cancelled = true;
     };
-  }, [isPdfRoute]);
+  }, [isPdfRoute, pdfId]);
 
   return {
     isPdfRoute,
+    pdfId,
     pdfQuote,
     pdfForm,
     pdfRoofs,
