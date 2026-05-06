@@ -44,6 +44,7 @@ import useTariffModal from "./hooks/useTariffModal";
 import useFormHandlers from "./hooks/useFormHandlers";
 import useQuoteSubmit from "./hooks/useQuoteSubmit";
 import useAppNavigation from "./hooks/useAppNavigation";
+import useQuotePdfDownload from "./hooks/useQuotePdfDownload";
 
 
 
@@ -173,20 +174,6 @@ function App() {
   // Full Financials Pop-up
   const progressPercent = (step / TOTAL_STEPS) * 100;
 
-  // PDF CREATION
-  const handleDownloadPdf = async () => {
-    try {
-      await downloadQuotePdf({
-        quote,
-        form,
-        roofs,
-      });
-    } catch (err) {
-      console.error("Failed to download PDF", err);
-      alert(`Sorry, the PDF could not be generated.\n\n${err.message}`);
-    }
-  };
-
   /**
    * =========================================================
    * Navigation helpers
@@ -246,6 +233,21 @@ function App() {
 
     setNeedsRecalc,
     setUpdatedSections,
+  });
+
+
+  /*
+   * =========================================================
+   * PDF Creation
+   * =========================================================
+   */
+
+  const {
+    handleDownloadPdf,
+  } = useQuotePdfDownload({
+    quote,
+    form,
+    roofs,
   });
 
   /**
