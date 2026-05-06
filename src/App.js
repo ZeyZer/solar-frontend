@@ -30,6 +30,9 @@ import QuotePage from "./components/QuotePage";
 
 import QuoteForm from "./components/QuoteForm";
 
+import LandingPage from "./components/LandingPage";
+import SiteFooter from "./components/SiteFooter";
+
 import PdfQuoteRoute from "./components/PdfQuoteRoute";
 
 import {
@@ -356,14 +359,7 @@ function App() {
       // 2) Start listening for backend progress updates (SSE)
       setProgress({ pct: 5, step: "starting", label: "Starting…" });
 
-
-      console.log("SENDING tariffBefore:", payload.tariffBefore);
-      console.log("SENDING tariffAfter:", payload.tariffAfter);
-      console.log("SENDING tariff:", payload.tariff);
-
       const data = await generateQuote(payload);
-
-    
 
       // ✅ Complete progress nicely before switching page
       stopFakeProgress();
@@ -405,75 +401,11 @@ function App() {
   return (
     <div className={started ? "app app-started" : "app app-landing"}>
       {!started && (
-        <section className="landing-hero">
-          <div className="landing-hero-inner">
-            <div className="landing-hero-tags">
-              <span className="landing-tag">Under 60 seconds</span>
-              <span className="landing-tag">No obligation estimate</span>
-              <span className="landing-tag">5 Star Trusted Trader</span>
-            </div>
-
-            <div className="landing-hero-main">
-              <div className="landing-hero-left">
-                <h1 className="landing-title">
-                  Instant Solar Estimate
-                  <span>For Your Home</span>
-                </h1>
-
-                <p className="landing-subtitle">See what solar &amp; battery could save you!</p>
-
-                <div className="landing-cta-row">
-                  <button type="button" className="landing-cta-button" onClick={startEstimate}>
-                    Start my estimate
-                    <span className="landing-cta-arrow">➜</span>
-                  </button>
-
-                  <p className="landing-cta-note">
-                    Answer a few quick questions to see a tailored system, price range, savings and simple payback.
-                    <br />
-                    <span className="landing-no-sales">No sales calls.</span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="landing-hero-right">
-                <img
-                  src="/solar-hero.png"
-                  alt="Solar panels, sun and savings illustration"
-                  className="landing-hero-image"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="landing-brand-bar">
-            <div className="landing-brand-inner">
-              <div className="landing-brand-left">
-                <div className="brand-logo-circle">ZE</div>
-                <div className="brand-text">
-                  {INSTALLER ? (
-                    <>
-                      Estimate provided by <strong>{INSTALLER.name}</strong> via{" "}
-                      <strong>{PLATFORM.toolName}</strong>
-                    </>
-                  ) : (
-                    <>
-                      <strong>{PLATFORM.toolName}</strong> connects you with local installers
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {INSTALLER?.accreditations?.length ? (
-                <div className="landing-brand-badges">
-                  {INSTALLER.accreditations.map((b) => (
-                    <span key={b} className="brand-pill">{b}</span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </section>
+        <LandingPage
+          platform={PLATFORM}
+          installer={INSTALLER}
+          onStartEstimate={startEstimate}
+        />
       )}
       
       {started && (
@@ -548,16 +480,10 @@ function App() {
         onSave={saveTariffFromDraft}
       />
 
-      <footer className="site-footer">
-        {PLATFORM.toolName} estimate tool •{" "}
-        {INSTALLER ? (
-          <>
-            Estimate provided by <strong>{INSTALLER.name}</strong>
-          </>
-        ) : (
-          "Providing realistic Solar estimates - Connecting homeowners with installers"
-        )}
-      </footer>
+      <SiteFooter
+        platform={PLATFORM}
+        installer={INSTALLER}
+      />
     </div>
   );
 }
