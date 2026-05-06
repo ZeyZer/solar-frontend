@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef} from "react";
+import React, { useState } from "react";
 import "./App.css";
 
 import {
@@ -50,6 +50,8 @@ import useRoofWizard from "./hooks/useRoofWizard";
 import usePdfQuoteData from "./hooks/usePdfQuoteData";
 
 import usePersistedQuoteState from "./hooks/usePersistedQuoteState";
+
+import useAppPageEffects from "./hooks/useAppPageEffects";
 
 
 function App() {
@@ -169,6 +171,13 @@ function App() {
     rentingBlocked,
   });
 
+  useAppPageEffects({
+    isPdfRoute,
+    page,
+    setStarted,
+    setPage,
+  });
+
   function openTariffModal(mode = "after") {
     setTariffEditMode(mode);
 
@@ -250,33 +259,6 @@ function App() {
       alert(`Sorry, the PDF could not be generated.\n\n${err.message}`);
     }
   };
-
-
-  /**
-   * =========================================================
-   * Persist state
-   * =========================================================
-   */
-
-  useEffect(() => {
-    if (window.location.pathname === "/quote-pdf") {
-      console.log("Detected /quote-pdf route");
-      setStarted(true);
-      setPage("quote-pdf");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (page === "quote") {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    }
-  }, [page]);
-
-  useEffect(() => {
-    if ("scrollRestoration" in window.history) {
-      window.history.scrollRestoration = "manual";
-    }
-  }, []);
 
   /**
    * =========================================================
