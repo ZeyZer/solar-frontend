@@ -11,30 +11,9 @@ import {
   downloadQuotePdf,
 } from "./api/quoteApi";
 
-import {
-  cleanTariffObject,
-} from "./utils/tariffUtils";
 
 
-import {
-  formatPostcodeInput,
-} from "./utils/postcodeUtils";
-
-import LoadingScreen from "./components/LoadingScreen";
-
-import TariffModal from "./components/TariffModal";
-
-import QuotePage from "./components/QuotePage";
-
-import QuoteForm from "./components/QuoteForm";
-
-import LandingPage from "./components/LandingPage";
-import SiteFooter from "./components/SiteFooter";
-
-import PdfQuoteRoute from "./components/PdfQuoteRoute";
-
-import useQuoteSubmit from "./hooks/useQuoteSubmit";
-
+// UTILS //
 import {
   STORAGE_KEY,
   TOTAL_STEPS,
@@ -42,17 +21,29 @@ import {
   loadSavedState,
 } from "./utils/appStateUtils";
 
+import { cleanTariffObject,} from "./utils/tariffUtils";
+
+
+// COMPONENTS //
+import LoadingScreen from "./components/LoadingScreen";
+import TariffModal from "./components/TariffModal";
+import QuotePage from "./components/QuotePage";
+import QuoteForm from "./components/QuoteForm";
+import LandingPage from "./components/LandingPage";
+import SiteFooter from "./components/SiteFooter";
+import PdfQuoteRoute from "./components/PdfQuoteRoute";
+
+
+
+// HOOKS //
 import useFakeQuoteProgress from "./hooks/useFakeQuoteProgress";
-
 import useRoofWizard from "./hooks/useRoofWizard";
-
 import usePdfQuoteData from "./hooks/usePdfQuoteData";
-
 import usePersistedQuoteState from "./hooks/usePersistedQuoteState";
-
 import useAppPageEffects from "./hooks/useAppPageEffects";
-
 import useTariffModal from "./hooks/useTariffModal";
+import useFormHandlers from "./hooks/useFormHandlers";
+import useQuoteSubmit from "./hooks/useQuoteSubmit";
 
 
 function App() {
@@ -252,18 +243,12 @@ function App() {
    * Change handlers
    * =========================================================
    */
-  function handleChange(e) {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  }
-
-  function handlePostcodeChange(e) {
-    const formatted = formatPostcodeInput(e.target.value);
-    setForm((prev) => ({ ...prev, postcode: formatted }));
-  }
+  const {
+    handleChange,
+    handlePostcodeChange,
+  } = useFormHandlers({
+    setForm,
+  });
 
   /*
    * =========================================================
