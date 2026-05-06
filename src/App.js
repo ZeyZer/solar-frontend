@@ -13,7 +13,6 @@ import {
 } from "./api/quoteApi";
 
 import {
-  DEFAULT_TARIFF,
   cleanTariffObject,
 } from "./utils/tariffUtils";
 
@@ -50,11 +49,13 @@ import usePersistedQuoteState from "./hooks/usePersistedQuoteState";
 
 import useAppPageEffects from "./hooks/useAppPageEffects";
 
+import useTariffModal from "./hooks/useTariffModal";
+
 
 function App() {
   const savedState = loadSavedState();
   const {
-  progress,
+    progress,
     setProgress,
     startFakeProgress,
     stopFakeProgress,
@@ -139,19 +140,25 @@ function App() {
       : false
   );
 
-  // Tariff modal state
-  const [tariffModalOpen, setTariffModalOpen] = useState(false);
-  const [tariffEditMode, setTariffEditMode] = useState("after");
-
-  // Single draft bucket (IMPORTANT)
-  const [draftTariff, setDraftTariff] = useState(() => ({
-    ...DEFAULT_TARIFF,
-    ...(form?.tariffAfter || {})
-  }));
-
   // DIRTY STATE STUFF
   const [needsRecalc, setNeedsRecalc] = useState(false);
   const [updatedSections, setUpdatedSections] = useState([]);
+
+  const {
+    tariffModalOpen,
+    tariffEditMode,
+    draftTariff,
+    setDraftTariff,
+    openTariffModal,
+    switchTariffMode,
+    saveTariffFromDraft,
+    closeTariffModal,
+  } = useTariffModal({
+    form,
+    setForm,
+    setNeedsRecalc,
+    setUpdatedSections,
+  });
 
   usePersistedQuoteState({
     isPdfRoute,
@@ -167,71 +174,6 @@ function App() {
   useAppPageEffects({
     page,
   });
-
-  function openTariffModal(mode = "after") {
-    setTariffEditMode(mode);
-
-    const src = mode === "before"
-      ? form.tariffBefore
-      : form.tariffAfter;
-
-    setDraftTariff(cleanTariffObject(src, mode));
-    setTariffModalOpen(true);
-  }
-
-  function switchTariffMode(nextMode) {
-    setForm((prev) => {
-      const next = { ...prev };
-
-      // commit current draft
-      if (tariffEditMode === "before") {
-        next.tariffBefore = cleanTariffObject(
-          { ...(prev.tariffBefore || {}), ...draftTariff },
-          "before"
-        );
-      } else {
-        next.tariffAfter = cleanTariffObject(
-          { ...(prev.tariffAfter || {}), ...draftTariff },
-          "after"
-        );
-      }
-
-      // load next draft
-      const nextBucket =
-        nextMode === "before" ? next.tariffBefore : next.tariffAfter;
-
-      setDraftTariff(cleanTariffObject(nextBucket, nextMode));
-      setTariffEditMode(nextMode);
-
-      return next;
-    });
-  }
-
-  function saveTariffFromDraft() {
-    setForm((prev) => {
-      if (tariffEditMode === "before") {
-        return {
-          ...prev,
-          tariffBefore: cleanTariffObject(
-            { ...(prev.tariffBefore || {}), ...draftTariff },
-            "before"
-          ),
-        };
-      }
-
-      return {
-        ...prev,
-        tariffAfter: cleanTariffObject(
-          { ...(prev.tariffAfter || {}), ...draftTariff },
-          "after"
-        ),
-      };
-    });
-
-    setNeedsRecalc(true);
-    setUpdatedSections([]);
-    setTariffModalOpen(false);
-  }
 
   // Full Financials Pop-up
   const progressPercent = (step / TOTAL_STEPS) * 100;
@@ -440,15 +382,6 @@ function App() {
       setLoading(false);
     }
   }
-
-  console.log("Render state:", {
-    page,
-    started,
-    hasQuote: !!quote,
-    hasPdfQuote: !!pdfQuote,
-    hasPdfForm: !!pdfForm,
-    pathname: window.location.pathname
-  });
   
 
   /**
@@ -611,7 +544,7 @@ function App() {
         switchTariffMode={switchTariffMode}
         draftTariff={draftTariff}
         setDraftTariff={setDraftTariff}
-        onClose={() => setTariffModalOpen(false)}
+        onClose={closeTariffModal}
         onSave={saveTariffFromDraft}
       />
 
