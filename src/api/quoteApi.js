@@ -59,17 +59,60 @@ export async function getPdfQuoteData(pdfId) {
   return resp.json();
 }
 
+function getLeadIdFromPayload(payload = {}) {
+  return (
+    payload.leadId ||
+    payload.quote?.leadId ||
+    payload.input?.leadId ||
+    payload.form?.leadId ||
+    ""
+  );
+}
+
+function withExplicitLeadId(payload = {}) {
+  const leadId = getLeadIdFromPayload(payload);
+
+  return {
+    ...payload,
+    leadId,
+
+    quote: payload.quote
+      ? {
+          ...payload.quote,
+          leadId: payload.quote.leadId || leadId,
+        }
+      : payload.quote,
+
+    input: payload.input
+      ? {
+          ...payload.input,
+          leadId: payload.input.leadId || leadId,
+        }
+      : payload.input,
+
+    form: payload.form
+      ? {
+          ...payload.form,
+          leadId: payload.form.leadId || leadId,
+        }
+      : payload.form,
+  };
+}
+
 export async function requestQuotePdfBlob({ quote, form, roofs }) {
+  const payload = withExplicitLeadId({
+    leadId: quote?.leadId || form?.leadId || "",
+    quote,
+    form,
+    roofs,
+  });
+
   const resp = await fetch(`${API_BASE}/api/quote/pdf`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      quote,
-      form,
-      roofs,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!resp.ok) {
@@ -82,6 +125,7 @@ export async function requestQuotePdfBlob({ quote, form, roofs }) {
 
   return resp.blob();
 }
+
 
 export function downloadBlob(blob, filename = "solar-quote.pdf") {
   const url = window.URL.createObjectURL(blob);
@@ -110,7 +154,7 @@ export async function downloadQuotePdf({ quote, form, roofs }) {
 export async function emailQuoteLead(payload) {
   return postJson(
     "/api/lead/email-quote",
-    payload,
+    withExplicitLeadId(payload),
     "Failed to send email quote."
   );
 }
@@ -118,7 +162,7 @@ export async function emailQuoteLead(payload) {
 export async function requestCallLead(payload) {
   return postJson(
     "/api/lead/request-call",
-    payload,
+    withExplicitLeadId(payload),
     "Failed to request a call."
   );
 }
