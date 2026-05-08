@@ -5,6 +5,7 @@ import {
   PLATFORM,
   INSTALLER,
   CONTACT_EMAIL,
+  CALCULATOR_STARTS_OPEN,
 } from "./config/siteConfig";
 
 
@@ -75,6 +76,8 @@ function App() {
   );
 
   const [started, setStarted] = useState(() => {
+    if (CALCULATOR_STARTS_OPEN) return true;
+
     if (!savedState) return false;
     const inferredStarted =
       savedState.started === true ||
@@ -264,8 +267,8 @@ function App() {
   }
 
   return (
-    <div className={started ? "app app-started" : "app app-landing"}>
-      {!started && (
+    <div className={started || CALCULATOR_STARTS_OPEN ? "app app-started" : "app app-landing"}>
+      {!started && !CALCULATOR_STARTS_OPEN && (
         <LandingPage
           platform={PLATFORM}
           installer={INSTALLER}

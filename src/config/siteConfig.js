@@ -11,6 +11,8 @@ export const PLATFORM = {
   ],
 };
 
+export const CALCULATOR_STARTS_OPEN = true;
+
 export const INSTALLER = null;
 
 export const CONTACT_EMAIL =

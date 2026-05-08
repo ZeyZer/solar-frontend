@@ -4,6 +4,8 @@ import {
   DEFAULT_FORM,
 } from "../utils/appStateUtils";
 
+import { CALCULATOR_STARTS_OPEN } from "../config/siteConfig";
+
 export default function useAppNavigation({
   setQuote,
   setRentingBlocked,
@@ -37,7 +39,7 @@ export default function useAppNavigation({
   function goToHome() {
     clearSavedState();
 
-    setStarted(false);
+    setStarted(CALCULATOR_STARTS_OPEN ? true : false);
     setStep(1);
     setForm(DEFAULT_FORM);
     setQuote(null);
