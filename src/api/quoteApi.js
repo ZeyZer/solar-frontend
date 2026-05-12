@@ -1,5 +1,5 @@
 export const API_BASE =
-  process.env.REACT_APP_API_BASE || "http://localhost:4000"; // http://localhost:4000 or https://solar-backend-vp7n.onrender.com
+  process.env.REACT_APP_API_BASE || "https://solar-backend-vp7n.onrender.com"; // http://localhost:4000 or https://solar-backend-vp7n.onrender.com
 
 async function readErrorResponse(resp, fallbackMessage) {
   try {

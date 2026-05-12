@@ -14,9 +14,7 @@ function getPdfRouteInfo() {
 
   const hash = window.location.hash || "";
 
-  const isPdfRoute = hash.startsWith("#/quote-pdf");
-
-  if (!isPdfRoute) {
+  if (!hash.startsWith("#/quote-pdf")) {
     return {
       isPdfRoute: false,
       pdfId: "",
@@ -24,15 +22,7 @@ function getPdfRouteInfo() {
   }
 
   const queryIndex = hash.indexOf("?");
-
-  if (queryIndex === -1) {
-    return {
-      isPdfRoute: true,
-      pdfId: "",
-    };
-  }
-
-  const queryString = hash.slice(queryIndex + 1);
+  const queryString = queryIndex >= 0 ? hash.slice(queryIndex + 1) : "";
   const params = new URLSearchParams(queryString);
 
   return {
@@ -53,6 +43,11 @@ export default function usePdfQuoteData() {
   } = useMemo(() => getPdfRouteInfo(), []);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.__QUOTE_PDF_READY__ = false;
+      window.__QUOTE_PDF_ERROR__ = "";
+    }
+
     if (!isPdfRoute) return;
 
     let cancelled = false;
@@ -72,11 +67,23 @@ export default function usePdfQuoteData() {
         setPdfQuote(data.quote || null);
         setPdfForm(data.form || null);
         setPdfRoofs(data.roofs || []);
+
+        if (typeof window !== "undefined") {
+          window.__QUOTE_PDF_READY__ = true;
+          window.__QUOTE_PDF_ERROR__ = "";
+        }
       } catch (err) {
         if (cancelled) return;
 
+        const message = err?.message || "Failed to load PDF quote data.";
+
         console.error("Failed to load PDF quote data:", err);
-        setPdfError(err?.message || "Failed to load PDF quote data.");
+        setPdfError(message);
+
+        if (typeof window !== "undefined") {
+          window.__QUOTE_PDF_READY__ = false;
+          window.__QUOTE_PDF_ERROR__ = message;
+        }
       }
     }
 
