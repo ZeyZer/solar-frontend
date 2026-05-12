@@ -11,6 +11,8 @@ export const PLATFORM = {
   ],
 };
 
+export const MARKETING_SITE_URL = "https://www.zeyzersolar.com";
+
 export const CALCULATOR_STARTS_OPEN = true;
 
 export const INSTALLER = null;

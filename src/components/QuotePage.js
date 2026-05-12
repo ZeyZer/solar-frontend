@@ -150,8 +150,6 @@ export default function QuotePage({
       : "rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50";
   }
 
-  //HEEEERRRR
-
   const mode = pdfMode ? "pdf" : "screen";
   const isMode = (value) => mode === value;
   const isPdf = isMode("pdf");
@@ -160,6 +158,19 @@ export default function QuotePage({
     ? "quote-content quote-content--clean pdf-tight-top"
     : "quote-content quote-content--clean";
 
+
+  // EXIT TO HOME BUTTON
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+
+  const exitToWebsite = () => {
+    setExitConfirmOpen(true);
+  };
+
+  function confirmExitToWebsite() {
+    setExitConfirmOpen(false);
+    onBackToForm?.();
+  } 
+  
   if (!quote) {
     return (
       <div className="quote-page">
@@ -172,7 +183,17 @@ export default function QuotePage({
     );
   }
 
-  const exitToWebsite = () => onBackToForm();
+  // === ENVIRONMENT ICONS ==== \\
+  function EnvironmentalImpactIcon({ src }) {
+    return (
+      <img
+        src={src}
+        alt=""
+        aria-hidden="true"
+        className={pdfMode ? "mx-auto h-7 w-7 object-contain" : "mx-auto h-9 w-9 object-contain"}
+      />
+    );
+  }
 
   // ---- IRR (use same source as payback chart) ----
   const payback = quote?.financialSeries?.payback;
@@ -413,6 +434,48 @@ export default function QuotePage({
 
   return (
     <div className="quote-shell quote-shell--clean">
+      
+      {!isPdf && exitConfirmOpen && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="exit-quote-title"
+        >
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+            <h2 id="exit-quote-title" className="text-xl font-semibold text-slate-900">
+              Leave your quote?
+            </h2>
+
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              This will clear your current estimate and take you back to Zeyzer Solar.
+            </p>
+
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              If you want to keep this quote, please email yourself a copy before leaving.
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setExitConfirmOpen(false)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Stay on quote
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmExitToWebsite}
+                className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+              >
+                Leave and clear quote
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
         {!isPdf && <StickyQuoteNav updatedSections={updatedSections} onExit={exitToWebsite}/>}
         {!isPdf && (
           <QuoteHeader
@@ -687,7 +750,7 @@ export default function QuotePage({
                   <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
 
                     <div className="text-center">
-                      <div className="text-2xl">🌍</div>
+                      <EnvironmentalImpactIcon src="/icons/environment/earth.png" />
                       <div className={pdfMode ? "mt-1 text-xl font-medium text-slate-900" : "mt-1 text-2xl font-semibold text-slate-900"}>
                         {lifetimeCO2.toLocaleString()} kg
                       </div>
@@ -695,7 +758,7 @@ export default function QuotePage({
                     </div>
 
                     <div className="text-center">
-                      <div className="text-2xl">🚗</div>
+                      <EnvironmentalImpactIcon src="/icons/environment/tree.png" />
                       <div className={pdfMode ? "mt-1 text-xl font-medium text-slate-900" : "mt-1 text-2xl font-semibold text-slate-900"}>
                         {kmEquivalent.toLocaleString()}
                       </div>
@@ -703,7 +766,7 @@ export default function QuotePage({
                     </div>
 
                     <div className="text-center">
-                      <div className="text-2xl">✈️</div>
+                      <EnvironmentalImpactIcon src="/icons/environment/tree.png" />
                       <div className={pdfMode ? "mt-1 text-xl font-medium text-slate-900" : "mt-1 text-2xl font-semibold text-slate-900"}>
                         {flightsEquivalent}
                       </div>
@@ -711,7 +774,7 @@ export default function QuotePage({
                     </div>
 
                     <div className="text-center">
-                      <div className="text-2xl">🌳</div>
+                      <EnvironmentalImpactIcon src="/icons/environment/tree.png" />
                       <div className={pdfMode ? "mt-1 text-xl font-medium text-slate-900" : "mt-1 text-2xl font-semibold text-slate-900"}>
                         {treesEquivalent}
                       </div>
@@ -932,7 +995,7 @@ export default function QuotePage({
             {/* =======================
                 B) System Preferences
             ======================= */}
-            <div className={pdfMode ? "mt-3" : "mt-7"}>
+            <div className={pdfMode ? "mt-3 pdf-system-preferences-section pdf-keep-together" : "mt-7"}>
               <CardAlt
                 mode={mode}
                 title="System Preferences"
@@ -2201,7 +2264,7 @@ export default function QuotePage({
               onEmailQuote={onEmailQuoteLead}
               onRequestCall={onRequestCallLead}
               onDownloadPdf={handlePdfDownload}
-              infoUrl="https://YOUR-WEBSITE-URL-HERE/information-centre/"
+              infoUrl="https://zeyzersolar.com/solar-advice-hub/"
               initialName={form.name}
               initialEmail={form.email}
               initialPhone={form.phone}

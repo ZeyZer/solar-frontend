@@ -1801,6 +1801,23 @@ select:focus {
   }
 }
 
+@media print {
+  .pdf-system-preferences-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .pdf-system-preferences-section > * {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .pdf-system-pref-group {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
 /* =========================================================
    14) Responsive
    ========================================================= */

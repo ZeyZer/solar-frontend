@@ -6,6 +6,7 @@ import {
   INSTALLER,
   CONTACT_EMAIL,
   CALCULATOR_STARTS_OPEN,
+  MARKETING_SITE_URL,
 } from "./config/siteConfig";
 
 
@@ -14,6 +15,7 @@ import {
   TOTAL_STEPS,
   DEFAULT_FORM,
   loadSavedState,
+  STORAGE_KEY,
 } from "./utils/appStateUtils";
 
 import { cleanTariffObject,} from "./utils/tariffUtils";
@@ -195,6 +197,26 @@ function App() {
     setLoading,
   });
 
+  function exitQuoteToMarketingSite() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
+
+    setQuote(null);
+    setRentingBlocked(false);
+    setLoading(false);
+    setError("");
+    setStep(1);
+    setForm(DEFAULT_FORM);
+    resetRoofs();
+    setNeedsRecalc(false);
+    setUpdatedSections([]);
+    setPage("form");
+    setStarted(CALCULATOR_STARTS_OPEN ? true : false);
+
+    window.location.assign(MARKETING_SITE_URL);
+  }
+
   /**
    * =========================================================
    * Change handlers
@@ -286,7 +308,7 @@ function App() {
               form={form}
               roofs={roofs}
               onEdit={(stepNum) => editAnswers(stepNum)}
-              onBackToForm={() => setPage("form")}
+              onBackToForm={exitQuoteToMarketingSite}
               onDownloadPdf={handleDownloadPdf}
               onUpdateQuote={setQuote}
               onOpenTariffModal={(mode) => openTariffModal(mode)}
