@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import SectionHeader from "../ui/SectionHeader.js";
 import Card from "../ui/Card.js";
+import LegalNotice from "./LegalNotice";
 
 export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, infoUrl, onDownloadPdf, initialName, initialEmail, initialPhone }) {
   const [name, setName] = useState(initialName || "");
@@ -202,9 +203,10 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
         </Card>
       </div>
 
-      <p className="mt-6 text-xs text-slate-500">
-        This is an estimate, not a formal quote. Final design and pricing depends on a site survey and exact product choices.
-      </p>
+      <LegalNotice
+        variant="compact"
+        className={"mt-4"}
+      />
 
       <p className="mt-2 mb-6 text-xs text-slate-500">
         Self-consumption model:{" "}
