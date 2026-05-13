@@ -15,6 +15,11 @@ import TariffModal from "./TariffModal";
 import EnergyFlowCards from "./EnergyFlowCards";
 import StickyQuoteNav from "./StickyQuoteNav";
 import NextStepsPanel from "./NextStepsPanel";
+import LegalNotice from "./LegalNotice";
+
+import {
+  ESTIMATE_DISCLAIMER_SHORT,
+} from "../config/siteConfig";
 
 import {
   FinanceDetailsModal,
@@ -533,6 +538,10 @@ export default function QuotePage({
                   </div>
                 </div>
               </div>
+              <LegalNotice
+                variant="compact"
+                className="mt-2"
+              />
             </section>
           )}
 

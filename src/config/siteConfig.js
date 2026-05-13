@@ -12,6 +12,11 @@ export const PLATFORM = {
 };
 
 export const MARKETING_SITE_URL = "https://www.zeyzersolar.com";
+export const PRIVACY_POLICY_URL = "https://www.zeyzersolar.com/privacy-policy";
+export const ESTIMATE_DISCLAIMER_URL = "https://www.zeyzersolar.com/estimate-disclaimer";
+
+export const ESTIMATE_DISCLAIMER_SHORT =
+  "This is an estimate, not a final quote. Final pricing, system design and performance depend on survey, equipment selection, roof condition, grid connection and installer confirmation.";
 
 export const CALCULATOR_STARTS_OPEN = true;
 

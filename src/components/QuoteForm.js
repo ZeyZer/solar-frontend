@@ -11,6 +11,8 @@ import {
 
 import RoofWizardModal from "./RoofWizardModal";
 
+import LegalNotice from "./LegalNotice";
+
 export default function QuoteForm({
   // navigation/state
   step,
@@ -473,7 +475,7 @@ export default function QuoteForm({
                         <>
                             <h2>👋 Your details</h2>
                             <p className="text-sm text-slate-500">
-                            Optional — You can skip this for now, as its just to pre-fill your next steps!
+                            Optional — you can skip this for now, as it&apos;s just to pre-fill your next steps!
                             </p>
 
                             <label>
@@ -509,10 +511,15 @@ export default function QuoteForm({
                             />
                             </label>
 
+                            <LegalNotice variant="compact" className="mt-4" />
+
                             <div className="buttons-row">
-                            <button type="button" onClick={handlePrev}>← Back</button>
+                            <button type="button" onClick={handlePrev}>
+                                ← Back
+                            </button>
+
                             <button type="button" onClick={handleSubmit} disabled={loading}>
-                                {loading ? "Calculating…" : "Get my quote"}
+                                {loading ? "Calculating…" : "Generate my quote"}
                             </button>
                             </div>
 
