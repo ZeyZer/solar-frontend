@@ -767,7 +767,7 @@ export default function QuotePage({
                     </div>
 
                     <div className="text-center">
-                      <EnvironmentalImpactIcon src="/icons/environment/tree.png" />
+                      <EnvironmentalImpactIcon src="/icons/environment/car.png" />
                       <div className={pdfMode ? "mt-1 text-xl font-medium text-slate-900" : "mt-1 text-2xl font-semibold text-slate-900"}>
                         {kmEquivalent.toLocaleString()}
                       </div>
@@ -775,7 +775,7 @@ export default function QuotePage({
                     </div>
 
                     <div className="text-center">
-                      <EnvironmentalImpactIcon src="/icons/environment/tree.png" />
+                      <EnvironmentalImpactIcon src="/icons/environment/plane.png" />
                       <div className={pdfMode ? "mt-1 text-xl font-medium text-slate-900" : "mt-1 text-2xl font-semibold text-slate-900"}>
                         {flightsEquivalent}
                       </div>
@@ -2103,8 +2103,9 @@ export default function QuotePage({
 
                 <div>
                   <p className={pdfMode ? "mt-1 text-sm leading-snug text-slate-700" : "mt-1 text-body text-slate-700"}>
-                    Knowing which battery capacity you need is difficult! So here are two options for you,
-                    currently based on a comparison period of{" "}
+                    Knowing which battery capacity you need is difficult! So we compare your selected battery
+                    against a no-battery option, then show two recommended battery sizes based on a comparison
+                    period of{" "}
                     <strong>
                       {quote?.batteryRecommendations?.assumptions?.lifetimeYears || batteryRecommendationLifetimeYears} years
                     </strong>.
@@ -2225,6 +2226,109 @@ export default function QuotePage({
                   </div>  
                   </div>
                 </div>
+
+                {quote?.batteryRecommendations?.noBatteryComparison && (() => {
+                  const comparison = quote.batteryRecommendations.noBatteryComparison;
+                  const noBattery = comparison.noBattery || {};
+                  const selectedBattery = comparison.selectedBattery || {};
+                  const incremental = comparison.incremental || {};
+                  const verdict = comparison.verdict || {};
+
+                  const selectedBatteryLabel =
+                    selectedBattery.requestedBatteryKWhUsable ||
+                    selectedBattery.batteryKWhUsable ||
+                    form?.batteryKWh ||
+                    quote?.hourlyModel?._batteryKWh ||
+                    0;
+
+                  const extraAnnualBenefit = Number(incremental.annualBenefit || 0);
+                  const extraLifetimeSavings = Number(incremental.lifetimeNetSavings || 0);
+                  const estimatedBatteryCost = Number(incremental.estimatedBatteryCost || incremental.systemCost || 0);
+                  const batteryPaybackYears = incremental.batteryPaybackYears;
+
+                  return (
+                    <div className={pdfMode ? "mt-3 rounded-2xl border border-slate-200 bg-white p-3 pdf-keep-together" : "mt-5 rounded-3xl border border-slate-200 bg-white p-5"}>
+                      <div className={pdfMode ? "text-xs font-semibold uppercase tracking-wide text-accent" : "text-sm font-semibold uppercase tracking-wide text-accent"}>
+                        Battery vs no battery
+                      </div>
+
+                      <p className={pdfMode ? "mt-1 text-xs leading-snug text-slate-600" : "mt-2 text-sm leading-6 text-slate-600"}>
+                        This compares your selected battery size against the same solar system with no battery.
+                      </p>
+
+                      <div className={pdfMode ? "mt-3 grid grid-cols-3 gap-2" : "mt-4 grid grid-cols-1 gap-3 md:grid-cols-3"}>
+                        <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center">
+                          <div className={pdfMode ? "text-[10px] font-medium text-slate-500" : "text-s font-medium text-slate-500"}>
+                            No battery annual benefit
+                          </div>
+                          <div className={pdfMode ? "mt-1 text-lg font-semibold text-slate-900" : "mt-1 text-2xl font-semibold text-slate-900"}>
+                            £{Number(noBattery.annualBenefit || 0).toLocaleString()}
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center">
+                          <div className={pdfMode ? "text-[10px] font-medium text-slate-500" : "text-s font-medium text-slate-500"}>
+                            {selectedBatteryLabel} kWh battery benefit
+                          </div>
+                          <div className={pdfMode ? "mt-1 text-lg font-semibold text-slate-900" : "mt-1 text-2xl font-semibold text-slate-900"}>
+                            £{Number(selectedBattery.annualBenefit || 0).toLocaleString()}
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-accent/25 bg-white p-3 text-center">
+                          <div className={pdfMode ? "text-[10px] font-medium text-slate-500" : "text-s font-medium text-slate-500"}>
+                            Extra annual benefit
+                          </div>
+                          <div className={pdfMode ? "mt-1 text-lg font-semibold text-accent" : "mt-1 text-2xl font-semibold text-accent"}>
+                            {extraAnnualBenefit >= 0 ? "+" : "-"}£{Math.abs(extraAnnualBenefit).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={pdfMode ? "mt-3 grid grid-cols-3 gap-2 text-center" : "mt-4 grid grid-cols-1 gap-3 text-center md:grid-cols-3"}>
+                        <div className="rounded-2xl bg-slate-50 p-3">
+                          <div className={pdfMode ? "text-[10px] text-slate-500" : "text-xs text-slate-500"}>
+                            Estimated extra system cost
+                          </div>
+                          <div className={pdfMode ? "mt-1 text-sm font-semibold text-slate-900" : "mt-1 text-base font-semibold text-slate-900"}>
+                            £{estimatedBatteryCost.toLocaleString()}
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl bg-slate-50 p-3">
+                          <div className={pdfMode ? "text-[10px] text-slate-500" : "text-xs text-slate-500"}>
+                            Battery-only payback
+                          </div>
+                          <div className={pdfMode ? "mt-1 text-sm font-semibold text-slate-900" : "mt-1 text-base font-semibold text-slate-900"}>
+                            {batteryPaybackYears ? `${batteryPaybackYears} yrs` : "N/A"}
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl bg-slate-50 p-3">
+                          <div className={pdfMode ? "text-[10px] text-slate-500" : "text-xs text-slate-500"}>
+                            Extra lifetime net savings
+                          </div>
+                          <div className={pdfMode ? "mt-1 text-sm font-semibold text-slate-900" : "mt-1 text-base font-semibold text-slate-900"}>
+                            {extraLifetimeSavings >= 0 ? "+" : "-"}£{Math.abs(extraLifetimeSavings).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={pdfMode ? "mt-3 rounded-2xl bg-white p-3 text-xs leading-snug text-slate-600" : "mt-4 rounded-2xl bg-white p-4 text-sm leading-6 text-slate-600"}>
+                        {verdict.batteryAddsAnnualValue ? (
+                          <>
+                            Based on the current assumptions, the selected battery adds extra annual value compared with no battery.
+                          </>
+                        ) : (
+                          <>
+                            Based on the current assumptions, the selected battery does not add extra annual value compared with no battery.
+                          </>
+                        )}{" "}
+                        This is still based on the current abstract pricing model. Real product pricing will be improved when the hardware database is added.
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {quote.batteryRecommendations.bestPayback &&
                   quote.batteryRecommendations.bestLifetimeSavings &&
