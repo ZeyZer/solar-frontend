@@ -195,7 +195,7 @@ export default function QuotePage({
         src={src}
         alt=""
         aria-hidden="true"
-        className={pdfMode ? "mx-auto h-7 w-7 object-contain" : "mx-auto h-9 w-9 object-contain"}
+        className={pdfMode ? "mx-auto h-7 w-7 object-contain" : "mx-auto h-12 w-12 object-contain"}
       />
     );
   }
