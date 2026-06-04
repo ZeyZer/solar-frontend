@@ -15,7 +15,9 @@ import TariffModal from "./TariffModal";
 import EnergyFlowCards from "./EnergyFlowCards";
 import StickyQuoteNav from "./StickyQuoteNav";
 import NextStepsPanel from "./NextStepsPanel";
+
 import LegalNotice from "./LegalNotice";
+import TariffWarningsPanel from "./TariffWarningsPanel";
 
 import {
   ESTIMATE_DISCLAIMER_SHORT,
@@ -88,6 +90,9 @@ export default function QuotePage({
   // MCS Table Chart
   const mcsTableData = getMcsTableData({ quote, form, roofs });
   const [mcsModalOpen, setMcsModalOpen] = useState(false);
+
+  // Tariff Warnings
+  const [tariffWarningsOpen, setTariffWarningsOpen] = useState(false);
 
   // Full Financials Pop-up
   const [financeModalOpen, setFinanceModalOpen] = useState(false);
@@ -1949,6 +1954,16 @@ export default function QuotePage({
                             </div>
                           </button>
                         </div>
+                        
+                        {!pdfMode && quote?.tariffWarnings?.warnings?.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setTariffWarningsOpen(true)}
+                            className="mt-3 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            View tariff model notes
+                          </button>
+                        )}
                       </div>
 
                       {/* Right: 3/5 powerflow graphs + toggles */}
@@ -2400,6 +2415,11 @@ export default function QuotePage({
         open={mcsModalOpen}
         onClose={() => setMcsModalOpen(false)}
         data={mcsTableData}
+      />
+      <TariffWarningsPanel
+        quote={quote}
+        open={tariffWarningsOpen}
+        onClose={() => setTariffWarningsOpen(false)}
       />
     </div>
   );
