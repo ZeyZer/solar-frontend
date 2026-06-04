@@ -1,35 +1,14 @@
-export const DEFAULT_TARIFF = {
-  tariffType: "standard",
+import {
+  getDefaultTariff,
+} from "../config/tariffPresets";
 
-  importPrice: 0.28,
-  standingChargePerDay: 0.6,
-  segPrice: 0.12,
-
-  importNight: 0.08,
-  importDay: 0.28,
-  nightStartHour: 0,
-  nightEndHour: 7,
-
-  importOffPeak: 0.1,
-  importPeak: 0.4,
-  exportOffPeak: 0.05,
-  exportPeak: 0.3,
-  offPeakStartHour: 2,
-  offPeakEndHour: 5,
-  peakStartHour: 16,
-  peakEndHour: 19,
-
-  exportFromBatteryEnabled: true,
-  allowGridCharging: false,
-  allowEnergyTrading: false,
-  energyInflationRate: 0.06,
-};
+export const DEFAULT_TARIFF = getDefaultTariff("after");
 
 export function cleanTariffObject(raw, kind = "after") {
   const source = raw && typeof raw === "object" ? raw : {};
 
   const cleaned = {
-    ...DEFAULT_TARIFF,
+    ...getDefaultTariff(kind),
   };
 
   const allowedKeys = [
@@ -64,6 +43,8 @@ export function cleanTariffObject(raw, kind = "after") {
   delete cleaned.before;
   delete cleaned.after;
   delete cleaned.tariff;
+
+  cleaned.tariffType = String(cleaned.tariffType || "standard").toLowerCase();
 
   if (kind === "before") {
     delete cleaned.segPrice;

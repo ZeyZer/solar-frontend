@@ -1,5 +1,9 @@
 import React from "react";
 
+import {
+  getTariffPreset,
+} from "../config/tariffPresets";
+
 export default function TariffModal({
   open,
 
@@ -16,6 +20,29 @@ export default function TariffModal({
   if (!open) return null;
 
   const setField = (k, v) => setDraftTariff((t) => ({ ...t, [k]: v }));
+
+  const applyTariffType = (nextTariffType) => {
+    setDraftTariff((current) => {
+      const preset = getTariffPreset(nextTariffType);
+
+      return {
+        ...preset,
+
+        // Keep values the user commonly expects to remain stable.
+        standingChargePerDay:
+          current.standingChargePerDay ?? preset.standingChargePerDay,
+
+        energyInflationRate:
+          current.energyInflationRate ?? preset.energyInflationRate,
+
+        // Keep custom SEG rate when editing after-solar tariff.
+        segPrice:
+          tariffEditMode === "after"
+            ? current.segPrice ?? preset.segPrice
+            : preset.segPrice,
+      };
+    });
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
@@ -74,7 +101,7 @@ export default function TariffModal({
               <label className="text-xs font-semibold text-slate-600">Tariff type</label>
               <select
                 value={draftTariff.tariffType}
-                onChange={(e) => setField("tariffType", e.target.value)}
+                onChange={(e) => applyTariffType(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
               >
                 <option value="standard">Standard variable</option>
@@ -151,7 +178,7 @@ export default function TariffModal({
             {draftTariff.tariffType === "flux" && (
               <>
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Off-peak import (12 - 6 am) (£/kWh)</label>
+                  <label className="text-xs font-semibold text-slate-600">Off-peak import (00:00 - 06:00) (£/kWh)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -162,7 +189,7 @@ export default function TariffModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Off-peak (12 - 6 am) export (£/kWh)</label>
+                  <label className="text-xs font-semibold text-slate-600">Off-peak export (00:00 - 06:00) (£/kWh)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -173,7 +200,7 @@ export default function TariffModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Peak (4 - 7 pm) import (£/kWh)</label>
+                  <label className="text-xs font-semibold text-slate-600">Peak import (16:00 - 19:00) (£/kWh)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -184,7 +211,7 @@ export default function TariffModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Peak (4 - 7 pm) export (£/kWh)</label>
+                  <label className="text-xs font-semibold text-slate-600">Peak import (16:00 - 19:00) (£/kWh)</label>
                   <input
                     type="number"
                     step="0.01"
