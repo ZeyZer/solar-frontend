@@ -61,7 +61,7 @@ export function BATTERY_UI(capacity) {
 
   if (c <= 9) {
     return {
-      image: "/products/battery-medium-portrait.jpg",
+      image: "/products/battery-medium-portrait.png",
       aboutTitle: "Medium home battery",
       aboutText:
         "A balanced battery size that typically covers more evening demand and reduces grid reliance across more of the year. Your additional battery storage can be used to increase your savings in a variety of ways.",

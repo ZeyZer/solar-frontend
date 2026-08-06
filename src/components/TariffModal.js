@@ -211,7 +211,7 @@ export default function TariffModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Peak import (16:00 - 19:00) (£/kWh)</label>
+                  <label className="text-xs font-semibold text-slate-600">Peak emport (16:00 - 19:00) (£/kWh)</label>
                   <input
                     type="number"
                     step="0.01"
