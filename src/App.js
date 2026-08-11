@@ -128,6 +128,14 @@ function App() {
     setError,
   });
 
+  const [roofInputMode, setRoofInputMode] = useState(
+    savedState?.roofInputMode || "panel_count"
+  );
+
+  const [roofGeometry, setRoofGeometry] = useState(
+    savedState?.roofGeometry || null
+  );
+
   const [quote, setQuote] = useState(() => (savedState?.quote ? savedState.quote : null));
 
   const [rentingBlocked, setRentingBlocked] = useState(() =>
@@ -163,6 +171,8 @@ function App() {
     started,
     form,
     roofs,
+    roofInputMode,
+    roofGeometry,
     quote,
     rentingBlocked,
   });
@@ -193,6 +203,8 @@ function App() {
     setStarted,
     setForm,
     resetRoofs,
+    setRoofInputMode,
+    setRoofGeometry,
     setPage,
     setLoading,
   });
@@ -209,6 +221,8 @@ function App() {
     setStep(1);
     setForm(DEFAULT_FORM);
     resetRoofs();
+    setRoofInputMode("panel_count");
+    setRoofGeometry(null);
     setNeedsRecalc(false);
     setUpdatedSections([]);
     setPage("form");
@@ -240,6 +254,8 @@ function App() {
   } = useQuoteSubmit({
     form,
     roofs,
+    roofInputMode,
+    roofGeometry,
 
     setError,
     setQuote,
@@ -341,6 +357,10 @@ function App() {
               openTariffModal={openTariffModal}
               roofs={roofs}
               setRoofs={setRoofs}
+              roofInputMode={roofInputMode}
+              setRoofInputMode={setRoofInputMode}
+              roofGeometry={roofGeometry}
+              setRoofGeometry={setRoofGeometry}
               openAddRoofModal={openAddRoofModal}
               openEditRoofModal={openEditRoofModal}
               roofModalOpen={roofModalOpen}

@@ -14,6 +14,8 @@ export default function useAppNavigation({
   setStarted,
   setForm,
   resetRoofs,
+  setRoofInputMode,
+  setRoofGeometry,
   setPage,
   setLoading,
 }) {
@@ -33,6 +35,8 @@ export default function useAppNavigation({
     setStarted(true);
     setForm(DEFAULT_FORM);
     resetRoofs();
+    setRoofInputMode?.("panel_count");
+    setRoofGeometry?.(null);
     setPage("form");
   }
 
@@ -47,6 +51,8 @@ export default function useAppNavigation({
     setLoading(false);
     setError("");
     resetRoofs();
+    setRoofInputMode?.("panel_count");
+    setRoofGeometry?.(null);
     setPage("form");
   }
 

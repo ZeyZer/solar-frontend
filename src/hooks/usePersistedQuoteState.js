@@ -11,6 +11,8 @@ export default function usePersistedQuoteState({
   started,
   form,
   roofs,
+  roofInputMode,
+  roofGeometry,
   quote,
   rentingBlocked,
 }) {
@@ -26,6 +28,8 @@ export default function usePersistedQuoteState({
           started,
           form,
           roofs,
+          roofInputMode,
+          roofGeometry,
           quote,
           rentingBlocked,
         })
@@ -40,6 +44,8 @@ export default function usePersistedQuoteState({
     started,
     form,
     roofs,
+    roofInputMode,
+    roofGeometry,
     quote,
     rentingBlocked,
   ]);

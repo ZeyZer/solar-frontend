@@ -10,9 +10,15 @@ import {
   isValidUkPostcode,
 } from "../utils/postcodeUtils";
 
+import {
+  validateRoofGeometryPayload,
+} from "../utils/roofGeometryPayload";
+
 export default function useQuoteSubmit({
   form,
   roofs,
+  roofInputMode,
+  roofGeometry,
 
   setError,
   setQuote,
@@ -62,8 +68,21 @@ export default function useQuoteSubmit({
       0
     );
 
+    if (roofInputMode === "draw_my_roof") {
+      const roofGeometryErrors = validateRoofGeometryPayload(roofGeometry);
+
+      if (roofGeometryErrors.length > 0) {
+        setError(roofGeometryErrors[0]);
+        return;
+      }
+    }
+
     if (!roofs.length || totalPanels <= 0) {
-      setError("Please enter at least 1 panel across your roof spaces.");
+      setError(
+        roofInputMode === "draw_my_roof"
+          ? "Please also add an estimated panel count for now. The roof drawing is saved as geometry, but this quote version still needs a panel-count estimate for the calculation."
+          : "Please enter at least 1 panel across your roof spaces."
+      );
       return;
     }
 
@@ -102,6 +121,12 @@ export default function useQuoteSubmit({
         occupancyProfile: form.occupancyProfile,
 
         panelOption: form.panelOption,
+
+        roofInputMode,
+
+        ...(roofInputMode === "draw_my_roof" && roofGeometry
+          ? { roofGeometry }
+          : {}),
 
         roofs: roofs.map((r) => ({
           orientation: r.orientation,

@@ -13,6 +13,13 @@ import RoofWizardModal from "./RoofWizardModal";
 
 import LegalNotice from "./LegalNotice";
 
+import DrawMyRoofMap from "./roof/DrawMyRoofMap";
+import RoofInputModeSelector from "./roof/RoofInputModeSelector";
+
+import {
+  validateRoofGeometryPayload,
+} from "../utils/roofGeometryPayload";
+
 export default function QuoteForm({
   // navigation/state
   step,
@@ -45,6 +52,10 @@ export default function QuoteForm({
   // roofs
   roofs,
   setRoofs,
+  roofInputMode,
+  setRoofInputMode,
+  roofGeometry,
+  setRoofGeometry,
   openAddRoofModal,
   openEditRoofModal,
 
@@ -288,25 +299,68 @@ export default function QuoteForm({
                         <>
                             <h2>🏡 Your Roof Spaces</h2>
                             <p className="subheading-print">
-                            Add each roof area you want to use. The more accurate you are the more accuratly we can calculate your solar production.
+                            Add each roof area you want to use. The more accurate you are,
+                            the more accurately we can estimate your solar production.
                             </p>
 
-                            {/* Empty state (no roofs yet) */}
+                            <RoofInputModeSelector
+                                value={roofInputMode}
+                                onChange={(nextMode) => {
+                                setRoofInputMode(nextMode);
+                                setRoofGeometry(null);
+                                setError("");
+                                }}
+                            />
+
+                            {roofInputMode === "draw_my_roof" && (
+                            <>
+                                <DrawMyRoofMap
+                                postcode={form.postcode}
+                                addressContext={{
+                                    postcode: form.postcode,
+                                    addressLine: `${form.houseNumber || ""} ${form.postcode || ""}`.trim(),
+                                    country: "GB",
+                                }}
+                                value={roofGeometry}
+                                onChange={setRoofGeometry}
+                                />
+
+                                <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                                <p className="font-semibold">Current MVP limitation</p>
+                                <p className="mt-1">
+                                    Your drawn roof area will be saved and sent to the backend as
+                                    roof geometry. For this version of the quote calculator, please
+                                    also add an estimated panel count below so the existing calculation
+                                    engine can still run safely.
+                                </p>
+                                </div>
+                            </>
+                            )}
+
+                            {roofInputMode === "panel_count" && (
+                            <p className="small-print">
+                                This is the fastest option. It uses your estimated number of panels
+                                as the basis for the current quote calculation.
+                            </p>
+                            )}
+
+                            {/* Empty state (no roof panel-count estimate yet) */}
                             {roofs.length === 0 && (
                             <div className="roof-empty">
                                 <p className="small-print">
-                                You haven&apos;t added any roofs yet. Add at least one to continue.
+                                You haven&apos;t added a roof panel-count estimate yet.
+                                Add at least one roof estimate to continue.
                                 </p>
 
                                 <div className="buttons-row">
                                 <button type="button" onClick={openAddRoofModal}>
-                                    + Add a roof
+                                    + Add a roof estimate
                                 </button>
                                 </div>
                             </div>
                             )}
 
-                            {/* Summary cards (once roofs exist) */}
+                            {/* Summary cards (once roof panel-count estimates exist) */}
                             {roofs.length > 0 && (
                             <>
                                 {roofs.map((roof, idx) => (
@@ -371,27 +425,42 @@ export default function QuoteForm({
 
                                 <div className="buttons-row">
                                 <button type="button" onClick={openAddRoofModal}>
-                                    + Add another roof
+                                    + Add another roof estimate
                                 </button>
                                 </div>
                             </>
                             )}
 
-                            {/* Navigation buttons */}
                             <div className="buttons-row">
                             <button type="button" onClick={handlePrev}>← Back</button>
 
                             <button
                                 type="button"
                                 onClick={() => {
-                                // Must have at least one roof
+                                if (roofInputMode === "draw_my_roof") {
+                                    const roofGeometryErrors =
+                                    validateRoofGeometryPayload(roofGeometry);
+
+                                    if (roofGeometryErrors.length > 0) {
+                                    setError(roofGeometryErrors[0]);
+                                    return;
+                                    }
+                                }
+
                                 if (!roofs.length) {
-                                    setError("Please add at least 1 roof to continue.");
+                                    setError(
+                                    roofInputMode === "draw_my_roof"
+                                        ? "Please also add an estimated panel count below so the current quote calculation can run."
+                                        : "Please add at least 1 roof to continue."
+                                    );
                                     return;
                                 }
 
-                                // Must have at least 1 panel total (your backend needs this)
-                                const total = roofs.reduce((s, r) => s + Number(r.panels || 0), 0);
+                                const total = roofs.reduce(
+                                    (s, r) => s + Number(r.panels || 0),
+                                    0
+                                );
+
                                 if (total <= 0) {
                                     setError("Please enter at least 1 panel across your roof spaces.");
                                     return;
