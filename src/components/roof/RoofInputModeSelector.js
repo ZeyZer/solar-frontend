@@ -4,6 +4,7 @@ export default function RoofInputModeSelector({ value, onChange }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4">
       <h3 className="text-lg font-semibold text-slate-900">Roof details</h3>
+
       <p className="mt-1 text-sm text-slate-600">
         Choose how you want to tell us about your roof.
       </p>
@@ -18,9 +19,12 @@ export default function RoofInputModeSelector({ value, onChange }) {
               : "border-slate-200 bg-white"
           }`}
         >
-          <div className="font-semibold text-slate-900">I know roughly how many panels fit</div>
+          <div className="font-semibold text-slate-900">
+            I know roughly how many panels fit
+          </div>
+
           <div className="mt-1 text-sm text-slate-600">
-            Fastest option, but lowest roof-layout confidence.
+            Fastest option. Best if you already know the likely panel count.
           </div>
         </button>
 
@@ -33,9 +37,12 @@ export default function RoofInputModeSelector({ value, onChange }) {
               : "border-slate-200 bg-white"
           }`}
         >
-          <div className="font-semibold text-slate-900">Draw my roof</div>
+          <div className="font-semibold text-slate-900">
+            Draw my roof
+          </div>
+
           <div className="mt-1 text-sm text-slate-600">
-            Draw usable roof areas from aerial imagery for a better estimate.
+            Use Google satellite imagery to mark the usable roof areas.
           </div>
         </button>
       </div>
