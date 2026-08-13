@@ -13,6 +13,8 @@ import RoofWizardModal from "./RoofWizardModal";
 
 import LegalNotice from "./LegalNotice";
 
+import GooglePlacesAddressLookup from "./address/GooglePlacesAddressLookup";
+
 import DrawMyRoofMap from "./roof/DrawMyRoofMap";
 import RoofInputModeSelector from "./roof/RoofInputModeSelector";
 
@@ -156,27 +158,14 @@ export default function QuoteForm({
                             </div>
                             </label>
 
-                            <label>
-                            <div className="question-label">🏘️ Your House Number / Name</div>
-                            <input
-                                type="text"
-                                name="houseNumber"
-                                value={form.houseNumber}
-                                onChange={handleChange}
-                                placeholder="e.g. 44 or Rose Cottage"
+                            <GooglePlacesAddressLookup
+                                form={form}
+                                setForm={setForm}
+                                handleChange={handleChange}
+                                handlePostcodeChange={handlePostcodeChange}
+                                setError={setError}
+                                setRoofGeometry={setRoofGeometry}
                             />
-                            </label>
-
-                            <label>
-                            <div className="question-label">📍 Your Postcode</div> 
-                            <input
-                                type="text"
-                                name="postcode"
-                                value={form.postcode}
-                                onChange={handlePostcodeChange}
-                                placeholder="e.g. SW1A 1AA"
-                            />
-                            </label>
 
                             <div className="buttons-row">
                             <button
@@ -193,18 +182,34 @@ export default function QuoteForm({
                                     return;
                                 }
 
-                                if (!form.houseNumber.trim()) {
-                                    setError("Please enter your house name or number.");
-                                    return;
-                                }
-                                if (!form.postcode.trim()) {
-                                    setError("Please enter your postcode.");
-                                    return;
-                                }
+                                if (process.env.REACT_APP_GOOGLE_MAPS_API_KEY) {
+                                    if (!form.selectedAddress) {
+                                        setError("Please search for and select your address before continuing.");
+                                        return;
+                                    }
 
-                                if (!isValidUkPostcode(form.postcode)) {
-                                    setError("Please enter a valid UK postcode (e.g. SW1A 1AA).");
-                                    return;
+                                    if (
+                                        form.selectedAddress.latitude === null ||
+                                        form.selectedAddress.longitude === null
+                                    ) {
+                                        setError("The selected address does not have map coordinates. Please choose another address result.");
+                                        return;
+                                    }
+                                } else {
+                                    if (!form.houseNumber.trim()) {
+                                        setError("Please enter your house name or number.");
+                                        return;
+                                    }
+
+                                    if (!form.postcode.trim()) {
+                                        setError("Please enter your postcode.");
+                                        return;
+                                    }
+
+                                    if (!isValidUkPostcode(form.postcode)) {
+                                        setError("Please enter a valid UK postcode (e.g. SW1A 1AA).");
+                                        return;
+                                    }
                                 }
 
                                 setError("");
@@ -315,14 +320,19 @@ export default function QuoteForm({
                             {roofInputMode === "draw_my_roof" && (
                             <>
                                 <DrawMyRoofMap
-                                postcode={form.postcode}
-                                addressContext={{
-                                    postcode: form.postcode,
-                                    addressLine: `${form.houseNumber || ""} ${form.postcode || ""}`.trim(),
-                                    country: "GB",
-                                }}
-                                value={roofGeometry}
-                                onChange={setRoofGeometry}
+                                    postcode={form.postcode}
+                                    selectedAddress={form.selectedAddress}
+                                    addressContext={{
+                                        postcode: form.postcode,
+                                        addressLine:
+                                        form.selectedAddress?.fullAddress ||
+                                        form.address ||
+                                        `${form.houseNumber || ""} ${form.postcode || ""}`.trim(),
+                                        selectedAddress: form.selectedAddress || null,
+                                        country: "GB",
+                                    }}
+                                    value={roofGeometry}
+                                    onChange={setRoofGeometry}
                                 />
 
                                 <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">

@@ -1,9 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-import {
-  setOptions,
-  importLibrary,
-} from "@googlemaps/js-api-loader";
+import { loadGoogleMapsLibrary } from "../../utils/googleMapsLoader";
 
 import {
   buildRoofGeometryPayload,
@@ -24,19 +21,46 @@ const DEFAULT_CENTER = {
   lng: -0.5704,
 };
 
-function normaliseText(value) {
-  return String(value || "").trim();
+function numberOrNull(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 }
 
-function buildInitialAddressSearch({ postcode, addressContext }) {
-  const addressLine = normaliseText(addressContext?.addressLine);
-  const cleanPostcode = normaliseText(postcode || addressContext?.postcode);
+function getSelectedAddressCenter(selectedAddress) {
+  const latitude = numberOrNull(selectedAddress?.latitude);
+  const longitude = numberOrNull(selectedAddress?.longitude);
 
-  if (addressLine && cleanPostcode && !addressLine.includes(cleanPostcode)) {
-    return `${addressLine}, ${cleanPostcode}`;
+  if (latitude === null || longitude === null) {
+    return null;
   }
 
-  return addressLine || cleanPostcode || "";
+  return {
+    lat: latitude,
+    lng: longitude,
+  };
+}
+
+function getInitialMapCenter({ selectedAddress, initialCenter }) {
+  const selectedCenter = getSelectedAddressCenter(selectedAddress);
+
+  if (selectedCenter) {
+    return selectedCenter;
+  }
+
+  if (Array.isArray(initialCenter)) {
+    const [lng, lat] = initialCenter;
+    const cleanLat = numberOrNull(lat);
+    const cleanLng = numberOrNull(lng);
+
+    if (cleanLat !== null && cleanLng !== null) {
+      return {
+        lat: cleanLat,
+        lng: cleanLng,
+      };
+    }
+  }
+
+  return DEFAULT_CENTER;
 }
 
 function pointsToCoordinates(points) {
@@ -90,6 +114,7 @@ function makeGeoJsonFeatureFromCoordinates(coordinates) {
 
 export default function DrawMyRoofMap({
   postcode,
+  selectedAddress,
   addressContext,
   initialCenter = [DEFAULT_CENTER.lng, DEFAULT_CENTER.lat],
   initialZoom = 20,
@@ -100,10 +125,10 @@ export default function DrawMyRoofMap({
 
   const googleRef = useRef(null);
   const mapRef = useRef(null);
-  const geocoderRef = useRef(null);
 
   const onChangeRef = useRef(onChange);
   const postcodeRef = useRef(postcode);
+  const selectedAddressRef = useRef(selectedAddress);
   const addressContextRef = useRef(addressContext);
 
   const currentPathRef = useRef([]);
@@ -112,10 +137,6 @@ export default function DrawMyRoofMap({
   const draftPolylineRef = useRef(null);
   const draftPolygonRef = useRef(null);
   const savedPolygonsRef = useRef([]);
-
-  const [addressSearch, setAddressSearch] = useState(() =>
-    buildInitialAddressSearch({ postcode, addressContext })
-  );
 
   const [mapStatus, setMapStatus] = useState("Loading Google satellite map…");
   const [currentPath, setCurrentPath] = useState([]);
@@ -131,24 +152,18 @@ export default function DrawMyRoofMap({
   }, [postcode]);
 
   useEffect(() => {
-    addressContextRef.current = addressContext;
-  }, [addressContext]);
+    selectedAddressRef.current = selectedAddress;
+  }, [selectedAddress]);
 
   useEffect(() => {
-    const nextAddressSearch = buildInitialAddressSearch({
-      postcode,
-      addressContext,
-    });
-
-    if (nextAddressSearch && roofPlanesRef.current.length === 0) {
-      setAddressSearch(nextAddressSearch);
-    }
-  }, [postcode, addressContext?.addressLine, addressContext?.postcode]);
+    addressContextRef.current = addressContext;
+  }, [addressContext]);
 
   function buildAddressContext() {
     return (
       addressContextRef.current || {
         postcode: postcodeRef.current || null,
+        selectedAddress: selectedAddressRef.current || null,
         country: "GB",
       }
     );
@@ -159,9 +174,12 @@ export default function DrawMyRoofMap({
       roofPlanes: nextRoofPlanes,
       addressContext: {
         ...buildAddressContext(),
-        addressSearchUsed: addressSearch,
+        selectedAddress: selectedAddressRef.current || null,
         mapProvider: "google_maps",
         mapType: "hybrid",
+        mapCentredFrom: selectedAddressRef.current
+          ? "google_places_selected_address"
+          : "manual_map_position",
       },
     });
   }
@@ -389,49 +407,23 @@ export default function DrawMyRoofMap({
     }
   }
 
-  async function centreMapOnAddress(searchText = addressSearch) {
-    const google = googleRef.current;
+  function centreMapOnSelectedAddress() {
     const map = mapRef.current;
-    const geocoder = geocoderRef.current;
+    const center = getSelectedAddressCenter(selectedAddressRef.current);
 
-    const cleanSearchText = normaliseText(searchText);
-
-    if (!google || !map || !geocoder || !cleanSearchText) {
+    if (!map || !center) {
+      setMapStatus(
+        "No selected address coordinates found. Go back and select your address, or move the map manually."
+      );
       return;
     }
 
-    setMapStatus(`Finding ${cleanSearchText}…`);
+    map.setCenter(center);
+    map.setZoom(initialZoom);
 
-    try {
-      const response = await geocoder.geocode({
-        address: `${cleanSearchText}, United Kingdom`,
-        componentRestrictions: {
-          country: "GB",
-        },
-      });
-
-      const result = response?.results?.[0];
-      const location = result?.geometry?.location;
-
-      if (!location) {
-        setMapStatus("Could not find that address. Try entering the full street address.");
-        return;
-      }
-
-      if (result.geometry.viewport) {
-        map.fitBounds(result.geometry.viewport);
-      }
-
-      map.setCenter(location);
-      map.setZoom(initialZoom);
-
-      setMapStatus(
-        "Map centred. Click around the roof corners, then save the roof area."
-      );
-    } catch (err) {
-      console.warn("Failed to geocode address for roof map:", err);
-      setMapStatus("Could not find that address. Try entering the full street address.");
-    }
+    setMapStatus(
+      "Map centred on your selected address. Click the gutter/eaves line first, then draw around the roof."
+    );
   }
 
   useEffect(() => {
@@ -445,13 +437,7 @@ export default function DrawMyRoofMap({
 
     async function initialiseMap() {
       try {
-        setOptions({
-          key: apiKey,
-          version: "weekly",
-        });
-
-        const mapsLibrary = await importLibrary("maps");
-        const geocodingLibrary = await importLibrary("geocoding");
+        const mapsLibrary = await loadGoogleMapsLibrary("maps");
 
         if (cancelled || !mapContainerRef.current) {
           return;
@@ -460,18 +446,16 @@ export default function DrawMyRoofMap({
         const google = window.google;
 
         if (!google?.maps) {
-          throw new Error("Google Maps namespace was not available after importLibrary().");
+          throw new Error("Google Maps namespace was not available after loadGoogleMapsLibrary().");
         }
 
-        const [lng, lat] = Array.isArray(initialCenter)
-          ? initialCenter
-          : [DEFAULT_CENTER.lng, DEFAULT_CENTER.lat];
+        const center = getInitialMapCenter({
+          selectedAddress: selectedAddressRef.current,
+          initialCenter,
+        });
 
         const map = new mapsLibrary.Map(mapContainerRef.current, {
-          center: {
-            lat: Number(lat) || DEFAULT_CENTER.lat,
-            lng: Number(lng) || DEFAULT_CENTER.lng,
-          },
+          center,
           zoom: initialZoom,
           mapTypeId: "hybrid",
           streetViewControl: false,
@@ -479,13 +463,13 @@ export default function DrawMyRoofMap({
           mapTypeControl: true,
           rotateControl: false,
           tilt: 0,
+          clickableIcons: false,
+          gestureHandling: "greedy",
+          draggableCursor: "crosshair",
         });
-
-        const geocoder = new geocodingLibrary.Geocoder();
 
         googleRef.current = google;
         mapRef.current = map;
-        geocoderRef.current = geocoder;
 
         map.addListener("click", (event) => {
           addMapPoint(event.latLng);
@@ -495,19 +479,12 @@ export default function DrawMyRoofMap({
           redrawSavedPolygonsFromPlanes(roofPlanesRef.current);
         }
 
-        setMapStatus("Map loaded. Finding the address…");
+        setMapStatus(
+          selectedAddressRef.current
+            ? "Map centred on your selected address. Click the gutter/eaves line first, then draw around the roof."
+            : "Map loaded. Go back to Step 1 and select your address, or move the map manually."
+        );
 
-        const initialSearch = buildInitialAddressSearch({
-          postcode: postcodeRef.current,
-          addressContext: addressContextRef.current,
-        });
-
-        if (initialSearch) {
-          setAddressSearch(initialSearch);
-          await centreMapOnAddress(initialSearch);
-        } else {
-          setMapStatus("Map loaded. Click around the roof corners to start drawing.");
-        }
       } catch (err) {
         console.error("Failed to load Google Maps roof drawing map:", err);
 
@@ -534,13 +511,21 @@ export default function DrawMyRoofMap({
       savedPolygonsRef.current = [];
 
       mapRef.current = null;
-      geocoderRef.current = null;
       googleRef.current = null;
     };
 
     // Initialise the map once. Form changes should not recreate the Google map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    selectedAddressRef.current = selectedAddress;
+
+    if (mapRef.current && selectedAddress) {
+      centreMapOnSelectedAddress();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAddress?.latitude, selectedAddress?.longitude]);
 
   useEffect(() => {
     const shouldClear =
@@ -577,29 +562,30 @@ export default function DrawMyRoofMap({
           quantity still need to be confirmed by survey.
         </p>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
-          <label className="text-sm">
-            <span className="block font-medium text-slate-700">
-              Find your property
-            </span>
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-300 p-2"
-              type="text"
-              value={addressSearch}
-              placeholder="e.g. 55 Example Road, Guildford, GU2 9AH"
-              onChange={(event) => setAddressSearch(event.target.value)}
-            />
-          </label>
+        {selectedAddress?.fullAddress && (
+          <div className="mt-4 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
+            <p className="font-semibold">Map address</p>
+            <p className="mt-1">{selectedAddress.fullAddress}</p>
 
-          <div className="flex items-end">
             <button
               type="button"
-              onClick={() => centreMapOnAddress(addressSearch)}
+              className="secondary-mini mt-3"
+              onClick={centreMapOnSelectedAddress}
             >
-              Find address
+              Re-centre on selected address
             </button>
           </div>
-        </div>
+        )}
+
+        {!selectedAddress && (
+          <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+            <p className="font-semibold">No selected address found</p>
+            <p className="mt-1">
+              Go back to Step 1 and select the exact address so the map can open on the
+              right property.
+            </p>
+          </div>
+        )}
 
         <p className="mt-2 text-sm text-slate-600">{mapStatus}</p>
 

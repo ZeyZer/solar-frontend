@@ -34,6 +34,7 @@ const DEFAULT_FORM = {
   homeOwnership: "",
   houseNumber: "",
   postcode: "",
+  selectedAddress: null,
 
   annualKWh: "",
   monthlyBill: "",

@@ -42,9 +42,10 @@ export default function useQuoteSubmit({
     const REQUIRE_CONTACT_DETAILS = false;
 
     const derivedAddress =
-      form.address && form.address.trim()
+      form.selectedAddress?.fullAddress ||
+      (form.address && form.address.trim()
         ? form.address.trim()
-        : `${form.houseNumber || ""} ${form.postcode || ""}`.trim();
+        : `${form.houseNumber || ""} ${form.postcode || ""}`.trim());
 
     if (!derivedAddress || !form.postcode) {
       setError("Please enter your house number and postcode so we can run the estimate.");
@@ -109,6 +110,9 @@ export default function useQuoteSubmit({
         postcode: form.postcode,
         homeOwnership: form.homeOwnership,
         houseNumber: form.houseNumber,
+        selectedAddress: form.selectedAddress || null,
+        addressLatitude: form.selectedAddress?.latitude || null,
+        addressLongitude: form.selectedAddress?.longitude || null,
 
         tariffBefore: cleanedTariffBefore,
         tariffAfter: cleanedTariffAfter,
