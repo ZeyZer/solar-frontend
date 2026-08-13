@@ -15,8 +15,8 @@ import LegalNotice from "./LegalNotice";
 
 import GooglePlacesAddressLookup from "./address/GooglePlacesAddressLookup";
 
-import DrawMyRoofMap from "./roof/DrawMyRoofMap";
 import RoofInputModeSelector from "./roof/RoofInputModeSelector";
+import SolarTargetBuildingSelector from "./roof/SolarTargetBuildingSelector";
 
 import {
   validateRoofGeometryPayload,
@@ -319,8 +319,7 @@ export default function QuoteForm({
 
                             {roofInputMode === "draw_my_roof" && (
                             <>
-                                <DrawMyRoofMap
-                                    postcode={form.postcode}
+                                <SolarTargetBuildingSelector
                                     selectedAddress={form.selectedAddress}
                                     addressContext={{
                                         postcode: form.postcode,

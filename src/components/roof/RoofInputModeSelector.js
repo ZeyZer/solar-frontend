@@ -38,11 +38,11 @@ export default function RoofInputModeSelector({ value, onChange }) {
           }`}
         >
           <div className="font-semibold text-slate-900">
-            Draw my roof
+            AI roof model
           </div>
 
           <div className="mt-1 text-sm text-slate-600">
-            Use Google satellite imagery to mark the usable roof areas.
+            Select the building roofs on the map and we’ll use Google Solar API to estimate roof segments, pitch, azimuth and solar potential.
           </div>
         </button>
       </div>
