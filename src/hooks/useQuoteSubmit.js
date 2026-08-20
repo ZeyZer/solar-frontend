@@ -10,10 +10,6 @@ import {
   isValidUkPostcode,
 } from "../utils/postcodeUtils";
 
-import {
-  validateRoofGeometryPayload,
-} from "../utils/roofGeometryPayload";
-
 export default function useQuoteSubmit({
   form,
   roofs,
@@ -70,10 +66,19 @@ export default function useQuoteSubmit({
     );
 
     if (roofInputMode === "draw_my_roof") {
-      const roofGeometryErrors = validateRoofGeometryPayload(roofGeometry);
+      const hasSolarTargetBuildings =
+        Array.isArray(roofGeometry?.solarTargetBuildings) &&
+        roofGeometry.solarTargetBuildings.length > 0;
 
-      if (roofGeometryErrors.length > 0) {
-        setError(roofGeometryErrors[0]);
+      const hasSolarApiAnalysis = Boolean(roofGeometry?.solarApiAnalysis?.summary);
+
+      if (!hasSolarTargetBuildings) {
+        setError("Please select at least one building roof on the map before continuing.");
+        return;
+      }
+
+      if (!hasSolarApiAnalysis) {
+        setError("Please click “Analyse selected buildings” before continuing.");
         return;
       }
     }
@@ -81,7 +86,7 @@ export default function useQuoteSubmit({
     if (!roofs.length || totalPanels <= 0) {
       setError(
         roofInputMode === "draw_my_roof"
-          ? "Please also add an estimated panel count for now. The roof drawing is saved as geometry, but this quote version still needs a panel-count estimate for the calculation."
+          ? "Please also add an estimated panel count for now. The AI roof model is saved diagnostically, but this quote version still needs a panel-count estimate for the calculation."
           : "Please enter at least 1 panel across your roof spaces."
       );
       return;

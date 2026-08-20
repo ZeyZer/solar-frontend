@@ -49,6 +49,76 @@ function roundCoordinate(value) {
   return Math.round(number * 1000000) / 1000000;
 }
 
+function formatNumber(value, decimals = 0, suffix = "") {
+  const number = numberOrNull(value);
+
+  if (number === null) {
+    return "Unknown";
+  }
+
+  return `${number.toFixed(decimals)}${suffix}`;
+}
+
+function formatArea(value) {
+  return formatNumber(value, 1, " m²");
+}
+
+function formatDegrees(value) {
+  return formatNumber(value, 1, "°");
+}
+
+function azimuthToCompass(value) {
+  const number = numberOrNull(value);
+
+  if (number === null) {
+    return "Unknown";
+  }
+
+  const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const index = Math.round(number / 45) % 8;
+
+  return directions[index];
+}
+
+function getGooglePanelPowerKw(building) {
+  const panelCount = numberOrNull(building?.solarPotential?.maxArrayPanelsCount);
+  const panelWatts = numberOrNull(building?.solarPotential?.panelCapacityWatts);
+
+  if (panelCount === null || panelWatts === null) {
+    return null;
+  }
+
+  return Math.round((panelCount * panelWatts) / 10) / 100;
+}
+
+function getAnalysisTotals(analysis) {
+  const buildings = Array.isArray(analysis?.solarBuildingModels)
+    ? analysis.solarBuildingModels
+    : [];
+
+  return buildings.reduce(
+    (totals, building) => {
+      const maxPanels = numberOrNull(building?.solarPotential?.maxArrayPanelsCount) || 0;
+      const maxArrayArea = numberOrNull(building?.solarPotential?.maxArrayAreaM2) || 0;
+      const roofSegments = numberOrNull(building?.roofSegmentCount) || 0;
+      const powerKw = getGooglePanelPowerKw(building) || 0;
+
+      return {
+        maxPanels: totals.maxPanels + maxPanels,
+        maxArrayAreaM2: totals.maxArrayAreaM2 + maxArrayArea,
+        roofSegments: totals.roofSegments + roofSegments,
+        googleArrayKw: totals.googleArrayKw + powerKw,
+      };
+    },
+    {
+      maxPanels: 0,
+      maxArrayAreaM2: 0,
+      roofSegments: 0,
+      googleArrayKw: 0,
+    }
+  );
+}
+
 function buildSolarRoofGeometryPayload({
   selectedAddress,
   addressContext,
@@ -588,74 +658,188 @@ export default function SolarTargetBuildingSelector({
         </div>
       )}
 
-      {solarApiAnalysis?.summary && (
-        <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
-          <h4 className="font-semibold">Google Solar roof model summary</h4>
+      {solarApiAnalysis?.summary && (() => {
+        const totals = getAnalysisTotals(solarApiAnalysis);
 
-          <div className="mt-3 grid gap-3 md:grid-cols-4">
-            <div>
-              <p className="text-xs uppercase tracking-wide">Targets</p>
-              <p className="text-lg font-semibold">
-                {solarApiAnalysis.summary.requestedTargets}
-              </p>
+        return (
+          <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
+            <h4 className="font-semibold">Google Solar roof model summary</h4>
+
+            <p className="mt-1">
+              Google Solar API found roof model data for the selected building target.
+              This gives us pitch, azimuth, roof segments, imagery quality and Google’s
+              own maximum panel-position estimate.
+            </p>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-4">
+              <div className="rounded-lg bg-white/70 p-3">
+                <p className="text-xs uppercase tracking-wide">Unique buildings</p>
+                <p className="text-lg font-semibold">
+                  {solarApiAnalysis.summary.uniqueBuildingsReturned}
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-white/70 p-3">
+                <p className="text-xs uppercase tracking-wide">Roof segments</p>
+                <p className="text-lg font-semibold">{totals.roofSegments}</p>
+              </div>
+
+              <div className="rounded-lg bg-white/70 p-3">
+                <p className="text-xs uppercase tracking-wide">Google max panels</p>
+                <p className="text-lg font-semibold">{totals.maxPanels}</p>
+              </div>
+
+              <div className="rounded-lg bg-white/70 p-3">
+                <p className="text-xs uppercase tracking-wide">Google array size</p>
+                <p className="text-lg font-semibold">
+                  {totals.googleArrayKw ? `${totals.googleArrayKw.toFixed(1)} kWp` : "Unknown"}
+                </p>
+              </div>
             </div>
 
-            <div>
-              <p className="text-xs uppercase tracking-wide">Unique buildings</p>
-              <p className="text-lg font-semibold">
-                {solarApiAnalysis.summary.uniqueBuildingsReturned}
-              </p>
-            </div>
+            {solarApiAnalysis.summary.duplicateBuildingsRemoved > 0 && (
+              <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900">
+                {solarApiAnalysis.summary.duplicateBuildingsRemoved} duplicate target
+                {solarApiAnalysis.summary.duplicateBuildingsRemoved === 1 ? "" : "s"} removed.
+                This usually means two clicks matched the same Google building model.
+              </div>
+            )}
 
-            <div>
-              <p className="text-xs uppercase tracking-wide">Duplicates</p>
-              <p className="text-lg font-semibold">
-                {solarApiAnalysis.summary.duplicateBuildingsRemoved}
-              </p>
-            </div>
+            {solarApiAnalysis.summary.notFoundTargets > 0 && (
+              <div className="mt-4 rounded-lg border border-red-300 bg-red-50 p-3 text-red-900">
+                Google Solar API could not find a known building for{" "}
+                {solarApiAnalysis.summary.notFoundTargets} selected target
+                {solarApiAnalysis.summary.notFoundTargets === 1 ? "" : "s"}. Try clicking
+                closer to the centre of the building roof.
+              </div>
+            )}
 
-            <div>
-              <p className="text-xs uppercase tracking-wide">Not found</p>
-              <p className="text-lg font-semibold">
-                {solarApiAnalysis.summary.notFoundTargets}
-              </p>
-            </div>
+            {solarApiAnalysis.solarBuildingModels?.length > 0 && (
+              <div className="mt-4 space-y-4">
+                {solarApiAnalysis.solarBuildingModels.map((building) => {
+                  const googleArrayKw = getGooglePanelPowerKw(building);
+                  const roofSegments = Array.isArray(building.roofSegments)
+                    ? building.roofSegments
+                    : [];
+
+                  return (
+                    <div
+                      key={building.id}
+                      className="rounded-lg border border-emerald-200 bg-white/80 p-4"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-emerald-950">
+                            {building.targetLabel || building.id}
+                          </p>
+
+                          <p className="mt-1 text-emerald-900">
+                            {building.postalCode || "Unknown postcode"} · Imagery{" "}
+                            {building.imagery?.quality || "Unknown"}
+                            {building.imagery?.date ? ` · ${building.imagery.date}` : ""}
+                          </p>
+                        </div>
+
+                        <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-950">
+                          Diagnostic only
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-3 md:grid-cols-4">
+                        <div>
+                          <p className="text-xs uppercase tracking-wide">Segments</p>
+                          <p className="font-semibold">{building.roofSegmentCount ?? "Unknown"}</p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs uppercase tracking-wide">Google max panels</p>
+                          <p className="font-semibold">
+                            {building.solarPotential?.maxArrayPanelsCount ?? "Unknown"}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs uppercase tracking-wide">Google array</p>
+                          <p className="font-semibold">
+                            {googleArrayKw ? `${googleArrayKw.toFixed(1)} kWp` : "Unknown"}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs uppercase tracking-wide">Array area</p>
+                          <p className="font-semibold">
+                            {formatArea(building.solarPotential?.maxArrayAreaM2)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {roofSegments.length > 0 && (
+                        <div className="mt-4">
+                          <p className="font-semibold">Detected roof segments</p>
+
+                          <div className="mt-2 grid gap-2">
+                            {roofSegments.slice(0, 6).map((segment, index) => (
+                              <div
+                                key={segment.id || index}
+                                className="grid gap-2 rounded-lg border border-emerald-100 bg-emerald-50/60 p-3 md:grid-cols-4"
+                              >
+                                <div>
+                                  <p className="text-xs uppercase tracking-wide">Segment</p>
+                                  <p className="font-semibold">{index + 1}</p>
+                                </div>
+
+                                <div>
+                                  <p className="text-xs uppercase tracking-wide">Direction</p>
+                                  <p className="font-semibold">
+                                    {azimuthToCompass(segment.azimuthDegrees)}{" "}
+                                    <span className="font-normal">
+                                      ({formatDegrees(segment.azimuthDegrees)})
+                                    </span>
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <p className="text-xs uppercase tracking-wide">Pitch</p>
+                                  <p className="font-semibold">
+                                    {formatDegrees(segment.pitchDegrees)}
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <p className="text-xs uppercase tracking-wide">Area</p>
+                                  <p className="font-semibold">{formatArea(segment.areaM2)}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {roofSegments.length > 6 && (
+                            <p className="mt-2 text-xs">
+                              Showing first 6 of {roofSegments.length} detected segments.
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+                        For semi-detached or terraced properties, this may include
+                        roof area beyond the customer-owned boundary. Zion Energy must
+                        confirm the final usable roof boundary before design.
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <p className="mt-4 text-xs">
+              Diagnostic only. Google panel count uses Google’s own assumptions, not
+              Zion Energy’s final panel catalogue, setbacks, obstructions or
+              installation design.
+            </p>
           </div>
-
-          {solarApiAnalysis.solarBuildingModels?.length > 0 && (
-            <div className="mt-4 space-y-3">
-              {solarApiAnalysis.solarBuildingModels.map((building) => (
-                <div
-                  key={building.id}
-                  className="rounded-lg border border-emerald-200 bg-white/70 p-3"
-                >
-                  <p className="font-semibold">
-                    {building.targetLabel || building.id}
-                  </p>
-
-                  <p className="mt-1">
-                    Roof segments: {building.roofSegmentCount ?? "Unknown"} ·
-                    Google max panels:{" "}
-                    {building.solarPotential?.maxArrayPanelsCount ?? "Unknown"} ·
-                    Imagery: {building.imagery?.quality || "Unknown"}
-                  </p>
-
-                  {building.imagery?.date && (
-                    <p className="mt-1 text-xs">
-                      Imagery date: {building.imagery.date}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <p className="mt-4 text-xs">
-            Diagnostic only. Google panel count uses Google’s own assumptions,
-            not Zion Energy’s final panel catalogue or installation design.
-          </p>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

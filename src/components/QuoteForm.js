@@ -18,10 +18,6 @@ import GooglePlacesAddressLookup from "./address/GooglePlacesAddressLookup";
 import RoofInputModeSelector from "./roof/RoofInputModeSelector";
 import SolarTargetBuildingSelector from "./roof/SolarTargetBuildingSelector";
 
-import {
-  validateRoofGeometryPayload,
-} from "../utils/roofGeometryPayload";
-
 export default function QuoteForm({
   // navigation/state
   step,
@@ -302,10 +298,10 @@ export default function QuoteForm({
                         {/* STEP 3 */}
                         {step === 3 && (
                         <>
-                            <h2>🏡 Your Roof Spaces</h2>
+                            <h2>🏡 Your Roof & Solar Model</h2>
                             <p className="subheading-print">
-                            Add each roof area you want to use. The more accurate you are,
-                            the more accurately we can estimate your solar production.
+                            Select the roof buildings you want us to assess. We’ll use the address,
+                            map selection and Google Solar API data to build a more accurate roof model.
                             </p>
 
                             <RoofInputModeSelector
@@ -337,10 +333,10 @@ export default function QuoteForm({
                                 <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
                                 <p className="font-semibold">Current MVP limitation</p>
                                 <p className="mt-1">
-                                    Your drawn roof area will be saved and sent to the backend as
-                                    roof geometry. For this version of the quote calculator, please
-                                    also add an estimated panel count below so the existing calculation
-                                    engine can still run safely.
+                                    The AI roof model is saved diagnostically and helps us understand the
+                                    property, roof segments and solar potential. For now, please also add an
+                                    estimated panel count below so the existing quote calculation engine can
+                                    still run safely.
                                 </p>
                                 </div>
                             </>
@@ -357,8 +353,8 @@ export default function QuoteForm({
                             {roofs.length === 0 && (
                             <div className="roof-empty">
                                 <p className="small-print">
-                                You haven&apos;t added a roof panel-count estimate yet.
-                                Add at least one roof estimate to continue.
+                                You haven&apos;t added the calculation roof estimate yet.
+                                Add at least one estimated roof/panel count so the current quote engine can run.
                                 </p>
 
                                 <div className="buttons-row">
@@ -447,11 +443,12 @@ export default function QuoteForm({
                                 type="button"
                                 onClick={() => {
                                 if (roofInputMode === "draw_my_roof") {
-                                    const roofGeometryErrors =
-                                    validateRoofGeometryPayload(roofGeometry);
+                                    const hasSolarTargetBuildings =
+                                    Array.isArray(roofGeometry?.solarTargetBuildings) &&
+                                    roofGeometry.solarTargetBuildings.length > 0;
 
-                                    if (roofGeometryErrors.length > 0) {
-                                    setError(roofGeometryErrors[0]);
+                                    if (!hasSolarTargetBuildings) {
+                                    setError("Please select at least one building roof on the map before continuing.");
                                     return;
                                     }
                                 }
