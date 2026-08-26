@@ -91,6 +91,446 @@ function getGooglePanelPowerKw(building) {
   return Math.round((panelCount * panelWatts) / 10) / 100;
 }
 
+function inferLegacyShadingFromSunshine(segment) {
+  const quantiles = Array.isArray(segment?.sunshineQuantiles)
+    ? segment.sunshineQuantiles
+    : [];
+
+  const medianSunshine = numberOrNull(quantiles[5] ?? quantiles[4]);
+
+  if (medianSunshine === null) {
+    return "some";
+  }
+
+  if (medianSunshine >= 760) {
+    return "none";
+  }
+
+  if (medianSunshine >= 620) {
+    return "some";
+  }
+
+  return "a_lot";
+}
+
+function isLikelyUsableCalculationSegment(segment) {
+  const areaM2 = numberOrNull(segment?.areaM2);
+  const compass = azimuthToCompass(segment?.azimuthDegrees);
+
+  if (areaM2 === null || areaM2 < 8) {
+    return false;
+  }
+
+  // Avoid using clearly north-facing roof areas for the first automated
+  // estimate unless they are the only available segments.
+  if (compass === "N") {
+    return false;
+  }
+
+  return true;
+}
+
+function makeCalculationRoofId(buildingId, segmentIndex) {
+  return `ai-roof-${buildingId || "building"}-${segmentIndex + 1}`;
+}
+
+function distributePanelsAcrossSegments({ building, segments }) {
+  const maxPanels =
+    numberOrNull(building?.solarPotential?.maxArrayPanelsCount) || 0;
+
+  if (!maxPanels || !segments.length) {
+    return [];
+  }
+
+  const totalArea = segments.reduce(
+    (sum, segment) => sum + (numberOrNull(segment?.areaM2) || 0),
+    0
+  );
+
+  if (!totalArea) {
+    return [];
+  }
+
+  const rawAllocations = segments.map((segment, index) => {
+    const areaM2 = numberOrNull(segment?.areaM2) || 0;
+    const exactPanels = (maxPanels * areaM2) / totalArea;
+    const basePanels = Math.max(1, Math.floor(exactPanels));
+
+    return {
+      index,
+      segment,
+      exactPanels,
+      panels: basePanels,
+      remainder: exactPanels - basePanels,
+    };
+  });
+
+  let allocatedPanels = rawAllocations.reduce(
+    (sum, item) => sum + item.panels,
+    0
+  );
+
+  let remainingPanels = Math.max(maxPanels - allocatedPanels, 0);
+
+  const sortedByRemainder = [...rawAllocations].sort(
+    (a, b) => b.remainder - a.remainder
+  );
+
+  for (const item of sortedByRemainder) {
+    if (remainingPanels <= 0) {
+      break;
+    }
+
+    item.panels += 1;
+    remainingPanels -= 1;
+  }
+
+  // If floor allocation ever overshoots because of very small segments, trim
+  // from the smallest allocations.
+  allocatedPanels = rawAllocations.reduce((sum, item) => sum + item.panels, 0);
+
+  if (allocatedPanels > maxPanels) {
+    let panelsToRemove = allocatedPanels - maxPanels;
+
+    const sortedSmallestFirst = [...rawAllocations].sort(
+      (a, b) => a.panels - b.panels
+    );
+
+    for (const item of sortedSmallestFirst) {
+      if (panelsToRemove <= 0) {
+        break;
+      }
+
+      const removable = Math.min(item.panels - 1, panelsToRemove);
+
+      if (removable > 0) {
+        item.panels -= removable;
+        panelsToRemove -= removable;
+      }
+    }
+  }
+
+  return rawAllocations.filter((item) => item.panels > 0);
+}
+
+function getRoofSelectionModel(building) {
+  return building?.roofSelectionModel || null;
+}
+
+function getRoofSelectionTitle(model) {
+  const mode = model?.summary?.defaultSelectionMode;
+
+  if (mode === "recommended_segments") {
+    return "Recommended roof areas selected";
+  }
+
+  if (mode === "recommended_plus_optional_to_reach_target") {
+    return "Recommended roof areas plus useful optional areas";
+  }
+
+  if (mode === "best_optional_segment") {
+    return "Suggested roof area for review";
+  }
+
+  return "Roof areas need review";
+}
+
+function getRoofSelectionDescription(model) {
+  const mode = model?.summary?.defaultSelectionMode;
+
+  if (mode === "best_optional_segment") {
+    return "We found a usable roof area, but it needs confirmation before treating it as a strong recommendation.";
+  }
+
+  if (mode === "recommended_plus_optional_to_reach_target") {
+    return "We selected the strongest roof areas and added useful optional areas to reach a sensible starting panel count.";
+  }
+
+  if (mode === "recommended_segments") {
+    return "We selected the roof areas that look most suitable based on direction, pitch, solar yield and Google roof data.";
+  }
+
+  return "Please review the roof areas before using this estimate.";
+}
+
+function getCalculationTargetPanels(model) {
+  const suggested = numberOrNull(model?.suggestedPanelRange?.expected);
+  const editableDefault = numberOrNull(model?.editablePanelRange?.defaultValue);
+  const selectedCapacity = numberOrNull(model?.summary?.defaultSelectedCapacityPanels);
+  const selectableCapacity = numberOrNull(model?.summary?.selectableCapacityPanels);
+
+  const rawTarget =
+    suggested ||
+    editableDefault ||
+    selectedCapacity ||
+    selectableCapacity ||
+    0;
+
+  const max =
+    selectedCapacity ||
+    selectableCapacity ||
+    rawTarget ||
+    0;
+
+  if (!rawTarget || !max) {
+    return 0;
+  }
+
+  return Math.min(Math.max(1, Math.round(rawTarget)), max);
+}
+
+function getRoofSelectionSegmentsForEstimate(model) {
+  const defaultSelectedSegments = Array.isArray(model?.defaultSelectedSegments)
+    ? model.defaultSelectedSegments
+    : [];
+
+  if (defaultSelectedSegments.length > 0) {
+    return defaultSelectedSegments;
+  }
+
+  const recommendedSegments = Array.isArray(model?.recommendedSegments)
+    ? model.recommendedSegments
+    : [];
+
+  if (recommendedSegments.length > 0) {
+    return recommendedSegments;
+  }
+
+  const optionalSegments = Array.isArray(model?.optionalSegments)
+    ? model.optionalSegments
+    : [];
+
+  return optionalSegments.slice(0, 1);
+}
+
+function inferLegacyShadingFromRoofSelectionSegment(segment) {
+  const sunshineClass = String(segment?.sunshineClass || "").toLowerCase();
+  const selectionStatus = String(segment?.selectionStatus || "").toLowerCase();
+  const annualKwhPerKwp = numberOrNull(segment?.annualKwhPerKwp);
+
+  if (sunshineClass === "very_low" || sunshineClass === "low") {
+    return "a_lot";
+  }
+
+  if (annualKwhPerKwp !== null && annualKwhPerKwp < 650) {
+    return "a_lot";
+  }
+
+  if (selectionStatus === "optional") {
+    return "some";
+  }
+
+  if (sunshineClass === "medium") {
+    return "some";
+  }
+
+  if (annualKwhPerKwp !== null && annualKwhPerKwp < 800) {
+    return "some";
+  }
+
+  return "none";
+}
+
+function distributePanelsAcrossRoofSelectionSegments({ segments, targetPanels }) {
+  const cleanSegments = Array.isArray(segments)
+    ? segments.filter((segment) => (numberOrNull(segment?.maxPanels) || 0) > 0)
+    : [];
+
+  const target = Math.max(0, Math.round(numberOrNull(targetPanels) || 0));
+
+  if (!cleanSegments.length || target <= 0) {
+    return [];
+  }
+
+  const totalCapacity = cleanSegments.reduce(
+    (sum, segment) => sum + (numberOrNull(segment?.maxPanels) || 0),
+    0
+  );
+
+  const cappedTarget = Math.min(target, totalCapacity);
+
+  const allocations = cleanSegments.map((segment, index) => {
+    const maxPanels = numberOrNull(segment?.maxPanels) || 0;
+    const exactPanels = (cappedTarget * maxPanels) / totalCapacity;
+    const basePanels = Math.min(maxPanels, Math.floor(exactPanels));
+
+    return {
+      index,
+      segment,
+      maxPanels,
+      exactPanels,
+      panels: basePanels,
+      remainder: exactPanels - basePanels,
+    };
+  });
+
+  let allocatedPanels = allocations.reduce(
+    (sum, allocation) => sum + allocation.panels,
+    0
+  );
+
+  while (allocatedPanels < cappedTarget) {
+    const next = allocations
+      .filter((allocation) => allocation.panels < allocation.maxPanels)
+      .sort((a, b) => {
+        if (b.remainder !== a.remainder) {
+          return b.remainder - a.remainder;
+        }
+
+        return b.maxPanels - a.maxPanels;
+      })[0];
+
+    if (!next) {
+      break;
+    }
+
+    next.panels += 1;
+    next.remainder = 0;
+    allocatedPanels += 1;
+  }
+
+  while (allocatedPanels > cappedTarget) {
+    const next = allocations
+      .filter((allocation) => allocation.panels > 0)
+      .sort((a, b) => {
+        if (a.panels !== b.panels) {
+          return a.panels - b.panels;
+        }
+
+        return a.maxPanels - b.maxPanels;
+      })[0];
+
+    if (!next) {
+      break;
+    }
+
+    next.panels -= 1;
+    allocatedPanels -= 1;
+  }
+
+  return allocations.filter((allocation) => allocation.panels > 0);
+}
+
+function buildEditableRoofEstimatesFromSolarAnalysis(analysis) {
+  const buildings = Array.isArray(analysis?.solarBuildingModels)
+    ? analysis.solarBuildingModels
+    : [];
+
+  const estimatedRoofs = [];
+
+  buildings.forEach((building) => {
+    const roofSelectionModel = getRoofSelectionModel(building);
+
+    if (roofSelectionModel?.summary?.selectableCapacityPanels) {
+      const selectedSegments =
+        getRoofSelectionSegmentsForEstimate(roofSelectionModel);
+
+      const targetPanels = getCalculationTargetPanels(roofSelectionModel);
+
+      const allocations = distributePanelsAcrossRoofSelectionSegments({
+        segments: selectedSegments,
+        targetPanels,
+      });
+
+      allocations.forEach((allocation, allocationIndex) => {
+        const segment = allocation.segment;
+        const orientation = azimuthToCompass(segment?.azimuthDegrees);
+        const tilt = numberOrNull(segment?.pitchDegrees);
+
+        estimatedRoofs.push({
+          id: makeCalculationRoofId(building.id, allocationIndex),
+          source: "google_solar_api_roof_selection_model_estimate",
+          sourceBuildingId: building.id || null,
+          sourceTargetLabel: building.targetLabel || null,
+          sourceSegmentId: segment.segmentId || segment.id || null,
+          sourceSegmentIndex: segment.segmentIndex ?? null,
+
+          orientation: orientation === "Unknown" ? "S" : orientation,
+          tilt: tilt === null ? 40 : Math.round(tilt),
+          shading: inferLegacyShadingFromRoofSelectionSegment(segment),
+          panels: allocation.panels,
+
+          aiModelNotes: {
+            provider: "google_solar_api",
+            diagnosticOnly: true,
+            sourceModel: roofSelectionModel.source || null,
+            defaultSelectionMode:
+              roofSelectionModel?.summary?.defaultSelectionMode || null,
+            suggestedPanelRange: roofSelectionModel?.suggestedPanelRange || null,
+            editablePanelRange: roofSelectionModel?.editablePanelRange || null,
+            targetPanels,
+            segmentSelectionStatus: segment.selectionStatus || null,
+            segmentMaxPanels: segment.maxPanels ?? null,
+            segmentAnnualKwhPerKwp: segment.annualKwhPerKwp ?? null,
+            segmentAreaM2: segment?.areaM2 ?? null,
+            segmentAzimuthDegrees: segment?.azimuthDegrees ?? null,
+            segmentPitchDegrees: segment?.pitchDegrees ?? null,
+          },
+        });
+      });
+
+      return;
+    }
+
+    // Fallback for older backend responses without roofSelectionModel.
+    const allSegments = Array.isArray(building?.roofSegments)
+      ? building.roofSegments
+      : [];
+
+    const usableSegments = allSegments.filter(isLikelyUsableCalculationSegment);
+
+    const segmentsForEstimate =
+      usableSegments.length > 0
+        ? usableSegments
+        : allSegments.filter((segment) => {
+            const areaM2 = numberOrNull(segment?.areaM2);
+            return areaM2 !== null && areaM2 >= 8;
+          });
+
+    const allocations = distributePanelsAcrossSegments({
+      building,
+      segments: segmentsForEstimate,
+    });
+
+    allocations.forEach((allocation, allocationIndex) => {
+      const segment = allocation.segment;
+      const orientation = azimuthToCompass(segment?.azimuthDegrees);
+      const tilt = numberOrNull(segment?.pitchDegrees);
+
+      estimatedRoofs.push({
+        id: makeCalculationRoofId(building.id, allocationIndex),
+        source: "google_solar_api_editable_calculation_estimate",
+        sourceBuildingId: building.id || null,
+        sourceTargetLabel: building.targetLabel || null,
+        sourceSegmentId: segment.id || null,
+
+        orientation: orientation === "Unknown" ? "S" : orientation,
+        tilt: tilt === null ? 40 : Math.round(tilt),
+        shading: inferLegacyShadingFromSunshine(segment),
+        panels: allocation.panels,
+
+        aiModelNotes: {
+          provider: "google_solar_api",
+          diagnosticOnly: true,
+          googleMaxPanels: building?.solarPotential?.maxArrayPanelsCount ?? null,
+          segmentAreaM2: segment?.areaM2 ?? null,
+          segmentAzimuthDegrees: segment?.azimuthDegrees ?? null,
+          segmentPitchDegrees: segment?.pitchDegrees ?? null,
+        },
+      });
+    });
+  });
+
+  return estimatedRoofs;
+}
+
+function getEstimatedRoofPanelTotal(estimatedRoofs) {
+  return estimatedRoofs.reduce(
+    (sum, roof) => sum + (numberOrNull(roof?.panels) || 0),
+    0
+  );
+}
+
 function getAnalysisTotals(analysis) {
   const buildings = Array.isArray(analysis?.solarBuildingModels)
     ? analysis.solarBuildingModels
@@ -162,6 +602,8 @@ export default function SolarTargetBuildingSelector({
   addressContext,
   value,
   onChange,
+  onUseCalculationRoofEstimate,
+  hasCalculationRoofs = false,
   initialZoom = 20,
 }) {
   const mapContainerRef = useRef(null);
@@ -498,6 +940,12 @@ export default function SolarTargetBuildingSelector({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAddress?.latitude, selectedAddress?.longitude]);
 
+  const editableRoofEstimates = solarApiAnalysis?.summary
+    ? buildEditableRoofEstimatesFromSolarAnalysis(solarApiAnalysis)
+    : [];
+
+  const editableRoofPanelTotal = getEstimatedRoofPanelTotal(editableRoofEstimates);
+
   if (!process.env.REACT_APP_GOOGLE_MAPS_API_KEY) {
     return (
       <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
@@ -722,6 +1170,8 @@ export default function SolarTargetBuildingSelector({
                     ? building.roofSegments
                     : [];
 
+                  const roofSelectionModel = building.roofSelectionModel || null;
+
                   return (
                     <div
                       key={building.id}
@@ -772,6 +1222,77 @@ export default function SolarTargetBuildingSelector({
                           </p>
                         </div>
                       </div>
+
+                      {roofSelectionModel && (
+                        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-blue-950">
+                          <p className="font-semibold">
+                            {getRoofSelectionTitle(roofSelectionModel)}
+                          </p>
+
+                          <p className="mt-1 text-sm">
+                            {getRoofSelectionDescription(roofSelectionModel)}
+                          </p>
+
+                          <div className="mt-3 grid gap-2 md:grid-cols-4">
+                            <div className="rounded-lg bg-white/80 p-3">
+                              <p className="text-xs uppercase tracking-wide">
+                                Suggested panels
+                              </p>
+                              <p className="text-lg font-semibold">
+                                {roofSelectionModel.suggestedPanelRange?.expected ?? "—"}
+                              </p>
+                            </div>
+
+                            <div className="rounded-lg bg-white/80 p-3">
+                              <p className="text-xs uppercase tracking-wide">
+                                Suggested range
+                              </p>
+                              <p className="text-lg font-semibold">
+                                {roofSelectionModel.suggestedPanelRange
+                                  ? `${roofSelectionModel.suggestedPanelRange.low}–${roofSelectionModel.suggestedPanelRange.high}`
+                                  : "—"}
+                              </p>
+                            </div>
+
+                            <div className="rounded-lg bg-white/80 p-3">
+                              <p className="text-xs uppercase tracking-wide">
+                                Selected capacity
+                              </p>
+                              <p className="text-lg font-semibold">
+                                {roofSelectionModel.summary?.defaultSelectedCapacityPanels ?? "—"}
+                              </p>
+                            </div>
+
+                            <div className="rounded-lg bg-white/80 p-3">
+                              <p className="text-xs uppercase tracking-wide">
+                                Max selectable
+                              </p>
+                              <p className="text-lg font-semibold">
+                                {roofSelectionModel.summary?.selectableCapacityPanels ?? "—"}
+                              </p>
+                            </div>
+                          </div>
+
+                          {roofSelectionModel.warnings?.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                              {roofSelectionModel.warnings.map((warning) => (
+                                <div
+                                  key={warning.code}
+                                  className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900"
+                                >
+                                  {warning.message}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <p className="mt-3 text-xs">
+                            {roofSelectionModel.summary?.recommendedSegmentCount || 0} recommended,{" "}
+                            {roofSelectionModel.summary?.optionalSegmentCount || 0} optional,{" "}
+                            {roofSelectionModel.summary?.hiddenSegmentCount || 0} hidden roof areas.
+                          </p>
+                        </div>
+                      )}
 
                       {roofSegments.length > 0 && (
                         <div className="mt-4">
@@ -829,6 +1350,42 @@ export default function SolarTargetBuildingSelector({
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {editableRoofEstimates.length > 0 && (
+              <div className="mt-4 rounded-lg border border-blue-300 bg-blue-50 p-4 text-blue-950">
+                <p className="font-semibold">Create editable calculation estimate</p>
+
+                <p className="mt-1 text-sm">
+                  We can turn this AI roof model into{" "}
+                  {editableRoofEstimates.length} editable roof estimate
+                  {editableRoofEstimates.length === 1 ? "" : "s"} with around{" "}
+                  {editableRoofPanelTotal} total panel
+                  {editableRoofPanelTotal === 1 ? "" : "s"}. You can still edit the
+                  orientation, pitch, shading and panel count below before generating the
+                  quote.
+                </p>
+
+                <button
+                  type="button"
+                  className="mt-3"
+                  onClick={() => {
+                    if (onUseCalculationRoofEstimate) {
+                      onUseCalculationRoofEstimate(editableRoofEstimates);
+                    }
+                  }}
+                >
+                  {hasCalculationRoofs
+                    ? "Replace current roof estimate with AI estimate"
+                    : "Use AI model as calculation estimate"}
+                </button>
+
+                <p className="mt-2 text-xs">
+                  This is still an estimate. Google’s panel count is not the final Zion
+                  Energy design and does not yet account for our final product catalogue,
+                  installation method, setbacks or all obstructions.
+                </p>
               </div>
             )}
 

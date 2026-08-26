@@ -328,6 +328,11 @@ export default function QuoteForm({
                                     }}
                                     value={roofGeometry}
                                     onChange={setRoofGeometry}
+                                    hasCalculationRoofs={roofs.length > 0}
+                                    onUseCalculationRoofEstimate={(estimatedRoofs) => {
+                                        setRoofs(estimatedRoofs);
+                                        setError("");
+                                    }}
                                 />
 
                                 <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
@@ -349,7 +354,7 @@ export default function QuoteForm({
                             </p>
                             )}
 
-                            {/* Empty state (no roof panel-count estimate yet) */}
+                            {/* Empty state (no editable calculation roof estimate yet) */}
                             {roofs.length === 0 && (
                             <div className="roof-empty">
                                 <p className="small-print">
