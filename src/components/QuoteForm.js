@@ -304,6 +304,28 @@ export default function QuoteForm({
                             map selection and Google Solar API data to build a more accurate roof model.
                             </p>
 
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <label>
+                                    <div className="question-label">🏠 Property type</div>
+                                    <select
+                                        name="propertyType"
+                                        value={form.propertyType || "unknown"}
+                                        onChange={handleChange}
+                                    >
+                                        <option value="unknown">Select property type</option>
+                                        <option value="detached">Detached house</option>
+                                        <option value="semi_detached">Semi-detached house</option>
+                                        <option value="mid_terrace">Mid-terrace house</option>
+                                        <option value="end_terrace">End-terrace house</option>
+                                        <option value="bungalow">Bungalow</option>
+                                        <option value="commercial_or_other">Commercial / other</option>
+                                    </select>
+                                    <p className="small-print">
+                                        This helps us decide whether a property-boundary check is needed before using satellite roof measurements.
+                                    </p>
+                                </label>
+                            </div>
+
                             <RoofInputModeSelector
                                 value={roofInputMode}
                                 onChange={(nextMode) => {

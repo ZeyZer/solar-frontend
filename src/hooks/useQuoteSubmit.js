@@ -114,6 +114,7 @@ export default function useQuoteSubmit({
         phone: form.phone,
         postcode: form.postcode,
         homeOwnership: form.homeOwnership,
+        propertyType: form.propertyType || "unknown",
         houseNumber: form.houseNumber,
         selectedAddress: form.selectedAddress || null,
         addressLatitude: form.selectedAddress?.latitude || null,
@@ -134,7 +135,12 @@ export default function useQuoteSubmit({
         roofInputMode,
 
         ...(roofInputMode === "draw_my_roof" && roofGeometry
-          ? { roofGeometry }
+          ? {
+              roofGeometry: {
+                ...roofGeometry,
+                propertyType: form.propertyType || "unknown",
+              },
+            }
           : {}),
 
         roofs: roofs.map((r) => ({
