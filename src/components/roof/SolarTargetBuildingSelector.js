@@ -778,8 +778,74 @@ function buildSolarRoofGeometryPayload({
   };
 }
 
+const ATTACHED_PROPERTY_TYPES = new Set([
+  "semi_detached",
+  "mid_terrace",
+  "end_terrace",
+]);
+
+function requiresPropertyBoundary(propertyType) {
+  return ATTACHED_PROPERTY_TYPES.has(String(propertyType || "").toLowerCase());
+}
+
+function getBoundaryLineCount(propertyType) {
+  return String(propertyType || "").toLowerCase() === "mid_terrace" ? 2 : 1;
+}
+
+function getPropertyTypeLabel(propertyType) {
+  const labels = {
+    semi_detached: "semi-detached",
+    mid_terrace: "mid-terrace",
+    end_terrace: "end-terrace",
+  };
+
+  return labels[String(propertyType || "").toLowerCase()] || "attached";
+}
+
+function getBoundaryInstruction(propertyType) {
+  const normalised = String(propertyType || "").toLowerCase();
+
+  if (normalised === "mid_terrace") {
+    return "Click two points for the left boundary, then two points for the right boundary.";
+  }
+
+  if (normalised === "end_terrace") {
+    return "Click two points along the boundary between your home and the attached neighbour.";
+  }
+
+  return "Click two points along the boundary between your home and the attached neighbour.";
+}
+
+function buildPropertyBoundaryFromPoints(points, propertyType) {
+  const requiredLines = getBoundaryLineCount(propertyType);
+  const requiredPoints = requiredLines * 2;
+  const usablePoints = points.slice(0, requiredPoints);
+
+  if (usablePoints.length < requiredPoints) {
+    return null;
+  }
+
+  const boundaryLines = [];
+
+  for (let i = 0; i < usablePoints.length; i += 2) {
+    boundaryLines.push([usablePoints[i], usablePoints[i + 1]]);
+  }
+
+  return {
+    source: "user_drawn_on_google_map",
+    propertyType: propertyType || "unknown",
+    geometryType:
+      requiredLines === 2 ? "two_boundary_lines" : "single_boundary_line",
+    boundaryLines,
+    boundaryPointCount: usablePoints.length,
+    createdAt: new Date().toISOString(),
+    filteringStatus: "captured_not_applied",
+  };
+}
+
 export default function SolarTargetBuildingSelector({
   selectedAddress,
+  propertyType = "unknown",
   addressContext,
   value,
   onChange,
@@ -791,9 +857,15 @@ export default function SolarTargetBuildingSelector({
   const googleRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
+  const boundaryMarkersRef = useRef([]);
+  const boundaryPolylinesRef = useRef([]);
   const mapClickListenerRef = useRef(null);
 
   const selectedAddressRef = useRef(selectedAddress);
+  const propertyTypeRef = useRef(propertyType || "unknown");
+  const propertyBoundaryRef = useRef(value?.propertyBoundary || null);
+  const boundaryPointsRef = useRef([]);
+  const boundaryDrawingModeRef = useRef(false);
   const addressContextRef = useRef(addressContext);
   const onChangeRef = useRef(onChange);
 
@@ -814,6 +886,11 @@ export default function SolarTargetBuildingSelector({
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
   const [showRoofAreaReview, setShowRoofAreaReview] = useState(false);
   const [selectedRoofSegmentKeys, setSelectedRoofSegmentKeys] = useState([]);
+  const [propertyBoundary, setPropertyBoundary] = useState(
+    value?.propertyBoundary || null
+  );
+  const [boundaryPoints, setBoundaryPoints] = useState([]);
+  const [boundaryDrawingMode, setBoundaryDrawingMode] = useState(false);
 
   const targetLabelRef = useRef(targetLabel);
   const customLabelRef = useRef(customLabel);
@@ -823,6 +900,22 @@ export default function SolarTargetBuildingSelector({
   useEffect(() => {
     selectedAddressRef.current = selectedAddress;
   }, [selectedAddress]);
+
+  useEffect(() => {
+    propertyTypeRef.current = propertyType || "unknown";
+  }, [propertyType]);
+
+  useEffect(() => {
+    propertyBoundaryRef.current = propertyBoundary;
+  }, [propertyBoundary]);
+
+  useEffect(() => {
+    boundaryPointsRef.current = boundaryPoints;
+  }, [boundaryPoints]);
+
+  useEffect(() => {
+    boundaryDrawingModeRef.current = boundaryDrawingMode;
+  }, [boundaryDrawingMode]);
 
   useEffect(() => {
     addressContextRef.current = addressContext;
@@ -848,13 +941,23 @@ export default function SolarTargetBuildingSelector({
     solarApiAnalysisRef.current = solarApiAnalysis;
   }, [solarApiAnalysis]);
 
-  function emitChange(nextTargets, nextAnalysis = solarApiAnalysisRef.current) {
-    const payload = buildSolarRoofGeometryPayload({
+  function emitChange(
+    nextTargets,
+    nextAnalysis = solarApiAnalysisRef.current,
+    nextPropertyBoundary = propertyBoundaryRef.current
+  ) {
+    const basePayload = buildSolarRoofGeometryPayload({
       selectedAddress: selectedAddressRef.current,
       addressContext: addressContextRef.current,
       solarTargetBuildings: nextTargets,
       solarApiAnalysis: nextAnalysis,
     });
+
+    const payload = {
+      ...basePayload,
+      propertyType: propertyTypeRef.current || "unknown",
+      propertyBoundary: nextPropertyBoundary || null,
+    };
 
     if (onChangeRef.current) {
       onChangeRef.current(payload);
@@ -887,6 +990,150 @@ export default function SolarTargetBuildingSelector({
         title: target.label,
       });
     });
+  }
+
+  function clearBoundaryOverlays() {
+    boundaryMarkersRef.current.forEach((marker) => marker.setMap(null));
+    boundaryPolylinesRef.current.forEach((polyline) => polyline.setMap(null));
+
+    boundaryMarkersRef.current = [];
+    boundaryPolylinesRef.current = [];
+  }
+
+  function renderBoundaryOverlay(boundary) {
+    const google = googleRef.current;
+    const map = mapRef.current;
+
+    if (!google || !map) {
+      return;
+    }
+
+    clearBoundaryOverlays();
+
+    const lines = Array.isArray(boundary?.boundaryLines)
+      ? boundary.boundaryLines
+      : [];
+
+    boundaryPolylinesRef.current = lines.map((line) => {
+      return new google.maps.Polyline({
+        map,
+        path: line,
+        strokeColor: "#f59e0b",
+        strokeOpacity: 0.95,
+        strokeWeight: 4,
+        clickable: false,
+      });
+    });
+
+    boundaryMarkersRef.current = lines.flatMap((line, lineIndex) => {
+      return line.map((point, pointIndex) => {
+        return new google.maps.Marker({
+          map,
+          position: point,
+          label: String(lineIndex * 2 + pointIndex + 1),
+          title: "Property boundary point",
+        });
+      });
+    });
+  }
+
+  function resetPropertyBoundary({ keepDrawingMode = false } = {}) {
+    propertyBoundaryRef.current = null;
+    boundaryPointsRef.current = [];
+
+    setPropertyBoundary(null);
+    setBoundaryPoints([]);
+
+    if (!keepDrawingMode) {
+      boundaryDrawingModeRef.current = false;
+      setBoundaryDrawingMode(false);
+    }
+
+    clearBoundaryOverlays();
+  }
+
+  function startBoundaryDrawing() {
+    const currentPropertyType = propertyTypeRef.current || "unknown";
+
+    if (!requiresPropertyBoundary(currentPropertyType)) {
+      setMapStatus("Boundary drawing is only needed for semi-detached or terraced homes.");
+      return;
+    }
+
+    resetPropertyBoundary({ keepDrawingMode: true });
+    boundaryDrawingModeRef.current = true;
+    setBoundaryDrawingMode(true);
+
+    setMapStatus(
+      `${getBoundaryInstruction(currentPropertyType)} Boundary drawing is active.`
+    );
+  }
+
+  function cancelBoundaryDrawing() {
+    resetPropertyBoundary();
+    setMapStatus("Boundary drawing cancelled.");
+  }
+
+  function addBoundaryPointFromMapClick(latLng) {
+    if (!latLng) {
+      return;
+    }
+
+    const currentPropertyType = propertyTypeRef.current || "unknown";
+    const requiredLines = getBoundaryLineCount(currentPropertyType);
+    const requiredPoints = requiredLines * 2;
+
+    const nextPoint = {
+      lat: roundCoordinate(latLng.lat()),
+      lng: roundCoordinate(latLng.lng()),
+    };
+
+    const nextPoints = [...boundaryPointsRef.current, nextPoint].slice(
+      0,
+      requiredPoints
+    );
+
+    boundaryPointsRef.current = nextPoints;
+    setBoundaryPoints(nextPoints);
+
+    const nextBoundary = buildPropertyBoundaryFromPoints(
+      nextPoints,
+      currentPropertyType
+    );
+
+    if (nextBoundary) {
+      propertyBoundaryRef.current = nextBoundary;
+      boundaryDrawingModeRef.current = false;
+
+      setPropertyBoundary(nextBoundary);
+      setBoundaryDrawingMode(false);
+
+      renderBoundaryOverlay(nextBoundary);
+      emitChange(
+        solarTargetBuildingsRef.current,
+        solarApiAnalysisRef.current,
+        nextBoundary
+      );
+
+      setMapStatus(
+        `Property boundary saved: ${requiredLines} boundary line${requiredLines === 1 ? "" : "s"} captured.`
+      );
+
+      return;
+    }
+
+    setMapStatus(
+      `Boundary point ${nextPoints.length} of ${requiredPoints} added. ${getBoundaryInstruction(currentPropertyType)}`
+    );
+  }
+
+  function handleMapClick(latLng) {
+    if (boundaryDrawingModeRef.current) {
+      addBoundaryPointFromMapClick(latLng);
+      return;
+    }
+
+    addTargetFromMapClick(latLng);
   }
 
   function getNextLabel() {
@@ -927,6 +1174,7 @@ export default function SolarTargetBuildingSelector({
     setAnalysisError("");
     setShowRoofAreaReview(false);
     setSelectedRoofSegmentKeys([]);
+    resetPropertyBoundary();
     renderMarkers(nextTargets);
     emitChange(nextTargets, null);
 
@@ -957,6 +1205,7 @@ export default function SolarTargetBuildingSelector({
     setAnalysisError("");
     setShowRoofAreaReview(false);
     setSelectedRoofSegmentKeys([]);
+    resetPropertyBoundary();
     renderMarkers(nextTargets);
     emitChange(nextTargets, null);
   }
@@ -970,6 +1219,7 @@ export default function SolarTargetBuildingSelector({
     setAnalysisError("");
     setShowRoofAreaReview(false);
     setSelectedRoofSegmentKeys([]);
+    resetPropertyBoundary();
     clearMarkers();
     emitChange([], null);
     setMapStatus("Targets cleared. Click the main building roof to start again.");
@@ -1017,7 +1267,8 @@ export default function SolarTargetBuildingSelector({
       setShowTechnicalDetails(false);
       setShowRoofAreaReview(false);
       setSelectedRoofSegmentKeys(buildDefaultRoofSelectionSegmentKeys(result));
-      emitChange(currentTargets, result);
+      resetPropertyBoundary();
+      emitChange(currentTargets, result, null);
 
       setMapStatus(
         result?.summary?.uniqueBuildingsReturned
@@ -1078,11 +1329,15 @@ export default function SolarTargetBuildingSelector({
         mapRef.current = map;
 
         mapClickListenerRef.current = map.addListener("click", (event) => {
-          addTargetFromMapClick(event.latLng);
+          handleMapClick(event.latLng);
         });
 
         if (solarTargetBuildings.length > 0) {
           renderMarkers(solarTargetBuildings);
+        }
+
+        if (propertyBoundaryRef.current) {
+          renderBoundaryOverlay(propertyBoundaryRef.current);
         }
 
         setMapStatus(
@@ -1140,6 +1395,12 @@ export default function SolarTargetBuildingSelector({
     : [];
 
   const editableRoofPanelTotal = getEstimatedRoofPanelTotal(editableRoofEstimates);
+
+  const boundaryRequired = requiresPropertyBoundary(propertyType);
+  const boundaryLineCount = getBoundaryLineCount(propertyType);
+  const boundaryRequiredPoints = boundaryLineCount * 2;
+  const boundaryCaptured = !!propertyBoundary;
+  const boundaryPropertyLabel = getPropertyTypeLabel(propertyType);
 
   if (!process.env.REACT_APP_GOOGLE_MAPS_API_KEY) {
     return (
@@ -1234,6 +1495,71 @@ export default function SolarTargetBuildingSelector({
         </div>
 
         <p className="mt-3 text-sm text-slate-600">{mapStatus}</p>
+
+        {boundaryRequired && (
+          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold">
+                  Property boundary needed for this {boundaryPropertyLabel} home
+                </p>
+                <p className="mt-1 text-amber-900">
+                  Satellite roof data may include part of the attached neighbour&apos;s roof.
+                  After the roof model has loaded, draw the ownership boundary so we can
+                  filter the roof model in the next step.
+                </p>
+                <p className="mt-2 text-xs text-amber-800">
+                  {getBoundaryInstruction(propertyType)}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="secondary-mini"
+                  onClick={startBoundaryDrawing}
+                  disabled={!solarApiAnalysis?.summary || analysisLoading}
+                >
+                  {boundaryCaptured ? "Redraw boundary" : "Draw property boundary"}
+                </button>
+
+                {(boundaryDrawingMode || boundaryCaptured) && (
+                  <button
+                    type="button"
+                    className="secondary-mini"
+                    onClick={cancelBoundaryDrawing}
+                  >
+                    Clear boundary
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-lg bg-white/70 p-3 text-xs text-amber-900">
+              {boundaryCaptured ? (
+                <span>
+                  Boundary captured: {propertyBoundary.boundaryLines?.length || 0} line
+                  {(propertyBoundary.boundaryLines?.length || 0) === 1 ? "" : "s"}.
+                  Filtering will be applied in the next backend step.
+                </span>
+              ) : boundaryDrawingMode ? (
+                <span>
+                  Boundary drawing active: {boundaryPoints.length} of {boundaryRequiredPoints}
+                  points selected.
+                </span>
+              ) : solarApiAnalysis?.summary ? (
+                <span>
+                  Roof model loaded. Click “Draw property boundary”, then click on the map to
+                  mark the boundary points.
+                </span>
+              ) : (
+                <span>
+                  Analyse the selected building first, then draw the boundary.
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         <div
           ref={mapContainerRef}

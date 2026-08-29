@@ -339,6 +339,7 @@ export default function QuoteForm({
                             <>
                                 <SolarTargetBuildingSelector
                                     selectedAddress={form.selectedAddress}
+                                    propertyType={form.propertyType || "unknown"}
                                     addressContext={{
                                         postcode: form.postcode,
                                         addressLine:
