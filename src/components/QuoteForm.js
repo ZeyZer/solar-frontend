@@ -498,12 +498,12 @@ export default function QuoteForm({
                             <label>
                             <div className="question-label">🏷️ Panel Type</div>
                             <select name="panelOption" value={form.panelOption} onChange={handleChange}>
-                                <option value="value">Good value (≈430 W)</option>
-                                <option value="premium">Premium (≈460 W)</option>
+                                <option value="value">Standard (≈465 W)</option>
+                                <option value="premium">Premium (≈490 W)</option>
                             </select>
                             <p className="small-print">
-                                Standard panels will be an older model, have lower output but are cheaper. 
-                                Premium panels use the latest tech to maximise output but cost 10-15% more.
+                                Standard panels use our normal high-output residential panel assumption. 
+                                Premium panels use higher-output modules with a similar footprint, so the panel count can stay the same while the system size increases.
                             </p>
                             </label>
 
