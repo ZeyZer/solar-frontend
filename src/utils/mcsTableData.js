@@ -172,27 +172,6 @@ function getPostcodeRegion(postcode) {
 // SHADING //
 //=========//
 
-function shadeWordToFactor(shading) {
-  const shadingDerate = {
-    none: 1.0,
-    some: 0.9,
-    a_lot: 0.8,
-  };
-
-  return shadingDerate[String(shading || "none").toLowerCase()] ?? 1.0;
-}
-
-function buildShadeFactorText(roofs) {
-  if (!Array.isArray(roofs) || roofs.length === 0) return "—";
-
-  return roofs
-    .map((r, idx) => {
-      const factor = shadeWordToFactor(r?.shading);
-      return `Group ${idx + 1}: ${factor.toFixed(3)}`;
-    })
-    .join("  ");
-}
-
 
 // Degrees from South as a positive absolute deviation.
 // South = 0, East/West = 90, North = 180.
@@ -222,42 +201,10 @@ function degreesFromSouth(orientation) {
   return map[key] ?? null;
 }
 
-function buildRoofGroupText(roofs, valueType, panelWatt, annualGenerationTotal) {
-  if (!Array.isArray(roofs) || roofs.length === 0) return "—";
-
-  const totalPanels = roofs.reduce((s, r) => s + Number(r?.panels || 0), 0) || 1;
-
-  return roofs
-    .map((r, idx) => {
-      const panels = Number(r?.panels || 0);
-
-      if (valueType === "orientation") {
-        const deg = degreesFromSouth(r?.orientation);
-        return `Group ${idx + 1}: ${panels} panels with Orientation: ${deg != null ? `${formatNumber(deg, 0)}°` : "—"}`;
-      }
-
-      if (valueType === "tilt") {
-        return `Group ${idx + 1}: ${panels} panels with Tilt: ${r?.tilt != null ? `${formatNumber(r.tilt, 0)}°` : "—"}`;
-      }
-
-      if (valueType === "specificYield") {
-        const groupKwp = (panels * Number(panelWatt || 0)) / 1000;
-        const groupAnnualGen = annualGenerationTotal * (panels / totalPanels);
-        const yieldKwhPerKwp = groupKwp > 0 ? groupAnnualGen / groupKwp : 0;
-        return `Group ${idx + 1}: ${formatNumber(yieldKwhPerKwp, 0)}`;
-      }
-
-      return "—";
-    })
-    .join("  ");
-}
-
 export function getMcsTableData({ quote, form, roofs }) {
   const hm = quote?.hourlyModel || {};
 
   const systemSizeKwp = Number(quote?.systemSizeKwp || 0);
-  const panelWatt = Number(quote?.panelWatt || 0);
-
   const roofGroups = quote?.mcsRoofGroups || [];
 
   const annualGeneration =

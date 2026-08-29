@@ -1,10 +1,6 @@
 import React from "react";
 
 function StackedMonthlyBarChart({ title, labels, series, pdfMode = false }) {
-  const chartHeight = pdfMode ? 220 : 280;
-  const showTooltip = !pdfMode;
-  const animate = !pdfMode;
-
   // series = [{ name, data, className }]
   // data arrays must be length 12
 

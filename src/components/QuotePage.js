@@ -11,17 +11,12 @@ import ConfigChoiceCard from "../ui/ProductTile";
 
 import McsPerformanceTable from "./McsPerformanceTable";
 import McsPerformanceModal from "./McsPerformanceModal";
-import TariffModal from "./TariffModal";
 import EnergyFlowCards from "./EnergyFlowCards";
 import StickyQuoteNav from "./StickyQuoteNav";
 import NextStepsPanel from "./NextStepsPanel";
 
 import LegalNotice from "./LegalNotice";
 import TariffWarningsPanel from "./TariffWarningsPanel";
-
-import {
-  ESTIMATE_DISCLAIMER_SHORT,
-} from "../config/siteConfig";
 
 import {
   FinanceDetailsModal,
@@ -397,8 +392,6 @@ export default function QuotePage({
   const battChargeFromPV = (hm.monthlyBatteryChargeFromPVKWh || []).map((v) => Number(v || 0));
   const battDischargeToHomeAll = (hm.monthlyBatteryDischargeKWh || []).map((v) => Number(v || 0));
   const battDischargeFromPVToLoad = (hm.monthlyBatteryDischargeFromPVToLoadKWh || []).map((v) => Number(v || 0));
-  const exportedAll = (hm.monthlyExportedKWh || []).map((v) => Number(v || 0));
-  const imported = (hm.monthlyImportedKWh || []).map((v) => Number(v || 0));
 
   // -----------------------------
   // TOTALS
@@ -419,10 +412,6 @@ export default function QuotePage({
   const totalSolarDeliveredToHome =
     totalDirect +
     battDischargeFromPVToLoad.reduce((a, b) => a + Number(b || 0), 0);
-
-  // Financial export cross-check
-  const totalExportAll = exportedAll.reduce((a, b) => a + Number(b || 0), 0);
-  const totalImport = imported.reduce((a, b) => a + Number(b || 0), 0);
 
   const totalHomeDemand = Number(
     quote?.assumedAnnualConsumptionKWh ||
@@ -449,28 +438,8 @@ export default function QuotePage({
     ? (totalSolarDeliveredToHome / totalHomeDemand) * 100
     : 0;
 
-  // Donut percentages
-  const solarDirectPct = totalHomeDemand > 0
-    ? (totalDirect / totalHomeDemand) * 100
-    : 0;
-
-  const batteryPct = totalHomeDemand > 0
-    ? (totalBatteryToHome / totalHomeDemand) * 100
-    : 0;
-
-  const gridPct = totalHomeDemand > 0
-    ? (totalGridDirect / totalHomeDemand) * 100
-    : 0;
-
-
   const tb = quote?.tariffBefore || null;
   const ta = quote?.tariffAfter || null;
-
-  const showAfter =
-    ta &&
-    tb &&
-    (JSON.stringify(tb) !== JSON.stringify(ta));
-
 
   return (
     <div className="quote-shell quote-shell--clean">
@@ -1196,7 +1165,6 @@ export default function QuotePage({
                 </div>
               </div>
             ) : (() => {
-                const hm = quote.hourlyModel;
                 const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
                 const hasBattery = Number(form.batteryKWh || 0) > 0;
 

@@ -19,15 +19,6 @@ const styles = {
   subtitlePdf: "mt-2 max-w-xl text-body",
 };
 
-function MiniStat({ label, value }) {
-  return (
-    <div className="rounded-2xl bg-white/80 px-4 py-3 ring-1 ring-slate-200 backdrop-blur">
-      <div className="text-xs font-medium text-slate-500">{label}</div>
-      <div className="mt-1 text-sm font-semibold text-slate-900">{value}</div>
-    </div>
-  );
-}
-
 export default function QuoteHeader({
   onExit,
   subtitle,
