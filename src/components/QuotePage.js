@@ -247,6 +247,36 @@ export default function QuotePage({
 
   const totalPanels = roofs.reduce((sum, r) => sum + Number(r.panels || 0), 0);
 
+  const calculationAssumptions = quote?.calculationAssumptions || null;
+  const selectedPanelOption = calculationAssumptions?.selectedPanelOption || null;
+  const roofFitAssumption = calculationAssumptions?.roofFitAssumption || null;
+  const performanceModel = calculationAssumptions?.performanceModel || null;
+
+  const roofFitPanelAssumption =
+    Array.isArray(roofFitAssumption?.panelAssumptions) &&
+    roofFitAssumption.panelAssumptions.length > 0
+      ? roofFitAssumption.panelAssumptions[0]
+      : null;
+
+  const selectedPanelLabel =
+    selectedPanelOption?.label ||
+    humanPanelOption(form?.panelOption || quote?.panelOption || "value");
+
+  const selectedPanelWatt =
+    selectedPanelOption?.panelWatt ||
+    quote?.panelWatt ||
+    null;
+
+  const roofFitLabel = roofFitAssumption?.aiRoofDataUsed
+    ? "AI roof model"
+    : "Roof card estimate";
+
+  const performanceSourceLabel =
+    Array.isArray(performanceModel?.pvgisInputSources) &&
+    performanceModel.pvgisInputSources.includes("ai_roof_data")
+      ? "PVGIS using AI roof angles"
+      : "PVGIS using roof inputs";
+
   async function onEmailQuoteLead({ name, email, marketingConsent }) {
     const payload = {
       contact: {
@@ -628,6 +658,62 @@ export default function QuotePage({
               <p className="mt-3 text-xs text-slate-500">
                 Based on PVGIS data and the information you’ve provided. Final figures may vary after a site survey.
               </p>
+
+              {!isPdf && calculationAssumptions && (
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  <div className="font-semibold text-slate-900">
+                    How this estimate was calculated
+                  </div>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                    <div className="rounded-xl bg-white p-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Selected panel option
+                      </div>
+                      <div className="mt-1 font-semibold text-slate-900">
+                        {selectedPanelLabel}
+                        {selectedPanelWatt ? ` · ${selectedPanelWatt}W` : ""}
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Used for system size, pricing and generation output.
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl bg-white p-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Roof fit estimate
+                      </div>
+                      <div className="mt-1 font-semibold text-slate-900">
+                        {roofFitLabel}
+                        {totalPanels ? ` · ${totalPanels} panels` : ""}
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {roofFitPanelAssumption?.widthMm && roofFitPanelAssumption?.heightMm
+                          ? `Panel fit based on approx. ${roofFitPanelAssumption.widthMm} × ${roofFitPanelAssumption.heightMm}mm module footprint.`
+                          : "Panel count is based on the roof information supplied."}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl bg-white p-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Performance model
+                      </div>
+                      <div className="mt-1 font-semibold text-slate-900">
+                        {performanceSourceLabel}
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {performanceModel?.annualGenerationKWh
+                          ? `${Math.round(performanceModel.annualGenerationKWh).toLocaleString()} kWh estimated annual generation.`
+                          : "Estimated annual generation calculated from the quote model."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 text-xs text-slate-500">
+                    The roof-fit model estimates how many same-footprint panels can fit. Your selected panel option controls the wattage used for this quote.
+                  </p>
+                </div>
+              )}
             </div>
 
             
