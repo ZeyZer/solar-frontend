@@ -339,6 +339,35 @@ function getRoofSelectionCapacity(segments) {
   );
 }
 
+function formatPanelAssumption(panelAssumption) {
+  if (!panelAssumption) {
+    return "Panel assumption unavailable";
+  }
+
+  const watts = panelAssumption.panelWatts
+    ? `${panelAssumption.panelWatts}W`
+    : "Unknown wattage";
+
+  const dimensions =
+    panelAssumption.widthMm && panelAssumption.heightMm
+      ? `${panelAssumption.widthMm} × ${panelAssumption.heightMm}mm`
+      : "Unknown dimensions";
+
+  return `${panelAssumption.label || panelAssumption.key || "Panel assumption"} · ${watts} · ${dimensions}`;
+}
+
+function formatPanelCountMethod(method) {
+  if (method === "google_capacity_area_adjusted") {
+    return "Google Solar API roof capacity, area-adjusted to Zeyzer panel dimensions.";
+  }
+
+  if (!method) {
+    return "Panel count method unavailable.";
+  }
+
+  return method;
+}
+
 function getCalculationTargetPanels(model, selectedSegments = null) {
   const suggested = numberOrNull(model?.suggestedPanelRange?.expected);
   const editableDefault = numberOrNull(model?.editablePanelRange?.defaultValue);
@@ -1256,6 +1285,25 @@ export default function SolarTargetBuildingSelector({
 
         const selectedRoofAreaCount = selectedRoofSegmentKeys.length;
 
+        const panelAssumption =
+          roofSelectionModel?.panelAssumption ||
+          roofSelectionModel?.summary?.panelAssumption ||
+          null;
+
+        const googlePanelAssumption =
+          roofSelectionModel?.googlePanelAssumption ||
+          roofSelectionModel?.summary?.googlePanelAssumption ||
+          null;
+
+        const panelCountMethod =
+          roofSelectionModel?.panelCountMethod ||
+          roofSelectionModel?.summary?.panelCountMethod ||
+          null;
+
+        const panelCountAdjustmentFactor =
+          roofSelectionModel?.summary?.panelCountAdjustmentFactor ||
+          null;
+
         function toggleRoofSelectionSegment(building, segment) {
           const key = getRoofSelectionSegmentKey(building, segment);
 
@@ -1363,6 +1411,30 @@ export default function SolarTargetBuildingSelector({
               </div>
             )}
 
+            {panelAssumption && (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                <p className="text-sm font-semibold text-slate-950">
+                  Panel assumption used for this estimate
+                </p>
+                <p className="mt-1 text-sm text-slate-700">
+                  {formatPanelAssumption(panelAssumption)}
+                </p>
+                <p className="mt-2 text-xs text-slate-500">
+                  {formatPanelCountMethod(panelCountMethod)}
+                </p>
+
+                <div className="mt-3 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+                  <p>
+                    Google API panel assumption:{" "}
+                    {formatPanelAssumption(googlePanelAssumption)}
+                  </p>
+                  <p className="mt-1">
+                    Area adjustment factor: {panelCountAdjustmentFactor || "—"}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {roofSelectionModel && (
               <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1447,8 +1519,11 @@ export default function SolarTargetBuildingSelector({
                                     </div>
 
                                     <p className="mt-1 text-slate-600">
-                                      Up to {segment.maxPanels ?? "—"} panels ·{" "}
-                                      {azimuthToCompass(segment.azimuthDegrees)} facing ·{" "}
+                                      Up to {segment.maxPanels ?? "—"} modelled panels
+                                      {segment.googleMaxConfigPanels !== undefined
+                                        ? ` · Google capacity ${segment.googleMaxConfigPanels}`
+                                        : ""}{" "}
+                                      · {azimuthToCompass(segment.azimuthDegrees)} facing ·{" "}
                                       {formatDegrees(segment.pitchDegrees)} pitch
                                       {segment.annualKwhPerKwp
                                         ? ` · ${Math.round(segment.annualKwhPerKwp)} kWh/kWp`
