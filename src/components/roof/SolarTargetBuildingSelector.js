@@ -253,21 +253,110 @@ function getRoofSelectionDescription(model) {
   return "Please review the roof areas before using this estimate.";
 }
 
-function getCalculationTargetPanels(model) {
+function getRoofSelectionSegmentIdentity(segment) {
+  return String(
+    segment?.segmentIndex ??
+      segment?.sourceSegmentIndex ??
+      segment?.segmentId ??
+      segment?.id ??
+      ""
+  );
+}
+
+function getRoofSelectionSegmentKey(building, segment) {
+  return `${building?.id || building?.targetId || "building"}::${getRoofSelectionSegmentIdentity(segment)}`;
+}
+
+function getSelectableRoofSelectionSegments(model) {
+  const seen = new Set();
+  const segments = [];
+
+  [
+    ...(Array.isArray(model?.recommendedSegments) ? model.recommendedSegments : []),
+    ...(Array.isArray(model?.optionalSegments) ? model.optionalSegments : []),
+  ].forEach((segment) => {
+    const key = getRoofSelectionSegmentIdentity(segment);
+
+    if (!key || seen.has(key)) {
+      return;
+    }
+
+    seen.add(key);
+    segments.push(segment);
+  });
+
+  return segments;
+}
+
+function buildDefaultRoofSelectionSegmentKeys(analysis) {
+  const buildings = Array.isArray(analysis?.solarBuildingModels)
+    ? analysis.solarBuildingModels
+    : [];
+
+  const keys = [];
+
+  buildings.forEach((building) => {
+    const model = getRoofSelectionModel(building);
+
+    const defaultSegments = Array.isArray(model?.defaultSelectedSegments)
+      ? model.defaultSelectedSegments
+      : [];
+
+    defaultSegments.forEach((segment) => {
+      const key = getRoofSelectionSegmentKey(building, segment);
+
+      if (key && !keys.includes(key)) {
+        keys.push(key);
+      }
+    });
+  });
+
+  return keys;
+}
+
+function getSelectedRoofSelectionSegments({
+  building,
+  model,
+  selectedRoofSegmentKeySet,
+}) {
+  const selectableSegments = getSelectableRoofSelectionSegments(model);
+
+  const selectedSegments = selectableSegments.filter((segment) =>
+    selectedRoofSegmentKeySet.has(getRoofSelectionSegmentKey(building, segment))
+  );
+
+  if (selectedSegments.length > 0) {
+    return selectedSegments;
+  }
+
+  return getRoofSelectionSegmentsForEstimate(model);
+}
+
+function getRoofSelectionCapacity(segments) {
+  return (Array.isArray(segments) ? segments : []).reduce(
+    (sum, segment) => sum + (numberOrNull(segment?.maxPanels) || 0),
+    0
+  );
+}
+
+function getCalculationTargetPanels(model, selectedSegments = null) {
   const suggested = numberOrNull(model?.suggestedPanelRange?.expected);
   const editableDefault = numberOrNull(model?.editablePanelRange?.defaultValue);
-  const selectedCapacity = numberOrNull(model?.summary?.defaultSelectedCapacityPanels);
+  const selectedSegmentCapacity = getRoofSelectionCapacity(selectedSegments);
+  const defaultSelectedCapacity = numberOrNull(model?.summary?.defaultSelectedCapacityPanels);
   const selectableCapacity = numberOrNull(model?.summary?.selectableCapacityPanels);
 
   const rawTarget =
     suggested ||
     editableDefault ||
-    selectedCapacity ||
+    selectedSegmentCapacity ||
+    defaultSelectedCapacity ||
     selectableCapacity ||
     0;
 
   const max =
-    selectedCapacity ||
+    selectedSegmentCapacity ||
+    defaultSelectedCapacity ||
     selectableCapacity ||
     rawTarget ||
     0;
@@ -411,7 +500,11 @@ function distributePanelsAcrossRoofSelectionSegments({ segments, targetPanels })
   return allocations.filter((allocation) => allocation.panels > 0);
 }
 
-function buildEditableRoofEstimatesFromSolarAnalysis(analysis) {
+function buildEditableRoofEstimatesFromSolarAnalysis(
+  analysis,
+  { selectedRoofSegmentKeys = [] } = {}
+) {
+  const selectedRoofSegmentKeySet = new Set(selectedRoofSegmentKeys);
   const buildings = Array.isArray(analysis?.solarBuildingModels)
     ? analysis.solarBuildingModels
     : [];
@@ -422,10 +515,16 @@ function buildEditableRoofEstimatesFromSolarAnalysis(analysis) {
     const roofSelectionModel = getRoofSelectionModel(building);
 
     if (roofSelectionModel?.summary?.selectableCapacityPanels) {
-      const selectedSegments =
-        getRoofSelectionSegmentsForEstimate(roofSelectionModel);
+      const selectedSegments = getSelectedRoofSelectionSegments({
+        building,
+        model: roofSelectionModel,
+        selectedRoofSegmentKeySet,
+      });
 
-      const targetPanels = getCalculationTargetPanels(roofSelectionModel);
+      const targetPanels = getCalculationTargetPanels(
+        roofSelectionModel,
+        selectedSegments
+      );
 
       const allocations = distributePanelsAcrossRoofSelectionSegments({
         segments: selectedSegments,
@@ -631,6 +730,8 @@ export default function SolarTargetBuildingSelector({
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [analysisError, setAnalysisError] = useState("");
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+  const [showRoofAreaReview, setShowRoofAreaReview] = useState(false);
+  const [selectedRoofSegmentKeys, setSelectedRoofSegmentKeys] = useState([]);
 
   const targetLabelRef = useRef(targetLabel);
   const customLabelRef = useRef(customLabel);
@@ -742,6 +843,8 @@ export default function SolarTargetBuildingSelector({
     setSolarTargetBuildings(nextTargets);
     setSolarApiAnalysis(null);
     setAnalysisError("");
+    setShowRoofAreaReview(false);
+    setSelectedRoofSegmentKeys([]);
     renderMarkers(nextTargets);
     emitChange(nextTargets, null);
 
@@ -770,6 +873,8 @@ export default function SolarTargetBuildingSelector({
     setSolarTargetBuildings(nextTargets);
     setSolarApiAnalysis(null);
     setAnalysisError("");
+    setShowRoofAreaReview(false);
+    setSelectedRoofSegmentKeys([]);
     renderMarkers(nextTargets);
     emitChange(nextTargets, null);
   }
@@ -781,6 +886,8 @@ export default function SolarTargetBuildingSelector({
     setSolarTargetBuildings([]);
     setSolarApiAnalysis(null);
     setAnalysisError("");
+    setShowRoofAreaReview(false);
+    setSelectedRoofSegmentKeys([]);
     clearMarkers();
     emitChange([], null);
     setMapStatus("Targets cleared. Click the main building roof to start again.");
@@ -826,6 +933,8 @@ export default function SolarTargetBuildingSelector({
 
       setSolarApiAnalysis(result);
       setShowTechnicalDetails(false);
+      setShowRoofAreaReview(false);
+      setSelectedRoofSegmentKeys(buildDefaultRoofSelectionSegmentKeys(result));
       emitChange(currentTargets, result);
 
       setMapStatus(
@@ -943,7 +1052,9 @@ export default function SolarTargetBuildingSelector({
   }, [selectedAddress?.latitude, selectedAddress?.longitude]);
 
   const editableRoofEstimates = solarApiAnalysis?.summary
-    ? buildEditableRoofEstimatesFromSolarAnalysis(solarApiAnalysis)
+    ? buildEditableRoofEstimatesFromSolarAnalysis(solarApiAnalysis, {
+        selectedRoofSegmentKeys,
+      })
     : [];
 
   const editableRoofPanelTotal = getEstimatedRoofPanelTotal(editableRoofEstimates);
@@ -1141,6 +1252,34 @@ export default function SolarTargetBuildingSelector({
           ? roofSelectionModel.warnings
           : [];
 
+        const selectedRoofSegmentKeySet = new Set(selectedRoofSegmentKeys);
+
+        const selectedRoofAreaCount = selectedRoofSegmentKeys.length;
+
+        function toggleRoofSelectionSegment(building, segment) {
+          const key = getRoofSelectionSegmentKey(building, segment);
+
+          if (!key) {
+            return;
+          }
+
+          setSelectedRoofSegmentKeys((currentKeys) => {
+            const nextSet = new Set(currentKeys);
+
+            if (nextSet.has(key)) {
+              if (nextSet.size <= 1) {
+                return currentKeys;
+              }
+
+              nextSet.delete(key);
+            } else {
+              nextSet.add(key);
+            }
+
+            return Array.from(nextSet);
+          });
+        }
+
         const roofModelTitle = roofSelectionModel
           ? getRoofSelectionTitle(roofSelectionModel)
           : "Roof areas need review";
@@ -1221,6 +1360,115 @@ export default function SolarTargetBuildingSelector({
                     {warning.message}
                   </div>
                 ))}
+              </div>
+            )}
+
+            {roofSelectionModel && (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-slate-950">
+                      Review selected roof areas
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {selectedRoofAreaCount} roof area
+                      {selectedRoofAreaCount === 1 ? "" : "s"} selected for the estimate.
+                      You can add or remove suitable areas before creating the editable roof cards.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="secondary-mini"
+                    onClick={() => setShowRoofAreaReview((value) => !value)}
+                  >
+                    {showRoofAreaReview ? "Hide roof areas" : "Review roof areas"}
+                  </button>
+                </div>
+
+                {showRoofAreaReview && (
+                  <div className="mt-4 space-y-4">
+                    {buildings.map((building) => {
+                      const model = building.roofSelectionModel || null;
+                      const selectableSegments = getSelectableRoofSelectionSegments(model);
+
+                      if (!model || selectableSegments.length === 0) {
+                        return null;
+                      }
+
+                      return (
+                        <div
+                          key={building.id}
+                          className="rounded-xl border border-slate-200 bg-white p-3"
+                        >
+                          <p className="font-semibold text-slate-950">
+                            {building.targetLabel || building.id}
+                          </p>
+
+                          <div className="mt-3 grid gap-2">
+                            {selectableSegments.map((segment) => {
+                              const key = getRoofSelectionSegmentKey(building, segment);
+                              const checked = selectedRoofSegmentKeySet.has(key);
+                              const status = segment.selectionStatus || "optional";
+
+                              return (
+                                <label
+                                  key={key}
+                                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm ${
+                                    checked
+                                      ? "border-blue-300 bg-blue-50"
+                                      : "border-slate-200 bg-white"
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="mt-1"
+                                    checked={checked}
+                                    onChange={() =>
+                                      toggleRoofSelectionSegment(building, segment)
+                                    }
+                                  />
+
+                                  <div className="flex-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <span className="font-semibold text-slate-950">
+                                        Roof area {Number(segment.segmentIndex ?? 0) + 1}
+                                      </span>
+
+                                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                        status === "recommended"
+                                          ? "bg-emerald-100 text-emerald-800"
+                                          : "bg-amber-100 text-amber-800"
+                                      }`}>
+                                        {status === "recommended"
+                                          ? "Recommended"
+                                          : "Optional"}
+                                      </span>
+                                    </div>
+
+                                    <p className="mt-1 text-slate-600">
+                                      Up to {segment.maxPanels ?? "—"} panels ·{" "}
+                                      {azimuthToCompass(segment.azimuthDegrees)} facing ·{" "}
+                                      {formatDegrees(segment.pitchDegrees)} pitch
+                                      {segment.annualKwhPerKwp
+                                        ? ` · ${Math.round(segment.annualKwhPerKwp)} kWh/kWp`
+                                        : ""}
+                                    </p>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    <p className="text-xs text-slate-500">
+                      At least one roof area must remain selected. Optional areas are usable
+                      areas that should be actively confirmed before relying on them.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
