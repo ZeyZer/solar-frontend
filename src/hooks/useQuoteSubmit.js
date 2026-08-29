@@ -138,10 +138,20 @@ export default function useQuoteSubmit({
           : {}),
 
         roofs: roofs.map((r) => ({
+          id: r.id || null,
+          source: r.source || null,
+          sourceBuildingId: r.sourceBuildingId || null,
+          sourceTargetLabel: r.sourceTargetLabel || null,
+          sourceSegmentId: r.sourceSegmentId || null,
+          sourceSegmentIndex: r.sourceSegmentIndex ?? null,
+
           orientation: r.orientation,
           tilt: Number(r.tilt),
           shading: r.shading,
           panels: Number(r.panels),
+
+          aiRoofData: r.aiRoofData || null,
+          aiModelNotes: r.aiModelNotes || null,
         })),
 
         panelCount: totalPanels,
