@@ -578,6 +578,59 @@ function buildEditableRoofEstimatesFromSolarAnalysis(
           shading: inferLegacyShadingFromRoofSelectionSegment(segment),
           panels: allocation.panels,
 
+          // Rich AI roof data. The simple fields above keep the existing quote
+          // flow working; these fields allow the backend to use exact Google
+          // Solar pitch, azimuth, yield and panel-assumption data in a later phase.
+          aiRoofData: {
+            provider: "google_solar_api",
+            sourceModel: roofSelectionModel.source || null,
+            panelCountMethod:
+              roofSelectionModel?.panelCountMethod ||
+              roofSelectionModel?.summary?.panelCountMethod ||
+              null,
+
+            panelAssumption:
+              segment.panelAssumption ||
+              roofSelectionModel?.panelAssumption ||
+              roofSelectionModel?.summary?.panelAssumption ||
+              null,
+
+            googlePanelAssumption:
+              segment.googlePanelAssumption ||
+              roofSelectionModel?.googlePanelAssumption ||
+              roofSelectionModel?.summary?.googlePanelAssumption ||
+              null,
+
+            panelCountAdjustmentFactor:
+              segment.panelCountAdjustmentFactor ||
+              roofSelectionModel?.summary?.panelCountAdjustmentFactor ||
+              null,
+
+            targetPanels,
+            allocatedPanels: allocation.panels,
+
+            segmentId: segment.segmentId || segment.id || null,
+            segmentIndex: segment.segmentIndex ?? null,
+            segmentSelectionStatus: segment.selectionStatus || null,
+
+            maxPanels: segment.maxPanels ?? null,
+            googleMaxConfigPanels: segment.googleMaxConfigPanels ?? null,
+
+            annualKwhPerKwp: segment.annualKwhPerKwp ?? null,
+            maxConfigAnnualKwh: segment.maxConfigAnnualKwh ?? null,
+            googleMaxConfigAnnualKwh: segment.googleMaxConfigAnnualKwh ?? null,
+
+            areaM2: segment?.areaM2 ?? null,
+            groundAreaM2: segment?.groundAreaM2 ?? null,
+            azimuthDegrees: segment?.azimuthDegrees ?? null,
+            pitchDegrees: segment?.pitchDegrees ?? null,
+
+            orientationClass: segment.orientationClass || null,
+            sunshineClass: segment.sunshineClass || null,
+            medianSunshineHours: segment.medianSunshineHours ?? null,
+            lowSunshineHours: segment.lowSunshineHours ?? null,
+          },
+
           aiModelNotes: {
             provider: "google_solar_api",
             diagnosticOnly: true,
