@@ -630,6 +630,7 @@ export default function SolarTargetBuildingSelector({
 
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [analysisError, setAnalysisError] = useState("");
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
   const targetLabelRef = useRef(targetLabel);
   const customLabelRef = useRef(customLabel);
@@ -824,6 +825,7 @@ export default function SolarTargetBuildingSelector({
       solarApiAnalysisRef.current = result;
 
       setSolarApiAnalysis(result);
+      setShowTechnicalDetails(false);
       emitChange(currentTargets, result);
 
       setMapStatus(
@@ -1107,264 +1109,134 @@ export default function SolarTargetBuildingSelector({
       )}
 
       {solarApiAnalysis?.summary && (() => {
+        const buildings = Array.isArray(solarApiAnalysis.solarBuildingModels)
+          ? solarApiAnalysis.solarBuildingModels
+          : [];
+
+        const primaryBuilding = buildings[0] || null;
+        const roofSelectionModel = primaryBuilding?.roofSelectionModel || null;
+        const modelSummary = roofSelectionModel?.summary || {};
+        const suggestedRange = roofSelectionModel?.suggestedPanelRange || null;
         const totals = getAnalysisTotals(solarApiAnalysis);
 
+        const confidenceLevel = String(
+          modelSummary.confidenceLevel || "medium"
+        ).toLowerCase();
+
+        const confidenceLabel =
+          confidenceLevel === "high"
+            ? "High confidence"
+            : confidenceLevel === "low"
+              ? "Low confidence"
+              : "Medium confidence";
+
+        const selectedCapacity =
+          modelSummary.defaultSelectedCapacityPanels ??
+          modelSummary.recommendedCapacityPanels ??
+          "—";
+
+        const maxSelectable = modelSummary.selectableCapacityPanels ?? "—";
+
+        const warnings = Array.isArray(roofSelectionModel?.warnings)
+          ? roofSelectionModel.warnings
+          : [];
+
+        const roofModelTitle = roofSelectionModel
+          ? getRoofSelectionTitle(roofSelectionModel)
+          : "Roof areas need review";
+
+        const roofModelDescription = roofSelectionModel
+          ? getRoofSelectionDescription(roofSelectionModel)
+          : "We found Google Solar roof data, but the roof-selection model was not returned by the backend.";
+
         return (
-          <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
-            <h4 className="font-semibold">Google Solar roof model summary</h4>
+          <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-800">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  AI roof estimate
+                </p>
 
-            <p className="mt-1">
-              Google Solar API found roof model data for the selected building target.
-              This gives us pitch, azimuth, roof segments, imagery quality and Google’s
-              own maximum panel-position estimate.
-            </p>
+                <h4 className="mt-1 text-lg font-semibold text-slate-950">
+                  {roofModelTitle}
+                </h4>
 
-            <div className="mt-4 grid gap-3 md:grid-cols-4">
-              <div className="rounded-lg bg-white/70 p-3">
-                <p className="text-xs uppercase tracking-wide">Unique buildings</p>
-                <p className="text-lg font-semibold">
-                  {solarApiAnalysis.summary.uniqueBuildingsReturned}
+                <p className="mt-1 max-w-2xl text-slate-600">
+                  {roofModelDescription}
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white/70 p-3">
-                <p className="text-xs uppercase tracking-wide">Roof segments</p>
-                <p className="text-lg font-semibold">{totals.roofSegments}</p>
+              <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+                {confidenceLabel}
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-4">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Suggested panels
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-slate-950">
+                  {suggestedRange?.expected ?? (editableRoofPanelTotal || "—")}
+                </p>
               </div>
 
-              <div className="rounded-lg bg-white/70 p-3">
-                <p className="text-xs uppercase tracking-wide">Google max panels</p>
-                <p className="text-lg font-semibold">{totals.maxPanels}</p>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Likely range
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-slate-950">
+                  {suggestedRange
+                    ? `${suggestedRange.low}–${suggestedRange.high}`
+                    : "—"}
+                </p>
               </div>
 
-              <div className="rounded-lg bg-white/70 p-3">
-                <p className="text-xs uppercase tracking-wide">Google array size</p>
-                <p className="text-lg font-semibold">
-                  {totals.googleArrayKw ? `${totals.googleArrayKw.toFixed(1)} kWp` : "Unknown"}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Selected roof capacity
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-slate-950">
+                  {selectedCapacity}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Max selectable
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-slate-950">
+                  {maxSelectable}
                 </p>
               </div>
             </div>
 
-            {solarApiAnalysis.summary.duplicateBuildingsRemoved > 0 && (
-              <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900">
-                {solarApiAnalysis.summary.duplicateBuildingsRemoved} duplicate target
-                {solarApiAnalysis.summary.duplicateBuildingsRemoved === 1 ? "" : "s"} removed.
-                This usually means two clicks matched the same Google building model.
-              </div>
-            )}
-
-            {solarApiAnalysis.summary.notFoundTargets > 0 && (
-              <div className="mt-4 rounded-lg border border-red-300 bg-red-50 p-3 text-red-900">
-                Google Solar API could not find a known building for{" "}
-                {solarApiAnalysis.summary.notFoundTargets} selected target
-                {solarApiAnalysis.summary.notFoundTargets === 1 ? "" : "s"}. Try clicking
-                closer to the centre of the building roof.
-              </div>
-            )}
-
-            {solarApiAnalysis.solarBuildingModels?.length > 0 && (
-              <div className="mt-4 space-y-4">
-                {solarApiAnalysis.solarBuildingModels.map((building) => {
-                  const googleArrayKw = getGooglePanelPowerKw(building);
-                  const roofSegments = Array.isArray(building.roofSegments)
-                    ? building.roofSegments
-                    : [];
-
-                  const roofSelectionModel = building.roofSelectionModel || null;
-
-                  return (
-                    <div
-                      key={building.id}
-                      className="rounded-lg border border-emerald-200 bg-white/80 p-4"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="font-semibold text-emerald-950">
-                            {building.targetLabel || building.id}
-                          </p>
-
-                          <p className="mt-1 text-emerald-900">
-                            {building.postalCode || "Unknown postcode"} · Imagery{" "}
-                            {building.imagery?.quality || "Unknown"}
-                            {building.imagery?.date ? ` · ${building.imagery.date}` : ""}
-                          </p>
-                        </div>
-
-                        <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-950">
-                          Diagnostic only
-                        </div>
-                      </div>
-
-                      <div className="mt-4 grid gap-3 md:grid-cols-4">
-                        <div>
-                          <p className="text-xs uppercase tracking-wide">Segments</p>
-                          <p className="font-semibold">{building.roofSegmentCount ?? "Unknown"}</p>
-                        </div>
-
-                        <div>
-                          <p className="text-xs uppercase tracking-wide">Google max panels</p>
-                          <p className="font-semibold">
-                            {building.solarPotential?.maxArrayPanelsCount ?? "Unknown"}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-xs uppercase tracking-wide">Google array</p>
-                          <p className="font-semibold">
-                            {googleArrayKw ? `${googleArrayKw.toFixed(1)} kWp` : "Unknown"}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-xs uppercase tracking-wide">Array area</p>
-                          <p className="font-semibold">
-                            {formatArea(building.solarPotential?.maxArrayAreaM2)}
-                          </p>
-                        </div>
-                      </div>
-
-                      {roofSelectionModel && (
-                        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-blue-950">
-                          <p className="font-semibold">
-                            {getRoofSelectionTitle(roofSelectionModel)}
-                          </p>
-
-                          <p className="mt-1 text-sm">
-                            {getRoofSelectionDescription(roofSelectionModel)}
-                          </p>
-
-                          <div className="mt-3 grid gap-2 md:grid-cols-4">
-                            <div className="rounded-lg bg-white/80 p-3">
-                              <p className="text-xs uppercase tracking-wide">
-                                Suggested panels
-                              </p>
-                              <p className="text-lg font-semibold">
-                                {roofSelectionModel.suggestedPanelRange?.expected ?? "—"}
-                              </p>
-                            </div>
-
-                            <div className="rounded-lg bg-white/80 p-3">
-                              <p className="text-xs uppercase tracking-wide">
-                                Suggested range
-                              </p>
-                              <p className="text-lg font-semibold">
-                                {roofSelectionModel.suggestedPanelRange
-                                  ? `${roofSelectionModel.suggestedPanelRange.low}–${roofSelectionModel.suggestedPanelRange.high}`
-                                  : "—"}
-                              </p>
-                            </div>
-
-                            <div className="rounded-lg bg-white/80 p-3">
-                              <p className="text-xs uppercase tracking-wide">
-                                Selected capacity
-                              </p>
-                              <p className="text-lg font-semibold">
-                                {roofSelectionModel.summary?.defaultSelectedCapacityPanels ?? "—"}
-                              </p>
-                            </div>
-
-                            <div className="rounded-lg bg-white/80 p-3">
-                              <p className="text-xs uppercase tracking-wide">
-                                Max selectable
-                              </p>
-                              <p className="text-lg font-semibold">
-                                {roofSelectionModel.summary?.selectableCapacityPanels ?? "—"}
-                              </p>
-                            </div>
-                          </div>
-
-                          {roofSelectionModel.warnings?.length > 0 && (
-                            <div className="mt-3 space-y-2">
-                              {roofSelectionModel.warnings.map((warning) => (
-                                <div
-                                  key={warning.code}
-                                  className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900"
-                                >
-                                  {warning.message}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          <p className="mt-3 text-xs">
-                            {roofSelectionModel.summary?.recommendedSegmentCount || 0} recommended,{" "}
-                            {roofSelectionModel.summary?.optionalSegmentCount || 0} optional,{" "}
-                            {roofSelectionModel.summary?.hiddenSegmentCount || 0} hidden roof areas.
-                          </p>
-                        </div>
-                      )}
-
-                      {roofSegments.length > 0 && (
-                        <div className="mt-4">
-                          <p className="font-semibold">Detected roof segments</p>
-
-                          <div className="mt-2 grid gap-2">
-                            {roofSegments.slice(0, 6).map((segment, index) => (
-                              <div
-                                key={segment.id || index}
-                                className="grid gap-2 rounded-lg border border-emerald-100 bg-emerald-50/60 p-3 md:grid-cols-4"
-                              >
-                                <div>
-                                  <p className="text-xs uppercase tracking-wide">Segment</p>
-                                  <p className="font-semibold">{index + 1}</p>
-                                </div>
-
-                                <div>
-                                  <p className="text-xs uppercase tracking-wide">Direction</p>
-                                  <p className="font-semibold">
-                                    {azimuthToCompass(segment.azimuthDegrees)}{" "}
-                                    <span className="font-normal">
-                                      ({formatDegrees(segment.azimuthDegrees)})
-                                    </span>
-                                  </p>
-                                </div>
-
-                                <div>
-                                  <p className="text-xs uppercase tracking-wide">Pitch</p>
-                                  <p className="font-semibold">
-                                    {formatDegrees(segment.pitchDegrees)}
-                                  </p>
-                                </div>
-
-                                <div>
-                                  <p className="text-xs uppercase tracking-wide">Area</p>
-                                  <p className="font-semibold">{formatArea(segment.areaM2)}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-
-                          {roofSegments.length > 6 && (
-                            <p className="mt-2 text-xs">
-                              Showing first 6 of {roofSegments.length} detected segments.
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
-                        For semi-detached or terraced properties, this may include
-                        roof area beyond the customer-owned boundary. Zion Energy must
-                        confirm the final usable roof boundary before design.
-                      </div>
-                    </div>
-                  );
-                })}
+            {warnings.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {warnings.slice(0, 3).map((warning) => (
+                  <div
+                    key={warning.code}
+                    className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950"
+                  >
+                    {warning.message}
+                  </div>
+                ))}
               </div>
             )}
 
             {editableRoofEstimates.length > 0 && (
-              <div className="mt-4 rounded-lg border border-blue-300 bg-blue-50 p-4 text-blue-950">
-                <p className="font-semibold">Create editable calculation estimate</p>
+              <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-blue-950">
+                <p className="font-semibold">
+                  Create your editable roof estimate
+                </p>
 
                 <p className="mt-1 text-sm">
-                  We can turn this AI roof model into{" "}
-                  {editableRoofEstimates.length} editable roof estimate
+                  We can create {editableRoofEstimates.length} editable roof estimate
                   {editableRoofEstimates.length === 1 ? "" : "s"} with around{" "}
                   {editableRoofPanelTotal} total panel
-                  {editableRoofPanelTotal === 1 ? "" : "s"}. You can still edit the
-                  orientation, pitch, shading and panel count below before generating the
-                  quote.
+                  {editableRoofPanelTotal === 1 ? "" : "s"}. You can still adjust
+                  roof direction, pitch, shading and panel count before generating
+                  the quote.
                 </p>
 
                 <button
@@ -1377,23 +1249,242 @@ export default function SolarTargetBuildingSelector({
                   }}
                 >
                   {hasCalculationRoofs
-                    ? "Replace current roof estimate with AI estimate"
-                    : "Use AI model as calculation estimate"}
+                    ? "Replace current roof estimate"
+                    : "Use this roof estimate"}
                 </button>
-
-                <p className="mt-2 text-xs">
-                  This is still an estimate. Google’s panel count is not the final Zion
-                  Energy design and does not yet account for our final product catalogue,
-                  installation method, setbacks or all obstructions.
-                </p>
               </div>
             )}
 
-            <p className="mt-4 text-xs">
-              Diagnostic only. Google panel count uses Google’s own assumptions, not
-              Zion Energy’s final panel catalogue, setbacks, obstructions or
-              installation design.
-            </p>
+            <div className="mt-4 border-t border-slate-200 pt-4">
+              <button
+                type="button"
+                className="secondary-mini"
+                onClick={() => setShowTechnicalDetails((value) => !value)}
+              >
+                {showTechnicalDetails
+                  ? "Hide technical roof model details"
+                  : "Show technical roof model details"}
+              </button>
+            </div>
+
+            {showTechnicalDetails && (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <h5 className="font-semibold text-slate-950">
+                  Technical Google Solar model details
+                </h5>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-4">
+                  <div className="rounded-lg bg-white p-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                      Unique buildings
+                    </p>
+                    <p className="text-lg font-semibold">
+                      {solarApiAnalysis.summary.uniqueBuildingsReturned}
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg bg-white p-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                      Roof segments
+                    </p>
+                    <p className="text-lg font-semibold">{totals.roofSegments}</p>
+                  </div>
+
+                  <div className="rounded-lg bg-white p-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                      Google max panels
+                    </p>
+                    <p className="text-lg font-semibold">{totals.maxPanels}</p>
+                  </div>
+
+                  <div className="rounded-lg bg-white p-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                      Google array size
+                    </p>
+                    <p className="text-lg font-semibold">
+                      {totals.googleArrayKw
+                        ? `${totals.googleArrayKw.toFixed(1)} kWp`
+                        : "Unknown"}
+                    </p>
+                  </div>
+                </div>
+
+                {solarApiAnalysis.summary.duplicateBuildingsRemoved > 0 && (
+                  <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900">
+                    {solarApiAnalysis.summary.duplicateBuildingsRemoved} duplicate target
+                    {solarApiAnalysis.summary.duplicateBuildingsRemoved === 1 ? "" : "s"} removed.
+                    This usually means two clicks matched the same Google building model.
+                  </div>
+                )}
+
+                {solarApiAnalysis.summary.notFoundTargets > 0 && (
+                  <div className="mt-4 rounded-lg border border-red-300 bg-red-50 p-3 text-red-900">
+                    Google Solar API could not find a known building for{" "}
+                    {solarApiAnalysis.summary.notFoundTargets} selected target
+                    {solarApiAnalysis.summary.notFoundTargets === 1 ? "" : "s"}. Try clicking
+                    closer to the centre of the building roof.
+                  </div>
+                )}
+
+                {buildings.length > 0 && (
+                  <div className="mt-4 space-y-4">
+                    {buildings.map((building) => {
+                      const googleArrayKw = getGooglePanelPowerKw(building);
+                      const roofSegments = Array.isArray(building.roofSegments)
+                        ? building.roofSegments
+                        : [];
+
+                      const model = building.roofSelectionModel || null;
+
+                      return (
+                        <div
+                          key={building.id}
+                          className="rounded-lg border border-slate-200 bg-white p-4"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="font-semibold text-slate-950">
+                                {building.targetLabel || building.id}
+                              </p>
+
+                              <p className="mt-1 text-slate-600">
+                                {building.postalCode || "Unknown postcode"} · Imagery{" "}
+                                {building.imagery?.quality || "Unknown"}
+                                {building.imagery?.date ? ` · ${building.imagery.date}` : ""}
+                              </p>
+                            </div>
+
+                            <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                              Diagnostic only
+                            </div>
+                          </div>
+
+                          <div className="mt-4 grid gap-3 md:grid-cols-4">
+                            <div>
+                              <p className="text-xs uppercase tracking-wide text-slate-500">
+                                Segments
+                              </p>
+                              <p className="font-semibold">
+                                {building.roofSegmentCount ?? "Unknown"}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs uppercase tracking-wide text-slate-500">
+                                Google max panels
+                              </p>
+                              <p className="font-semibold">
+                                {building.solarPotential?.maxArrayPanelsCount ?? "Unknown"}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs uppercase tracking-wide text-slate-500">
+                                Google array
+                              </p>
+                              <p className="font-semibold">
+                                {googleArrayKw ? `${googleArrayKw.toFixed(1)} kWp` : "Unknown"}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs uppercase tracking-wide text-slate-500">
+                                Array area
+                              </p>
+                              <p className="font-semibold">
+                                {formatArea(building.solarPotential?.maxArrayAreaM2)}
+                              </p>
+                            </div>
+                          </div>
+
+                          {model && (
+                            <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-blue-950">
+                              <p className="font-semibold">
+                                {getRoofSelectionTitle(model)}
+                              </p>
+
+                              <p className="mt-1 text-sm">
+                                {getRoofSelectionDescription(model)}
+                              </p>
+
+                              <p className="mt-3 text-xs">
+                                {model.summary?.recommendedSegmentCount || 0} recommended,{" "}
+                                {model.summary?.optionalSegmentCount || 0} optional,{" "}
+                                {model.summary?.hiddenSegmentCount || 0} hidden roof areas.
+                              </p>
+                            </div>
+                          )}
+
+                          {roofSegments.length > 0 && (
+                            <div className="mt-4">
+                              <p className="font-semibold">Detected roof segments</p>
+
+                              <div className="mt-2 grid gap-2">
+                                {roofSegments.slice(0, 6).map((segment, index) => (
+                                  <div
+                                    key={segment.id || index}
+                                    className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 md:grid-cols-4"
+                                  >
+                                    <div>
+                                      <p className="text-xs uppercase tracking-wide text-slate-500">
+                                        Segment
+                                      </p>
+                                      <p className="font-semibold">{index + 1}</p>
+                                    </div>
+
+                                    <div>
+                                      <p className="text-xs uppercase tracking-wide text-slate-500">
+                                        Direction
+                                      </p>
+                                      <p className="font-semibold">
+                                        {azimuthToCompass(segment.azimuthDegrees)}{" "}
+                                        <span className="font-normal">
+                                          ({formatDegrees(segment.azimuthDegrees)})
+                                        </span>
+                                      </p>
+                                    </div>
+
+                                    <div>
+                                      <p className="text-xs uppercase tracking-wide text-slate-500">
+                                        Pitch
+                                      </p>
+                                      <p className="font-semibold">
+                                        {formatDegrees(segment.pitchDegrees)}
+                                      </p>
+                                    </div>
+
+                                    <div>
+                                      <p className="text-xs uppercase tracking-wide text-slate-500">
+                                        Area
+                                      </p>
+                                      <p className="font-semibold">
+                                        {formatArea(segment.areaM2)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {roofSegments.length > 6 && (
+                                <p className="mt-2 text-xs text-slate-500">
+                                  Showing first 6 of {roofSegments.length} detected segments.
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <p className="mt-4 text-xs text-slate-500">
+                  Technical details are diagnostic only. Google panel counts use Google’s
+                  assumptions, not Zion Energy’s final product catalogue, setbacks,
+                  obstructions or installation design.
+                </p>
+              </div>
+            )}
           </div>
         );
       })()}
