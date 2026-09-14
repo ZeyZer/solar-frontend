@@ -15,6 +15,10 @@ import LegalNotice from "./LegalNotice";
 
 import GooglePlacesAddressLookup from "./address/GooglePlacesAddressLookup";
 
+import {
+    buildConfirmedPostalAddress,
+} from "../utils/selectedAddressUtils";
+
 import RoofInputModeSelector from "./roof/RoofInputModeSelector";
 import SolarTargetBuildingSelector from "./roof/SolarTargetBuildingSelector";
 
@@ -180,7 +184,7 @@ export default function QuoteForm({
 
                                 if (process.env.REACT_APP_GOOGLE_MAPS_API_KEY) {
                                     if (!form.selectedAddress) {
-                                        setError("Please search for and select your address before continuing.");
+                                        setError("Please search for and select the closest matching address before continuing.");
                                         return;
                                     }
 
@@ -191,21 +195,31 @@ export default function QuoteForm({
                                         setError("The selected address does not have map coordinates. Please choose another address result.");
                                         return;
                                     }
-                                } else {
-                                    if (!form.houseNumber.trim()) {
-                                        setError("Please enter your house name or number.");
-                                        return;
-                                    }
+                                }
 
-                                    if (!form.postcode.trim()) {
-                                        setError("Please enter your postcode.");
-                                        return;
-                                    }
+                                if (!(form.houseNumber || "").trim()) {
+                                    setError("Please enter the house name or number.");
+                                    return;
+                                }
 
-                                    if (!isValidUkPostcode(form.postcode)) {
-                                        setError("Please enter a valid UK postcode (e.g. SW1A 1AA).");
-                                        return;
-                                    }
+                                if (!(form.roadName || "").trim()) {
+                                    setError("Please enter the road name.");
+                                    return;
+                                }
+
+                                if (!(form.town || "").trim()) {
+                                    setError("Please enter the town or city.");
+                                    return;
+                                }
+
+                                if (!(form.postcode || "").trim()) {
+                                    setError("Please enter the postcode.");
+                                    return;
+                                }
+
+                                if (!isValidUkPostcode(form.postcode)) {
+                                    setError("Please enter a valid UK postcode (e.g. SW1A 1AA).");
+                                    return;
                                 }
 
                                 setError("");
@@ -341,11 +355,15 @@ export default function QuoteForm({
                                     selectedAddress={form.selectedAddress}
                                     propertyType={form.propertyType || "unknown"}
                                     addressContext={{
-                                        postcode: form.postcode,
+                                        houseNumber: form.houseNumber || "",
+                                        roadName: form.roadName || "",
+                                        town: form.town || "",
+                                        postcode: form.postcode || "",
                                         addressLine:
+                                        buildConfirmedPostalAddress(form) ||
                                         form.selectedAddress?.fullAddress ||
                                         form.address ||
-                                        `${form.houseNumber || ""} ${form.postcode || ""}`.trim(),
+                                        "",
                                         selectedAddress: form.selectedAddress || null,
                                         country: "GB",
                                     }}

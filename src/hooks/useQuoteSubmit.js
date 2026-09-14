@@ -10,6 +10,10 @@ import {
   isValidUkPostcode,
 } from "../utils/postcodeUtils";
 
+import {
+  buildConfirmedPostalAddress,
+} from "../utils/selectedAddressUtils";
+
 export default function useQuoteSubmit({
   form,
   roofs,
@@ -37,14 +41,25 @@ export default function useQuoteSubmit({
 
     const REQUIRE_CONTACT_DETAILS = false;
 
-    const derivedAddress =
-      form.selectedAddress?.fullAddress ||
-      (form.address && form.address.trim()
-        ? form.address.trim()
-        : `${form.houseNumber || ""} ${form.postcode || ""}`.trim());
+    const derivedAddress = buildConfirmedPostalAddress(form);
 
-    if (!derivedAddress || !form.postcode) {
-      setError("Please enter your house number and postcode so we can run the estimate.");
+    if (!(form.houseNumber || "").trim()) {
+      setError("Please enter the house name or number.");
+      return;
+    }
+
+    if (!(form.roadName || "").trim()) {
+      setError("Please enter the road name.");
+      return;
+    }
+
+    if (!(form.town || "").trim()) {
+      setError("Please enter the town or city.");
+      return;
+    }
+
+    if (!(form.postcode || "").trim()) {
+      setError("Please enter the postcode.");
       return;
     }
 
@@ -112,13 +127,26 @@ export default function useQuoteSubmit({
         email: form.email,
         address: derivedAddress,
         phone: form.phone,
+
+        houseNumber: form.houseNumber,
+        roadName: form.roadName,
+        town: form.town,
         postcode: form.postcode,
+
+        addressDetails: {
+          propertyNameOrNumber: form.houseNumber,
+          roadName: form.roadName,
+          townOrCity: form.town,
+          postcode: form.postcode,
+          fullAddress: derivedAddress,
+        },
+
         homeOwnership: form.homeOwnership,
         propertyType: form.propertyType || "unknown",
-        houseNumber: form.houseNumber,
+
         selectedAddress: form.selectedAddress || null,
-        addressLatitude: form.selectedAddress?.latitude || null,
-        addressLongitude: form.selectedAddress?.longitude || null,
+        addressLatitude: form.selectedAddress?.latitude ?? null,
+        addressLongitude: form.selectedAddress?.longitude ?? null,
 
         tariffBefore: cleanedTariffBefore,
         tariffAfter: cleanedTariffAfter,

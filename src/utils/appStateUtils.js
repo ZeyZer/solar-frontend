@@ -33,6 +33,8 @@ const DEFAULT_FORM = {
 
   homeOwnership: "",
   houseNumber: "",
+  roadName: "",
+  town: "",
   postcode: "",
   selectedAddress: null,
 

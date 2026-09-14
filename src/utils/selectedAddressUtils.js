@@ -61,10 +61,16 @@ export function normaliseGooglePlaceAddress(place) {
     getAddressComponent(place, "country") ||
     "United Kingdom";
 
+  const premise = getAddressComponent(place, "premise");
+  const subpremise = getAddressComponent(place, "subpremise");
   const streetNumber = getAddressComponent(place, "street_number");
   const route = getAddressComponent(place, "route");
 
-  const line1 = [streetNumber, route].filter(Boolean).join(" ");
+  const propertyNameOrNumber =
+    premise ||
+    [subpremise, streetNumber].filter(Boolean).join(", ");
+
+  const line1 = [propertyNameOrNumber, route].filter(Boolean).join(" ");
 
   return {
     source: "google_places",
@@ -78,6 +84,13 @@ export function normaliseGooglePlaceAddress(place) {
 
     fullAddress: cleanText(place?.formattedAddress),
     line1,
+
+    propertyNameOrNumber,
+    premise,
+    subpremise,
+    streetNumber,
+    roadName: route,
+
     townOrCity,
     county,
     country,
@@ -94,13 +107,22 @@ export function normaliseGooglePlaceAddress(place) {
 }
 
 export function getHouseNumberOrNameFromSelectedAddress(selectedAddress) {
-  const line1 = cleanText(selectedAddress?.line1);
+  return (
+    cleanText(selectedAddress?.propertyNameOrNumber) ||
+    cleanText(selectedAddress?.premise) ||
+    cleanText(selectedAddress?.subpremise) ||
+    cleanText(selectedAddress?.streetNumber)
+  );
+}
 
-  if (!line1) {
-    return "";
-  }
-
-  const firstPart = line1.split(" ")[0];
-
-  return cleanText(firstPart || line1);
+export function buildConfirmedPostalAddress(form) {
+  return [
+    form?.houseNumber,
+    form?.roadName,
+    form?.town,
+    form?.postcode,
+  ]
+    .map(cleanText)
+    .filter(Boolean)
+    .join(", ");
 }

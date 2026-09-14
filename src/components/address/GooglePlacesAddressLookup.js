@@ -31,6 +31,8 @@ export default function GooglePlacesAddressLookup({
       ...prev,
       address: "",
       houseNumber: "",
+      roadName: "",
+      town: "",
       postcode: "",
       selectedAddress: null,
     }));
@@ -114,9 +116,10 @@ export default function GooglePlacesAddressLookup({
               ...prev,
               address: selectedAddress.fullAddress,
               houseNumber:
-                getHouseNumberOrNameFromSelectedAddress(selectedAddress) ||
-                prev.houseNumber,
-              postcode: selectedAddress.postcode || prev.postcode,
+                getHouseNumberOrNameFromSelectedAddress(selectedAddress),
+              roadName: selectedAddress.roadName || "",
+              town: selectedAddress.townOrCity || "",
+              postcode: selectedAddress.postcode || "",
               selectedAddress,
             }));
 
@@ -188,13 +191,35 @@ export default function GooglePlacesAddressLookup({
         </label>
 
         <label>
+          <div className="question-label">🛣️ Road name</div>
+          <input
+            type="text"
+            name="roadName"
+            value={form.roadName || ""}
+            onChange={handleChange}
+            placeholder="e.g. Shores Road"
+          />
+        </label>
+
+        <label>
+          <div className="question-label">🏙️ Town / city</div>
+          <input
+            type="text"
+            name="town"
+            value={form.town || ""}
+            onChange={handleChange}
+            placeholder="e.g. Woking"
+          />
+        </label>
+
+        <label>
           <div className="question-label">📍 Your Postcode</div>
           <input
             type="text"
             name="postcode"
             value={form.postcode}
             onChange={handlePostcodeChange}
-            placeholder="e.g. SW1A 1AA"
+            placeholder="e.g. GU21 4HN"
           />
         </label>
       </>
@@ -232,6 +257,62 @@ export default function GooglePlacesAddressLookup({
           >
             Change address
           </button>
+        </div>
+      )}
+
+      {form.selectedAddress && (
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="question-label">Confirm your postal address</div>
+
+          <p className="small-print">
+            We have filled in the details Google returned. Please correct them
+            or complete any missing fields so we have the full property address
+            for your quote and follow-up.
+          </p>
+
+          <label>
+            <div className="question-label">🏘️ House name or number</div>
+            <input
+              type="text"
+              name="houseNumber"
+              value={form.houseNumber || ""}
+              onChange={handleChange}
+              placeholder="e.g. 44 or Hollydene Cottage"
+            />
+          </label>
+
+          <label>
+            <div className="question-label">🛣️ Road name</div>
+            <input
+              type="text"
+              name="roadName"
+              value={form.roadName || ""}
+              onChange={handleChange}
+              placeholder="e.g. Shores Road"
+            />
+          </label>
+
+          <label>
+            <div className="question-label">🏙️ Town / city</div>
+            <input
+              type="text"
+              name="town"
+              value={form.town || ""}
+              onChange={handleChange}
+              placeholder="e.g. Woking"
+            />
+          </label>
+
+          <label>
+            <div className="question-label">📍 Postcode</div>
+            <input
+              type="text"
+              name="postcode"
+              value={form.postcode || ""}
+              onChange={handlePostcodeChange}
+              placeholder="e.g. GU21 4HN"
+            />
+          </label>
         </div>
       )}
 
