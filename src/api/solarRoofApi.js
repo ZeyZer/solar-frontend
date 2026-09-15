@@ -56,6 +56,8 @@ export async function analyseSolarTargetBuildings({
   requiredQuality = "BASE",
   includeDetectedArrays = false,
   maxTargets,
+  propertyType = "unknown",
+  propertyBoundary = null,
 }) {
   if (!Array.isArray(solarTargetBuildings) || solarTargetBuildings.length === 0) {
     throw new Error("Select at least one building target first.");
@@ -70,6 +72,8 @@ export async function analyseSolarTargetBuildings({
       requiredQuality,
       includeDetectedArrays,
       maxTargets,
+      propertyType,
+      propertyBoundary,
       solarTargetBuildings,
     }),
   });

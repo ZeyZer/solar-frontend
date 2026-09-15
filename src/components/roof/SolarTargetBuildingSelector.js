@@ -1061,6 +1061,19 @@ export default function SolarTargetBuildingSelector({
     }
 
     resetPropertyBoundary({ keepDrawingMode: true });
+
+    // A previous boundary-filtered analysis must not remain canonical while
+    // the customer redraws the ownership boundary.
+    solarApiAnalysisRef.current = null;
+    setSolarApiAnalysis(null);
+    setSelectedRoofSegmentKeys([]);
+
+    emitChange(
+      solarTargetBuildingsRef.current,
+      null,
+      null
+    );
+
     boundaryDrawingModeRef.current = true;
     setBoundaryDrawingMode(true);
 
@@ -1071,7 +1084,22 @@ export default function SolarTargetBuildingSelector({
 
   function cancelBoundaryDrawing() {
     resetPropertyBoundary();
-    setMapStatus("Boundary drawing cancelled.");
+
+    // Clear any analysis that may have been produced using the old boundary,
+    // and make sure the parent roofGeometry no longer contains that boundary.
+    solarApiAnalysisRef.current = null;
+    setSolarApiAnalysis(null);
+    setSelectedRoofSegmentKeys([]);
+
+    emitChange(
+      solarTargetBuildingsRef.current,
+      null,
+      null
+    );
+
+    setMapStatus(
+      "Property boundary cleared. Analyse the building again before using the roof estimate."
+    );
   }
 
   function addBoundaryPointFromMapClick(latLng) {
@@ -1116,8 +1144,12 @@ export default function SolarTargetBuildingSelector({
       );
 
       setMapStatus(
-        `Property boundary saved: ${requiredLines} boundary line${requiredLines === 1 ? "" : "s"} captured.`
+        `Property boundary saved: ${requiredLines} boundary line${requiredLines === 1 ? "" : "s"} captured. Re-running roof model with boundary filter…`
       );
+
+      window.setTimeout(() => {
+        analyseTargets({ propertyBoundaryOverride: nextBoundary });
+      }, 0);
 
       return;
     }
@@ -1241,10 +1273,28 @@ export default function SolarTargetBuildingSelector({
     setMapStatus("Map centred on selected address. Click the building roof you want to assess.");
   }
 
-  async function analyseTargets() {
+  async function analyseTargets(options = {}) {
     const currentTargets = Array.isArray(solarTargetBuildingsRef.current)
       ? solarTargetBuildingsRef.current
       : [];
+
+    const currentPropertyType =
+      propertyTypeRef.current ||
+      propertyType ||
+      "unknown";
+
+    const currentPropertyBoundary =
+      options?.propertyBoundaryOverride ||
+      propertyBoundaryRef.current ||
+      propertyBoundary ||
+      null;
+
+    console.log("Solar roof analysis request", {
+      targetCount: currentTargets.length,
+      propertyType: currentPropertyType,
+      boundaryFilterRequested: !!currentPropertyBoundary,
+      boundaryLineCount: currentPropertyBoundary?.boundaryLines?.length || 0,
+    });
 
     if (!currentTargets.length) {
       setAnalysisError("Select at least one building target first.");
@@ -1253,12 +1303,26 @@ export default function SolarTargetBuildingSelector({
 
     setAnalysisLoading(true);
     setAnalysisError("");
-    setMapStatus("Analysing selected buildings with Google Solar API…");
+
+    setMapStatus(
+      currentPropertyBoundary
+        ? "Analysing selected building with property boundary filter…"
+        : "Analysing selected buildings with Google Solar API…"
+    );
 
     try {
       const result = await analyseSolarTargetBuildings({
         solarTargetBuildings: currentTargets,
         requiredQuality: "BASE",
+        propertyType: currentPropertyType,
+        propertyBoundary: currentPropertyBoundary,
+      });
+
+      console.log("Solar roof analysis response", {
+        boundaryFilterApplied:
+          result?.solarBuildingModels?.[0]?.propertyBoundaryFilter?.applied || false,
+        propertyBoundaryFilter:
+          result?.solarBuildingModels?.[0]?.propertyBoundaryFilter || null,
       });
 
       solarApiAnalysisRef.current = result;
@@ -1267,13 +1331,25 @@ export default function SolarTargetBuildingSelector({
       setShowTechnicalDetails(false);
       setShowRoofAreaReview(false);
       setSelectedRoofSegmentKeys(buildDefaultRoofSelectionSegmentKeys(result));
-      resetPropertyBoundary();
-      emitChange(currentTargets, result, null);
+
+      if (currentPropertyBoundary) {
+        propertyBoundaryRef.current = currentPropertyBoundary;
+        setPropertyBoundary(currentPropertyBoundary);
+        renderBoundaryOverlay(currentPropertyBoundary);
+      } else {
+        propertyBoundaryRef.current = null;
+        setPropertyBoundary(null);
+        clearBoundaryOverlays();
+      }
+
+      emitChange(currentTargets, result, currentPropertyBoundary);
 
       setMapStatus(
-        result?.summary?.uniqueBuildingsReturned
-          ? `Solar roof model found for ${result.summary.uniqueBuildingsReturned} unique building(s).`
-          : "Analysis completed, but no unique roof models were returned."
+        currentPropertyBoundary
+          ? "Boundary-adjusted roof model ready. Review the selected roof areas, then use the estimate."
+          : result?.summary?.uniqueBuildingsReturned
+            ? `Solar roof model found for ${result.summary.uniqueBuildingsReturned} unique building(s).`
+            : "Analysis completed, but no unique roof models were returned."
       );
     } catch (err) {
       console.warn("Solar roof target analysis failed:", err);
@@ -1285,6 +1361,7 @@ export default function SolarTargetBuildingSelector({
       setAnalysisLoading(false);
     }
   }
+
 
   useEffect(() => {
     const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
@@ -1634,6 +1711,13 @@ export default function SolarTargetBuildingSelector({
 
         const primaryBuilding = buildings[0] || null;
         const roofSelectionModel = primaryBuilding?.roofSelectionModel || null;
+
+        const boundaryFilterApplied =
+          primaryBuilding?.propertyBoundaryFilter?.applied === true;
+
+        const roofEstimateReady =
+          !boundaryRequired ||
+          (boundaryCaptured && boundaryFilterApplied);
         const modelSummary = roofSelectionModel?.summary || {};
         const suggestedRange = roofSelectionModel?.suggestedPanelRange || null;
         const totals = getAnalysisTotals(solarApiAnalysis);
@@ -1941,9 +2025,16 @@ export default function SolarTargetBuildingSelector({
                   the quote.
                 </p>
 
+                {boundaryRequired && !roofEstimateReady && (
+                  <p className="mt-3 text-sm font-medium text-amber-800">
+                    Draw and apply the property boundary before using this roof estimate.
+                  </p>
+                )}
+
                 <button
                   type="button"
                   className="mt-3"
+                  disabled={!roofEstimateReady}
                   onClick={() => {
                     if (onUseCalculationRoofEstimate) {
                       onUseCalculationRoofEstimate(editableRoofEstimates);
