@@ -128,9 +128,21 @@ function App() {
     setError,
   });
 
-  const [roofInputMode, setRoofInputMode] = useState(
-    savedState?.roofInputMode || "panel_count"
-  );
+  const [roofInputMode, setRoofInputMode] = useState(() => {
+    const savedMode = savedState?.roofInputMode;
+
+    const hasSavedManualRoofs =
+      savedMode === "panel_count" &&
+      Array.isArray(savedState?.roofs) &&
+      savedState.roofs.length > 0;
+
+    // Satellite roof modelling is the normal customer journey.
+    // Preserve an existing manual roof entry only when the customer
+    // had actually added manual roofs already.
+    return hasSavedManualRoofs
+      ? "panel_count"
+      : "draw_my_roof";
+  });
 
   const [roofGeometry, setRoofGeometry] = useState(
     savedState?.roofGeometry || null
@@ -221,7 +233,7 @@ function App() {
     setStep(1);
     setForm(DEFAULT_FORM);
     resetRoofs();
-    setRoofInputMode("panel_count");
+    setRoofInputMode("draw_my_roof");
     setRoofGeometry(null);
     setNeedsRecalc(false);
     setUpdatedSections([]);

@@ -298,9 +298,22 @@ function buildDefaultRoofSelectionSegmentKeys(analysis) {
   buildings.forEach((building) => {
     const model = getRoofSelectionModel(building);
 
-    const defaultSegments = Array.isArray(model?.defaultSelectedSegments)
+    const backendDefaultSegments = Array.isArray(
+      model?.defaultSelectedSegments
+    )
       ? model.defaultSelectedSegments
       : [];
+
+    const recommendedSegments = Array.isArray(
+      model?.recommendedSegments
+    )
+      ? model.recommendedSegments
+      : [];
+
+    const defaultSegments =
+      backendDefaultSegments.length > 0
+        ? backendDefaultSegments
+        : recommendedSegments;
 
     defaultSegments.forEach((segment) => {
       const key = getRoofSelectionSegmentKey(building, segment);
@@ -321,15 +334,11 @@ function getSelectedRoofSelectionSegments({
 }) {
   const selectableSegments = getSelectableRoofSelectionSegments(model);
 
-  const selectedSegments = selectableSegments.filter((segment) =>
-    selectedRoofSegmentKeySet.has(getRoofSelectionSegmentKey(building, segment))
+  return selectableSegments.filter((segment) =>
+    selectedRoofSegmentKeySet.has(
+      getRoofSelectionSegmentKey(building, segment)
+    )
   );
-
-  if (selectedSegments.length > 0) {
-    return selectedSegments;
-  }
-
-  return getRoofSelectionSegmentsForEstimate(model);
 }
 
 function getRoofSelectionCapacity(segments) {
@@ -337,6 +346,48 @@ function getRoofSelectionCapacity(segments) {
     (sum, segment) => sum + (numberOrNull(segment?.maxPanels) || 0),
     0
   );
+}
+
+function getCustomerRoofFacingLabel(segment) {
+  const compass = azimuthToCompass(segment?.azimuthDegrees);
+
+  const labels = {
+    N: "North-facing",
+    NE: "North-east-facing",
+    E: "East-facing",
+    SE: "South-east-facing",
+    S: "South-facing",
+    SW: "South-west-facing",
+    W: "West-facing",
+    NW: "North-west-facing",
+  };
+
+  return labels[compass] || "Roof area";
+}
+
+function getCustomerPotentialReason(segment) {
+  const panels = numberOrNull(segment?.maxPanels) || 0;
+  const orientation = String(segment?.orientationClass || "").toLowerCase();
+  const sunshine = String(segment?.sunshineClass || "").toLowerCase();
+  const annualKwhPerKwp = numberOrNull(segment?.annualKwhPerKwp);
+
+  if (panels > 0 && panels < 4) {
+    return "This is a smaller roof area, so it may be less practical once panel clearances and installation access are confirmed.";
+  }
+
+  if (orientation === "marginal_east_west") {
+    return "This roof area could be usable, but its direction is less favourable than the areas we recommend automatically.";
+  }
+
+  if (sunshine === "medium") {
+    return "This roof area could be usable, but it receives less sunlight than the areas we recommend automatically.";
+  }
+
+  if (annualKwhPerKwp !== null && annualKwhPerKwp < 800) {
+    return "This roof area could add capacity, but its expected generation is lower than the areas we recommend automatically.";
+  }
+
+  return "This roof area could add capacity, but we would prefer to confirm its suitability during the final survey and design.";
 }
 
 function formatPanelAssumption(panelAssumption) {
@@ -369,32 +420,38 @@ function formatPanelCountMethod(method) {
 }
 
 function getCalculationTargetPanels(model, selectedSegments = null) {
-  const suggested = numberOrNull(model?.suggestedPanelRange?.expected);
-  const editableDefault = numberOrNull(model?.editablePanelRange?.defaultValue);
-  const selectedSegmentCapacity = getRoofSelectionCapacity(selectedSegments);
-  const defaultSelectedCapacity = numberOrNull(model?.summary?.defaultSelectedCapacityPanels);
-  const selectableCapacity = numberOrNull(model?.summary?.selectableCapacityPanels);
+  if (Array.isArray(selectedSegments)) {
+    const selectedSegmentCapacity =
+      getRoofSelectionCapacity(selectedSegments);
+
+    if (!selectedSegmentCapacity) {
+      return 0;
+    }
+
+    return Math.max(
+      1,
+      Math.round(selectedSegmentCapacity)
+    );
+  }
+
+  const defaultSelectedCapacity = numberOrNull(
+    model?.summary?.defaultSelectedCapacityPanels
+  );
+
+  const recommendedCapacity = numberOrNull(
+    model?.summary?.recommendedCapacityPanels
+  );
 
   const rawTarget =
-    suggested ||
-    editableDefault ||
-    selectedSegmentCapacity ||
     defaultSelectedCapacity ||
-    selectableCapacity ||
+    recommendedCapacity ||
     0;
 
-  const max =
-    selectedSegmentCapacity ||
-    defaultSelectedCapacity ||
-    selectableCapacity ||
-    rawTarget ||
-    0;
-
-  if (!rawTarget || !max) {
+  if (!rawTarget) {
     return 0;
   }
 
-  return Math.min(Math.max(1, Math.round(rawTarget)), max);
+  return Math.max(1, Math.round(rawTarget));
 }
 
 function getRoofSelectionSegmentsForEstimate(model) {
@@ -414,11 +471,9 @@ function getRoofSelectionSegmentsForEstimate(model) {
     return recommendedSegments;
   }
 
-  const optionalSegments = Array.isArray(model?.optionalSegments)
-    ? model.optionalSegments
-    : [];
-
-  return optionalSegments.slice(0, 1);
+  // Potential roof areas require explicit customer selection.
+  // Never promote one into the default system automatically.
+  return [];
 }
 
 function inferLegacyShadingFromRoofSelectionSegment(segment) {
@@ -543,7 +598,7 @@ function buildEditableRoofEstimatesFromSolarAnalysis(
   buildings.forEach((building) => {
     const roofSelectionModel = getRoofSelectionModel(building);
 
-    if (roofSelectionModel?.summary?.selectableCapacityPanels) {
+    if (roofSelectionModel) {
       const selectedSegments = getSelectedRoofSelectionSegments({
         building,
         model: roofSelectionModel,
@@ -843,6 +898,102 @@ function buildPropertyBoundaryFromPoints(points, propertyType) {
   };
 }
 
+function buildSelectedRoofSegmentKeysFromCalculationRoofs(
+  analysis,
+  calculationRoofs
+) {
+  const roofs = Array.isArray(calculationRoofs)
+    ? calculationRoofs
+    : [];
+
+  const buildings = Array.isArray(analysis?.solarBuildingModels)
+    ? analysis.solarBuildingModels
+    : [];
+
+  if (!roofs.length || !buildings.length) {
+    return [];
+  }
+
+  const keys = [];
+
+  roofs.forEach((roof) => {
+    const sourceBuildingId =
+      roof?.sourceBuildingId ?? null;
+
+    const building =
+      buildings.find((candidate) => {
+        const candidateId =
+          candidate?.id ??
+          candidate?.targetId ??
+          null;
+
+        return (
+          sourceBuildingId !== null &&
+          candidateId !== null &&
+          String(candidateId) === String(sourceBuildingId)
+        );
+      }) ||
+      (buildings.length === 1 ? buildings[0] : null);
+
+    if (!building) {
+      return;
+    }
+
+    const model = getRoofSelectionModel(building);
+    const selectableSegments =
+      getSelectableRoofSelectionSegments(model);
+
+    const sourceSegmentIndex =
+      roof?.sourceSegmentIndex ??
+      roof?.aiRoofData?.segmentIndex ??
+      null;
+
+    const sourceSegmentId =
+      roof?.sourceSegmentId ??
+      roof?.aiRoofData?.segmentId ??
+      null;
+
+    const segment = selectableSegments.find((candidate) => {
+      const candidateIndex =
+        candidate?.segmentIndex ??
+        candidate?.sourceSegmentIndex ??
+        null;
+
+      const candidateId =
+        candidate?.segmentId ??
+        candidate?.id ??
+        null;
+
+      if (
+        sourceSegmentIndex !== null &&
+        candidateIndex !== null &&
+        String(candidateIndex) === String(sourceSegmentIndex)
+      ) {
+        return true;
+      }
+
+      return (
+        sourceSegmentId !== null &&
+        candidateId !== null &&
+        String(candidateId) === String(sourceSegmentId)
+      );
+    });
+
+    if (!segment) {
+      return;
+    }
+
+    const key =
+      getRoofSelectionSegmentKey(building, segment);
+
+    if (key && !keys.includes(key)) {
+      keys.push(key);
+    }
+  });
+
+  return keys;
+}
+
 export default function SolarTargetBuildingSelector({
   selectedAddress,
   propertyType = "unknown",
@@ -851,6 +1002,7 @@ export default function SolarTargetBuildingSelector({
   onChange,
   onUseCalculationRoofEstimate,
   hasCalculationRoofs = false,
+  calculationRoofs = [],
   initialZoom = 20,
 }) {
   const mapContainerRef = useRef(null);
@@ -873,6 +1025,9 @@ export default function SolarTargetBuildingSelector({
   const [targetLabel, setTargetLabel] = useState("Main house");
   const [customLabel, setCustomLabel] = useState("");
 
+  const [addingSecondaryBuilding, setAddingSecondaryBuilding] = useState(false);
+  const [pendingSecondaryTarget, setPendingSecondaryTarget] = useState(null);
+
   const [solarTargetBuildings, setSolarTargetBuildings] = useState(
     Array.isArray(value?.solarTargetBuildings) ? value.solarTargetBuildings : []
   );
@@ -884,8 +1039,26 @@ export default function SolarTargetBuildingSelector({
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [analysisError, setAnalysisError] = useState("");
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
-  const [showRoofAreaReview, setShowRoofAreaReview] = useState(false);
-  const [selectedRoofSegmentKeys, setSelectedRoofSegmentKeys] = useState([]);
+  const restoredRoofSegmentKeys =
+    buildSelectedRoofSegmentKeysFromCalculationRoofs(
+      value?.solarApiAnalysis,
+      calculationRoofs
+    );
+
+  const [selectedRoofSegmentKeys, setSelectedRoofSegmentKeys] = useState(
+    () =>
+      restoredRoofSegmentKeys.length > 0
+        ? restoredRoofSegmentKeys
+        : value?.solarApiAnalysis
+          ? buildDefaultRoofSelectionSegmentKeys(value.solarApiAnalysis)
+          : []
+  );
+
+  const [roofSelectionConfirmed, setRoofSelectionConfirmed] = useState(
+    () =>
+      hasCalculationRoofs &&
+      restoredRoofSegmentKeys.length > 0
+  );
   const [propertyBoundary, setPropertyBoundary] = useState(
     value?.propertyBoundary || null
   );
@@ -894,6 +1067,8 @@ export default function SolarTargetBuildingSelector({
 
   const targetLabelRef = useRef(targetLabel);
   const customLabelRef = useRef(customLabel);
+  const addingSecondaryBuildingRef = useRef(false);
+  const pendingSecondaryTargetRef = useRef(null);
   const solarTargetBuildingsRef = useRef(solarTargetBuildings);
   const solarApiAnalysisRef = useRef(solarApiAnalysis);
 
@@ -1061,16 +1236,11 @@ export default function SolarTargetBuildingSelector({
     }
 
     resetPropertyBoundary({ keepDrawingMode: true });
-
-    // A previous boundary-filtered analysis must not remain canonical while
-    // the customer redraws the ownership boundary.
-    solarApiAnalysisRef.current = null;
-    setSolarApiAnalysis(null);
     setSelectedRoofSegmentKeys([]);
 
     emitChange(
       solarTargetBuildingsRef.current,
-      null,
+      solarApiAnalysisRef.current,
       null
     );
 
@@ -1084,21 +1254,16 @@ export default function SolarTargetBuildingSelector({
 
   function cancelBoundaryDrawing() {
     resetPropertyBoundary();
-
-    // Clear any analysis that may have been produced using the old boundary,
-    // and make sure the parent roofGeometry no longer contains that boundary.
-    solarApiAnalysisRef.current = null;
-    setSolarApiAnalysis(null);
     setSelectedRoofSegmentKeys([]);
 
     emitChange(
       solarTargetBuildingsRef.current,
-      null,
+      solarApiAnalysisRef.current,
       null
     );
 
     setMapStatus(
-      "Property boundary cleared. Analyse the building again before using the roof estimate."
+      "Boundary marking cancelled. Start again when you're ready."
     );
   }
 
@@ -1137,6 +1302,7 @@ export default function SolarTargetBuildingSelector({
       setBoundaryDrawingMode(false);
 
       renderBoundaryOverlay(nextBoundary);
+
       emitChange(
         solarTargetBuildingsRef.current,
         solarApiAnalysisRef.current,
@@ -1144,12 +1310,8 @@ export default function SolarTargetBuildingSelector({
       );
 
       setMapStatus(
-        `Property boundary saved: ${requiredLines} boundary line${requiredLines === 1 ? "" : "s"} captured. Re-running roof model with boundary filter…`
+        "Boundary marked. Check the line on the map, then confirm it to continue."
       );
-
-      window.setTimeout(() => {
-        analyseTargets({ propertyBoundaryOverride: nextBoundary });
-      }, 0);
 
       return;
     }
@@ -1157,6 +1319,24 @@ export default function SolarTargetBuildingSelector({
     setMapStatus(
       `Boundary point ${nextPoints.length} of ${requiredPoints} added. ${getBoundaryInstruction(currentPropertyType)}`
     );
+  }
+
+  function confirmPropertyBoundary() {
+    const currentBoundary =
+      propertyBoundaryRef.current ||
+      propertyBoundary ||
+      null;
+
+    if (!currentBoundary) {
+      setMapStatus(
+        "Mark the property boundary on the map before confirming."
+      );
+      return;
+    }
+
+    analyseTargets({
+      propertyBoundaryOverride: currentBoundary,
+    });
   }
 
   function handleMapClick(latLng) {
@@ -1188,6 +1368,37 @@ export default function SolarTargetBuildingSelector({
       ? solarTargetBuildingsRef.current
       : [];
 
+    if (currentTargets.length > 0) {
+      if (!addingSecondaryBuildingRef.current) {
+        setMapStatus(
+          "Your home is already selected."
+        );
+        return;
+      }
+
+      const nextSecondaryTarget = {
+        id: makeTargetId(),
+        label: "Garage / outbuilding",
+        source: "user_clicked_google_map_secondary",
+        latitude: roundCoordinate(latLng.lat()),
+        longitude: roundCoordinate(latLng.lng()),
+      };
+
+      pendingSecondaryTargetRef.current = nextSecondaryTarget;
+      setPendingSecondaryTarget(nextSecondaryTarget);
+
+      renderMarkers([
+        ...currentTargets,
+        nextSecondaryTarget,
+      ]);
+
+      setMapStatus(
+        "Additional building selected. Confirm it below to include it."
+      );
+
+      return;
+    }
+
     const nextTarget = {
       id: makeTargetId(),
       label: getNextLabel(),
@@ -1204,20 +1415,151 @@ export default function SolarTargetBuildingSelector({
     setSolarTargetBuildings(nextTargets);
     setSolarApiAnalysis(null);
     setAnalysisError("");
-    setShowRoofAreaReview(false);
     setSelectedRoofSegmentKeys([]);
     resetPropertyBoundary();
     renderMarkers(nextTargets);
     emitChange(nextTargets, null);
 
     setMapStatus(
-      `${nextTarget.label} target added. Add another building if needed, or analyse selected buildings.`
+      `Home selected. Confirm it below to continue.`
     );
 
-    if (targetLabelRef.current === "Main house") {
-      targetLabelRef.current = "Garage";
-      setTargetLabel("Garage");
+  }
+
+  function startAddingSecondaryBuilding() {
+    const currentPropertyType = String(
+      propertyTypeRef.current ||
+      propertyType ||
+      ""
+    ).toLowerCase();
+
+    if (!["detached", "bungalow"].includes(currentPropertyType)) {
+      setMapStatus(
+        "Additional buildings are not available for this property type yet."
+      );
+      return;
     }
+
+    addingSecondaryBuildingRef.current = true;
+    pendingSecondaryTargetRef.current = null;
+
+    setAddingSecondaryBuilding(true);
+    setPendingSecondaryTarget(null);
+    setAnalysisError("");
+
+    renderMarkers(solarTargetBuildingsRef.current);
+
+    setMapStatus(
+      "Click the garage or outbuilding you would like us to include."
+    );
+  }
+
+  function chooseSecondaryBuildingAgain() {
+    pendingSecondaryTargetRef.current = null;
+    setPendingSecondaryTarget(null);
+
+    renderMarkers(solarTargetBuildingsRef.current);
+
+    setMapStatus(
+      "Click the garage or outbuilding you would like us to include."
+    );
+  }
+
+  function cancelAddingSecondaryBuilding() {
+    addingSecondaryBuildingRef.current = false;
+    pendingSecondaryTargetRef.current = null;
+
+    setAddingSecondaryBuilding(false);
+    setPendingSecondaryTarget(null);
+    setAnalysisError("");
+
+    renderMarkers(solarTargetBuildingsRef.current);
+
+    setMapStatus(
+      "Home confirmed."
+    );
+  }
+
+  async function confirmSecondaryBuilding() {
+    const pendingTarget = pendingSecondaryTargetRef.current;
+
+    if (!pendingTarget) {
+      setMapStatus(
+        "Click the garage or outbuilding on the map first."
+      );
+      return;
+    }
+
+    const currentTargets = Array.isArray(solarTargetBuildingsRef.current)
+      ? solarTargetBuildingsRef.current
+      : [];
+
+    // V1 supports one optional additional building.
+    const mainTarget = currentTargets[0];
+
+    if (!mainTarget) {
+      setMapStatus(
+        "Your main home selection could not be found. Choose your home again."
+      );
+      return;
+    }
+
+    const nextTargets = [
+      mainTarget,
+      pendingTarget,
+    ];
+
+    const result = await analyseTargets({
+      targetsOverride: nextTargets,
+    });
+
+    if (!result) {
+      return;
+    }
+
+    solarTargetBuildingsRef.current = nextTargets;
+    setSolarTargetBuildings(nextTargets);
+    renderMarkers(nextTargets);
+
+    addingSecondaryBuildingRef.current = false;
+    pendingSecondaryTargetRef.current = null;
+
+    setAddingSecondaryBuilding(false);
+    setPendingSecondaryTarget(null);
+
+    setMapStatus(
+      "Additional building included in the roof assessment."
+    );
+  }
+
+  async function removeSecondaryBuilding() {
+    const currentTargets = Array.isArray(solarTargetBuildingsRef.current)
+      ? solarTargetBuildingsRef.current
+      : [];
+
+    const mainTarget = currentTargets[0];
+
+    if (!mainTarget || currentTargets.length <= 1) {
+      return;
+    }
+
+    const nextTargets = [mainTarget];
+
+    const result = await analyseTargets({
+      targetsOverride: nextTargets,
+    });
+
+    if (!result) {
+      return;
+    }
+
+    solarTargetBuildingsRef.current = nextTargets;
+    setSolarTargetBuildings(nextTargets);
+    renderMarkers(nextTargets);
+
+    setMapStatus(
+      "Additional building removed from the roof assessment."
+    );
   }
 
   function removeTarget(targetId) {
@@ -1235,7 +1577,6 @@ export default function SolarTargetBuildingSelector({
     setSolarTargetBuildings(nextTargets);
     setSolarApiAnalysis(null);
     setAnalysisError("");
-    setShowRoofAreaReview(false);
     setSelectedRoofSegmentKeys([]);
     resetPropertyBoundary();
     renderMarkers(nextTargets);
@@ -1249,12 +1590,17 @@ export default function SolarTargetBuildingSelector({
     setSolarTargetBuildings([]);
     setSolarApiAnalysis(null);
     setAnalysisError("");
-    setShowRoofAreaReview(false);
     setSelectedRoofSegmentKeys([]);
     resetPropertyBoundary();
     clearMarkers();
+
+    targetLabelRef.current = "Main house";
+    customLabelRef.current = "";
+    setTargetLabel("Main house");
+    setCustomLabel("");
+
     emitChange([], null);
-    setMapStatus("Targets cleared. Click the main building roof to start again.");
+    setMapStatus("Click your home on the satellite image.");
   }
 
   function centreMapOnSelectedAddress() {
@@ -1270,13 +1616,15 @@ export default function SolarTargetBuildingSelector({
 
     map.setCenter(center);
     map.setZoom(initialZoom);
-    setMapStatus("Map centred on selected address. Click the building roof you want to assess.");
+    setMapStatus("Map centred on your address. Click your home on the satellite image.");
   }
 
   async function analyseTargets(options = {}) {
-    const currentTargets = Array.isArray(solarTargetBuildingsRef.current)
-      ? solarTargetBuildingsRef.current
-      : [];
+    const currentTargets = Array.isArray(options?.targetsOverride)
+      ? options.targetsOverride
+      : Array.isArray(solarTargetBuildingsRef.current)
+        ? solarTargetBuildingsRef.current
+        : [];
 
     const currentPropertyType =
       propertyTypeRef.current ||
@@ -1297,7 +1645,7 @@ export default function SolarTargetBuildingSelector({
     });
 
     if (!currentTargets.length) {
-      setAnalysisError("Select at least one building target first.");
+      setAnalysisError("Click your home on the satellite image first.");
       return;
     }
 
@@ -1306,8 +1654,8 @@ export default function SolarTargetBuildingSelector({
 
     setMapStatus(
       currentPropertyBoundary
-        ? "Analysing selected building with property boundary filter…"
-        : "Analysing selected buildings with Google Solar API…"
+        ? "Checking your roof using the boundary you marked…"
+        : "Checking your roof…"
     );
 
     try {
@@ -1329,8 +1677,8 @@ export default function SolarTargetBuildingSelector({
 
       setSolarApiAnalysis(result);
       setShowTechnicalDetails(false);
-      setShowRoofAreaReview(false);
-      setSelectedRoofSegmentKeys(buildDefaultRoofSelectionSegmentKeys(result));
+        setSelectedRoofSegmentKeys(buildDefaultRoofSelectionSegmentKeys(result));
+      setRoofSelectionConfirmed(false);
 
       if (currentPropertyBoundary) {
         propertyBoundaryRef.current = currentPropertyBoundary;
@@ -1346,17 +1694,21 @@ export default function SolarTargetBuildingSelector({
 
       setMapStatus(
         currentPropertyBoundary
-          ? "Boundary-adjusted roof model ready. Review the selected roof areas, then use the estimate."
+          ? "Roof check complete. Review the roof areas below."
           : result?.summary?.uniqueBuildingsReturned
             ? `Solar roof model found for ${result.summary.uniqueBuildingsReturned} unique building(s).`
             : "Analysis completed, but no unique roof models were returned."
       );
+
+      return result;
     } catch (err) {
       console.warn("Solar roof target analysis failed:", err);
       setAnalysisError(
         err?.message || "Could not analyse the selected buildings."
       );
-      setMapStatus("Solar roof analysis failed. Check the backend is running and try again.");
+      setMapStatus("We could not check this roof right now. Please try again.");
+
+      return null;
     } finally {
       setAnalysisLoading(false);
     }
@@ -1419,7 +1771,7 @@ export default function SolarTargetBuildingSelector({
 
         setMapStatus(
           selectedAddressRef.current
-            ? "Map centred on selected address. Click the main building roof first."
+            ? "Map centred on your address. Click your home on the satellite image."
             : "Map loaded. Go back to Step 1 and select the exact address."
         );
       } catch (err) {
@@ -1479,6 +1831,73 @@ export default function SolarTargetBuildingSelector({
   const boundaryCaptured = !!propertyBoundary;
   const boundaryPropertyLabel = getPropertyTypeLabel(propertyType);
 
+  const homeTargetSelected = solarTargetBuildings.length > 0;
+  const homeAnalysisReady = Boolean(solarApiAnalysis?.summary);
+
+  const boundaryFilterApplied =
+    solarApiAnalysis?.solarBuildingModels?.[0]?.propertyBoundaryFilter?.applied === true;
+
+  const homeSelectionComplete =
+    homeAnalysisReady &&
+    (!boundaryRequired || boundaryFilterApplied);
+
+  const secondaryBuildingEligible = [
+    "detached",
+    "bungalow",
+  ].includes(
+    String(propertyType || "").toLowerCase()
+  );
+
+  const additionalBuildingCount = Math.max(
+    solarTargetBuildings.length - 1,
+    0
+  );
+
+  const analysedBuildings = Array.isArray(
+    solarApiAnalysis?.solarBuildingModels
+  )
+    ? solarApiAnalysis.solarBuildingModels
+    : [];
+
+  const additionalBuildingModels =
+    analysedBuildings.slice(1);
+
+  const additionalBuildingUsableCount =
+    additionalBuildingModels.filter((building) => {
+      const model = getRoofSelectionModel(building);
+
+      return (
+        model &&
+        getSelectableRoofSelectionSegments(model).length > 0
+      );
+    }).length;
+
+  const additionalBuildingAvoidOnlyCount =
+    additionalBuildingModels.filter((building) => {
+      const model = getRoofSelectionModel(building);
+
+      if (!model) {
+        return false;
+      }
+
+      const selectableSegments =
+        getSelectableRoofSelectionSegments(model);
+
+      const avoidSegmentCount =
+        numberOrNull(model?.summary?.avoidSegmentCount) ||
+        (Array.isArray(model?.notRecommendedSegments)
+          ? model.notRecommendedSegments.length
+          : 0) +
+        (Array.isArray(model?.hiddenSegments)
+          ? model.hiddenSegments.length
+          : 0);
+
+      return (
+        selectableSegments.length === 0 &&
+        avoidSegmentCount > 0
+      );
+    }).length;
+
   if (!process.env.REACT_APP_GOOGLE_MAPS_API_KEY) {
     return (
       <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
@@ -1492,175 +1911,368 @@ export default function SolarTargetBuildingSelector({
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-slate-200 bg-white p-4">
-        <h3 className="text-lg font-semibold text-slate-900">
-          Select roof buildings to analyse
-        </h3>
-
-        <p className="mt-1 text-sm text-slate-600">
-          Click the roof of each building you want us to assess — for example
-          the main house, garage or outbuilding. We will use Google Solar API to
-          retrieve roof segments, pitch, azimuth, usable area and panel-position
-          estimates.
-        </p>
-
-        {selectedAddress?.fullAddress && (
-          <div className="mt-4 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
-            <p className="font-semibold">Selected address</p>
-            <p className="mt-1">{selectedAddress.fullAddress}</p>
-
-            <button
-              type="button"
-              className="secondary-mini mt-3"
-              onClick={centreMapOnSelectedAddress}
-            >
-              Re-centre on selected address
-            </button>
-          </div>
-        )}
-
-        {!selectedAddress && (
-          <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-            <p className="font-semibold">No selected address found</p>
-            <p className="mt-1">
-              Go back to Step 1 and select the exact address before choosing
-              roof targets.
-            </p>
-          </div>
-        )}
-
-        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr]">
-          <label className="text-sm">
-            <span className="block font-medium text-slate-700">
-              Next click label
-            </span>
-
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-300 p-2"
-              value={targetLabel}
-              onChange={(event) => {
-                const nextLabel = event.target.value;
-                targetLabelRef.current = nextLabel;
-                setTargetLabel(nextLabel);
-              }}
-            >
-              {TARGET_LABELS.map((label) => (
-                <option key={label} value={label}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {targetLabel === "Other roof" && (
-            <label className="text-sm">
-              <span className="block font-medium text-slate-700">
-                Custom label
-              </span>
-
-              <input
-                className="mt-1 w-full rounded-lg border border-slate-300 p-2"
-                value={customLabel}
-                onChange={(event) => {
-                  const nextCustomLabel = event.target.value;
-                  customLabelRef.current = nextCustomLabel;
-                  setCustomLabel(nextCustomLabel);
-                }}
-                placeholder="e.g. Workshop roof"
-              />
-            </label>
-          )}
-        </div>
-
-        <p className="mt-3 text-sm text-slate-600">{mapStatus}</p>
-
-        {boundaryRequired && (
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="font-semibold">
-                  Property boundary needed for this {boundaryPropertyLabel} home
-                </p>
-                <p className="mt-1 text-amber-900">
-                  Satellite roof data may include part of the attached neighbour&apos;s roof.
-                  After the roof model has loaded, draw the ownership boundary so we can
-                  filter the roof model in the next step.
-                </p>
-                <p className="mt-2 text-xs text-amber-800">
-                  {getBoundaryInstruction(propertyType)}
-                </p>
+        {homeSelectionComplete ? (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                <span
+                  aria-hidden="true"
+                  className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white"
+                >
+                  ✓
+                </span>
+                Home confirmed
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="secondary-mini"
-                  onClick={startBoundaryDrawing}
-                  disabled={!solarApiAnalysis?.summary || analysisLoading}
-                >
-                  {boundaryCaptured ? "Redraw boundary" : "Draw property boundary"}
-                </button>
+              {selectedAddress?.fullAddress && (
+                <p className="mt-2 text-sm font-medium text-slate-900">
+                  {selectedAddress.fullAddress}
+                </p>
+              )}
 
-                {(boundaryDrawingMode || boundaryCaptured) && (
+              <p className="mt-1 text-sm text-slate-600">
+                We&apos;ve checked the satellite roof data for this property.
+              </p>
+
+              {additionalBuildingCount > 0 && (
+                <p
+                  className={`mt-1 text-sm font-medium ${
+                    additionalBuildingAvoidOnlyCount > 0
+                      ? "text-amber-700"
+                      : "text-emerald-800"
+                  }`}
+                >
+                  {additionalBuildingAvoidOnlyCount > 0
+                    ? "Additional building checked — no suitable roof areas found."
+                    : additionalBuildingUsableCount > 0
+                      ? `${additionalBuildingUsableCount} additional building${
+                          additionalBuildingUsableCount === 1 ? "" : "s"
+                        } checked and available below.`
+                      : "Additional building checked."}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {secondaryBuildingEligible &&
+                !addingSecondaryBuilding &&
+                additionalBuildingCount === 0 && (
                   <button
                     type="button"
                     className="secondary-mini"
-                    onClick={cancelBoundaryDrawing}
+                    onClick={startAddingSecondaryBuilding}
+                    disabled={analysisLoading}
                   >
-                    Clear boundary
+                    + Add a garage or outbuilding
+                  </button>
+                )}
+
+              {secondaryBuildingEligible &&
+                !addingSecondaryBuilding &&
+                additionalBuildingCount > 0 && (
+                  <button
+                    type="button"
+                    className="secondary-mini"
+                    onClick={removeSecondaryBuilding}
+                    disabled={analysisLoading}
+                  >
+                    Remove added building
+                  </button>
+                )}
+
+              <button
+                type="button"
+                className="secondary-mini"
+                onClick={clearTargets}
+                disabled={analysisLoading || addingSecondaryBuilding}
+              >
+                Choose a different home
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Your home
+                </p>
+
+                <h3 className="mt-1 text-lg font-semibold text-slate-900">
+                  {!homeTargetSelected
+                    ? "Confirm your home"
+                    : !homeAnalysisReady
+                      ? "Is this your home?"
+                      : boundaryRequired
+                        ? "Mark your roof boundary"
+                        : "Checking your roof"}
+                </h3>
+              </div>
+
+              {selectedAddress?.fullAddress && (
+                <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm sm:max-w-[52%] sm:text-right">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Address
+                  </p>
+
+                  <p className="mt-0.5 font-medium text-slate-900">
+                    {selectedAddress.fullAddress}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {!selectedAddress && (
+              <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                Go back to Step 1 and select your address before continuing.
+              </div>
+            )}
+
+            {homeTargetSelected && !homeAnalysisReady && (
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                <span
+                  aria-hidden="true"
+                  className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white"
+                >
+                  ✓
+                </span>
+                Home selected
+              </div>
+            )}
+
+            {!(
+              homeAnalysisReady &&
+              boundaryRequired &&
+              !boundaryFilterApplied
+            ) && (
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <p className="text-sm text-slate-600">
+                  {!homeTargetSelected
+                    ? "Click your home on the satellite image."
+                    : !homeAnalysisReady
+                      ? "Check the marker is on your home, then confirm below."
+                      : mapStatus}
+                </p>
+
+                {selectedAddress?.fullAddress && (
+                  <button
+                    type="button"
+                    className="secondary-mini shrink-0"
+                    onClick={centreMapOnSelectedAddress}
+                  >
+                    Re-centre map
                   </button>
                 )}
               </div>
-            </div>
+            )}
 
-            <div className="mt-3 rounded-lg bg-white/70 p-3 text-xs text-amber-900">
-              {boundaryCaptured ? (
-                <span>
-                  Boundary captured: {propertyBoundary.boundaryLines?.length || 0} line
-                  {(propertyBoundary.boundaryLines?.length || 0) === 1 ? "" : "s"}.
-                  Filtering will be applied in the next backend step.
-                </span>
-              ) : boundaryDrawingMode ? (
-                <span>
-                  Boundary drawing active: {boundaryPoints.length} of {boundaryRequiredPoints}
-                  points selected.
-                </span>
-              ) : solarApiAnalysis?.summary ? (
-                <span>
-                  Roof model loaded. Click “Draw property boundary”, then click on the map to
-                  mark the boundary points.
-                </span>
-              ) : (
-                <span>
-                  Analyse the selected building first, then draw the boundary.
-                </span>
-              )}
-            </div>
-          </div>
+          </>
         )}
 
         <div
           ref={mapContainerRef}
-          className="mt-4 h-[460px] w-full overflow-hidden rounded-xl border border-slate-200"
+          className={`h-[460px] w-full overflow-hidden rounded-xl border border-slate-200 ${
+            homeSelectionComplete && !addingSecondaryBuilding
+              ? "hidden"
+              : "mt-4"
+          }`}
         />
 
-        <div className="mt-4 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={analyseTargets}
-            disabled={analysisLoading || solarTargetBuildings.length === 0}
-          >
-            {analysisLoading ? "Analysing…" : "Analyse selected buildings"}
-          </button>
+        {addingSecondaryBuilding && (
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
+            <p className="font-semibold text-slate-900">
+              Add a garage or outbuilding
+            </p>
 
-          <button
-            type="button"
-            className="secondary-mini"
-            onClick={clearTargets}
-            disabled={analysisLoading || solarTargetBuildings.length === 0}
-          >
-            Clear targets
-          </button>
-        </div>
+            {!pendingSecondaryTarget ? (
+              <p className="mt-1 text-slate-600">
+                Click the garage or outbuilding on the satellite image above.
+              </p>
+            ) : (
+              <>
+                <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white"
+                  >
+                    ✓
+                  </span>
+                  Building selected
+                </div>
+
+                <p className="mt-2 text-slate-600">
+                  Check the marker is on the garage or outbuilding you want
+                  included, then confirm it.
+                </p>
+              </>
+            )}
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {pendingSecondaryTarget && (
+                <button
+                  type="button"
+                  className="next-step-button"
+                  onClick={confirmSecondaryBuilding}
+                  disabled={analysisLoading}
+                >
+                  {analysisLoading
+                    ? "Checking building…"
+                    : "Include this building"}
+                </button>
+              )}
+
+              {pendingSecondaryTarget && (
+                <button
+                  type="button"
+                  className="secondary-mini"
+                  onClick={chooseSecondaryBuildingAgain}
+                  disabled={analysisLoading}
+                >
+                  Choose again
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="secondary-mini"
+                onClick={cancelAddingSecondaryBuilding}
+                disabled={analysisLoading}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+            {homeAnalysisReady &&
+              boundaryRequired &&
+              !boundaryFilterApplied && (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+                  <p className="font-semibold text-slate-950">
+                    Mark your roof boundary
+                  </p>
+
+                  {!boundaryDrawingMode && !boundaryCaptured && (
+                    <>
+                      <p className="mt-1 text-slate-600">
+                        We need to separate your roof from the attached
+                        neighbour before creating your solar layout.
+                      </p>
+
+                      <button
+                        type="button"
+                        className="next-step-button mt-3"
+                        onClick={startBoundaryDrawing}
+                        disabled={analysisLoading}
+                      >
+                        Start marking boundary
+                      </button>
+                    </>
+                  )}
+
+                  {boundaryDrawingMode && (
+                    <>
+                      <p className="mt-1 text-slate-600">
+                        {getBoundaryInstruction(propertyType)}
+                      </p>
+
+                      <div className="mt-3 inline-flex rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700">
+                        {boundaryPoints.length} of {boundaryRequiredPoints} points selected
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className="secondary-mini"
+                          onClick={startBoundaryDrawing}
+                        >
+                          Start again
+                        </button>
+
+                        <button
+                          type="button"
+                          className="secondary-mini"
+                          onClick={cancelBoundaryDrawing}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {boundaryCaptured && !boundaryDrawingMode && (
+                    <>
+                      <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                        <span
+                          aria-hidden="true"
+                          className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white"
+                        >
+                          ✓
+                        </span>
+                        Boundary marked
+                      </div>
+
+                      <p className="mt-2 text-slate-600">
+                        Check the {boundaryLineCount === 1 ? "line" : "lines"} on
+                        the map. If {boundaryLineCount === 1 ? "it follows" : "they follow"} the
+                        boundary with your neighbour, confirm to continue.
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className="next-step-button"
+                          onClick={confirmPropertyBoundary}
+                          disabled={analysisLoading}
+                        >
+                          {analysisLoading
+                            ? "Checking boundary…"
+                            : boundaryLineCount === 1
+                              ? "Confirm boundary line"
+                              : "Confirm boundary lines"}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="secondary-mini"
+                          onClick={startBoundaryDrawing}
+                          disabled={analysisLoading}
+                        >
+                          Redraw
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+        {!homeSelectionComplete && (
+          <div className="mt-4 flex flex-wrap gap-3">
+            {homeTargetSelected && !homeAnalysisReady && (
+              <button
+                type="button"
+                className="next-step-button"
+                onClick={() => analyseTargets()}
+                disabled={analysisLoading}
+              >
+                {analysisLoading
+                  ? "Checking roof…"
+                  : "Confirm this is my home"}
+              </button>
+            )}
+
+            {homeTargetSelected && (
+              <button
+                type="button"
+                className="secondary-mini"
+                onClick={clearTargets}
+                disabled={analysisLoading}
+              >
+                Choose again
+              </button>
+            )}
+          </div>
+        )}
 
         {analysisError && (
           <div className="mt-4 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-900">
@@ -1669,106 +2281,64 @@ export default function SolarTargetBuildingSelector({
         )}
       </div>
 
-      {solarTargetBuildings.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <h4 className="font-semibold text-slate-900">
-            Selected building targets
-          </h4>
-
-          <div className="mt-3 space-y-2">
-            {solarTargetBuildings.map((target, index) => (
-              <div
-                key={target.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 text-sm"
-              >
-                <div>
-                  <p className="font-medium text-slate-900">
-                    {index + 1}. {target.label}
-                  </p>
-                  <p className="text-slate-500">
-                    {target.latitude}, {target.longitude}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  className="secondary-mini"
-                  onClick={() => removeTarget(target.id)}
-                  disabled={analysisLoading}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {solarApiAnalysis?.summary && (() => {
-        const buildings = Array.isArray(solarApiAnalysis.solarBuildingModels)
+      {homeSelectionComplete &&
+        !addingSecondaryBuilding &&
+        solarApiAnalysis?.summary &&
+        (() => {
+        const buildings = Array.isArray(
+          solarApiAnalysis.solarBuildingModels
+        )
           ? solarApiAnalysis.solarBuildingModels
           : [];
 
         const primaryBuilding = buildings[0] || null;
-        const roofSelectionModel = primaryBuilding?.roofSelectionModel || null;
 
-        const boundaryFilterApplied =
-          primaryBuilding?.propertyBoundaryFilter?.applied === true;
-
-        const roofEstimateReady =
-          !boundaryRequired ||
-          (boundaryCaptured && boundaryFilterApplied);
-        const modelSummary = roofSelectionModel?.summary || {};
-        const suggestedRange = roofSelectionModel?.suggestedPanelRange || null;
-        const totals = getAnalysisTotals(solarApiAnalysis);
-
-        const confidenceLevel = String(
-          modelSummary.confidenceLevel || "medium"
-        ).toLowerCase();
-
-        const confidenceLabel =
-          confidenceLevel === "high"
-            ? "High confidence"
-            : confidenceLevel === "low"
-              ? "Low confidence"
-              : "Medium confidence";
-
-        const selectedCapacity =
-          modelSummary.defaultSelectedCapacityPanels ??
-          modelSummary.recommendedCapacityPanels ??
-          "—";
-
-        const maxSelectable = modelSummary.selectableCapacityPanels ?? "—";
-
-        const warnings = Array.isArray(roofSelectionModel?.warnings)
-          ? roofSelectionModel.warnings
-          : [];
-
-        const selectedRoofSegmentKeySet = new Set(selectedRoofSegmentKeys);
-
-        const selectedRoofAreaCount = selectedRoofSegmentKeys.length;
+        const roofSelectionModel =
+          primaryBuilding?.roofSelectionModel || null;
 
         const panelAssumption =
           roofSelectionModel?.panelAssumption ||
           roofSelectionModel?.summary?.panelAssumption ||
           null;
 
-        const googlePanelAssumption =
-          roofSelectionModel?.googlePanelAssumption ||
-          roofSelectionModel?.summary?.googlePanelAssumption ||
-          null;
+        const panelWatt =
+          numberOrNull(panelAssumption?.panelWatts) || null;
 
-        const panelCountMethod =
-          roofSelectionModel?.panelCountMethod ||
-          roofSelectionModel?.summary?.panelCountMethod ||
-          null;
+        const selectedPanels =
+          editableRoofPanelTotal;
 
-        const panelCountAdjustmentFactor =
-          roofSelectionModel?.summary?.panelCountAdjustmentFactor ||
-          null;
+        const selectedKwp =
+          panelWatt && selectedPanels
+            ? ((selectedPanels * panelWatt) / 1000).toFixed(1)
+            : null;
+
+        const confirmedPanels =
+          getEstimatedRoofPanelTotal(
+            Array.isArray(calculationRoofs)
+              ? calculationRoofs
+              : []
+          );
+
+        const confirmedKwp =
+          panelWatt && confirmedPanels
+            ? ((confirmedPanels * panelWatt) / 1000).toFixed(1)
+            : null;
+
+        const boundaryRequired =
+          requiresPropertyBoundary(propertyType);
+
+        const boundaryFilterApplied =
+          primaryBuilding?.propertyBoundaryFilter?.applied === true;
+
+        const layoutReady =
+          !boundaryRequired || boundaryFilterApplied;
+
+        const selectedRoofSegmentKeySet =
+          new Set(selectedRoofSegmentKeys);
 
         function toggleRoofSelectionSegment(building, segment) {
-          const key = getRoofSelectionSegmentKey(building, segment);
+          const key =
+            getRoofSelectionSegmentKey(building, segment);
 
           if (!key) {
             return;
@@ -1791,493 +2361,388 @@ export default function SolarTargetBuildingSelector({
           });
         }
 
-        const roofModelTitle = roofSelectionModel
-          ? getRoofSelectionTitle(roofSelectionModel)
-          : "Roof areas need review";
+        if (roofSelectionConfirmed && hasCalculationRoofs) {
+          const displayPanels =
+            confirmedPanels || selectedPanels;
 
-        const roofModelDescription = roofSelectionModel
-          ? getRoofSelectionDescription(roofSelectionModel)
-          : "We found Google Solar roof data, but the roof-selection model was not returned by the backend.";
+          const displayKwp =
+            confirmedKwp || selectedKwp;
 
-        return (
-          <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-800">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  AI roof estimate
-                </p>
-
-                <h4 className="mt-1 text-lg font-semibold text-slate-950">
-                  {roofModelTitle}
-                </h4>
-
-                <p className="mt-1 max-w-2xl text-slate-600">
-                  {roofModelDescription}
-                </p>
-              </div>
-
-              <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-                {confidenceLabel}
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-3 md:grid-cols-4">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Suggested panels
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-slate-950">
-                  {suggestedRange?.expected ?? (editableRoofPanelTotal || "—")}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Likely range
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-slate-950">
-                  {suggestedRange
-                    ? `${suggestedRange.low}–${suggestedRange.high}`
-                    : "—"}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Selected roof capacity
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-slate-950">
-                  {selectedCapacity}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Max selectable
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-slate-950">
-                  {maxSelectable}
-                </p>
-              </div>
-            </div>
-
-            {warnings.length > 0 && (
-              <div className="mt-4 space-y-2">
-                {warnings.slice(0, 3).map((warning) => (
-                  <div
-                    key={warning.code}
-                    className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950"
-                  >
-                    {warning.message}
+          return (
+            <div className="rounded-xl border border-emerald-200 bg-white p-4 text-sm text-slate-800">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                    <span
+                      aria-hidden="true"
+                      className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white"
+                    >
+                      ✓
+                    </span>
+                    Selection confirmed
                   </div>
-                ))}
-              </div>
-            )}
 
-            {panelAssumption && (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-                <p className="text-sm font-semibold text-slate-950">
-                  Panel assumption used for this estimate
-                </p>
-                <p className="mt-1 text-sm text-slate-700">
-                  {formatPanelAssumption(panelAssumption)}
-                </p>
-                <p className="mt-2 text-xs text-slate-500">
-                  {formatPanelCountMethod(panelCountMethod)}
-                </p>
-
-                <div className="mt-3 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
-                  <p>
-                    Google API panel assumption:{" "}
-                    {formatPanelAssumption(googlePanelAssumption)}
+                  <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Current selection
                   </p>
-                  <p className="mt-1">
-                    Area adjustment factor: {panelCountAdjustmentFactor || "—"}
+
+                  <p className="mt-1 text-2xl font-semibold text-slate-950">
+                    {displayKwp
+                      ? `${displayKwp} kWp`
+                      : `${displayPanels} panels`}
+                  </p>
+
+                  <p className="mt-1 text-sm text-slate-600">
+                    {displayPanels} panel
+                    {displayPanels === 1 ? "" : "s"} selected
+                  </p>
+
+                  <p className="mt-2 text-xs text-emerald-700">
+                    This roof layout is locked in for your estimate.
                   </p>
                 </div>
-              </div>
-            )}
-
-            {roofSelectionModel && (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-slate-950">
-                      Review selected roof areas
-                    </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {selectedRoofAreaCount} roof area
-                      {selectedRoofAreaCount === 1 ? "" : "s"} selected for the estimate.
-                      You can add or remove suitable areas before creating the editable roof cards.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="secondary-mini"
-                    onClick={() => setShowRoofAreaReview((value) => !value)}
-                  >
-                    {showRoofAreaReview ? "Hide roof areas" : "Review roof areas"}
-                  </button>
-                </div>
-
-                {showRoofAreaReview && (
-                  <div className="mt-4 space-y-4">
-                    {buildings.map((building) => {
-                      const model = building.roofSelectionModel || null;
-                      const selectableSegments = getSelectableRoofSelectionSegments(model);
-
-                      if (!model || selectableSegments.length === 0) {
-                        return null;
-                      }
-
-                      return (
-                        <div
-                          key={building.id}
-                          className="rounded-xl border border-slate-200 bg-white p-3"
-                        >
-                          <p className="font-semibold text-slate-950">
-                            {building.targetLabel || building.id}
-                          </p>
-
-                          <div className="mt-3 grid gap-2">
-                            {selectableSegments.map((segment) => {
-                              const key = getRoofSelectionSegmentKey(building, segment);
-                              const checked = selectedRoofSegmentKeySet.has(key);
-                              const status = segment.selectionStatus || "optional";
-
-                              return (
-                                <label
-                                  key={key}
-                                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm ${
-                                    checked
-                                      ? "border-blue-300 bg-blue-50"
-                                      : "border-slate-200 bg-white"
-                                  }`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    className="mt-1"
-                                    checked={checked}
-                                    onChange={() =>
-                                      toggleRoofSelectionSegment(building, segment)
-                                    }
-                                  />
-
-                                  <div className="flex-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <span className="font-semibold text-slate-950">
-                                        Roof area {Number(segment.segmentIndex ?? 0) + 1}
-                                      </span>
-
-                                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                        status === "recommended"
-                                          ? "bg-emerald-100 text-emerald-800"
-                                          : "bg-amber-100 text-amber-800"
-                                      }`}>
-                                        {status === "recommended"
-                                          ? "Recommended"
-                                          : "Optional"}
-                                      </span>
-                                    </div>
-
-                                    <p className="mt-1 text-slate-600">
-                                      Up to {segment.maxPanels ?? "—"} modelled panels
-                                      {segment.googleMaxConfigPanels !== undefined
-                                        ? ` · Google capacity ${segment.googleMaxConfigPanels}`
-                                        : ""}{" "}
-                                      · {azimuthToCompass(segment.azimuthDegrees)} facing ·{" "}
-                                      {formatDegrees(segment.pitchDegrees)} pitch
-                                      {segment.annualKwhPerKwp
-                                        ? ` · ${Math.round(segment.annualKwhPerKwp)} kWh/kWp`
-                                        : ""}
-                                    </p>
-                                  </div>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    <p className="text-xs text-slate-500">
-                      At least one roof area must remain selected. Optional areas are usable
-                      areas that should be actively confirmed before relying on them.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {editableRoofEstimates.length > 0 && (
-              <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-blue-950">
-                <p className="font-semibold">
-                  Create your editable roof estimate
-                </p>
-
-                <p className="mt-1 text-sm">
-                  We can create {editableRoofEstimates.length} editable roof estimate
-                  {editableRoofEstimates.length === 1 ? "" : "s"} with around{" "}
-                  {editableRoofPanelTotal} total panel
-                  {editableRoofPanelTotal === 1 ? "" : "s"}. You can still adjust
-                  roof direction, pitch, shading and panel count before generating
-                  the quote.
-                </p>
-
-                {boundaryRequired && !roofEstimateReady && (
-                  <p className="mt-3 text-sm font-medium text-amber-800">
-                    Draw and apply the property boundary before using this roof estimate.
-                  </p>
-                )}
 
                 <button
                   type="button"
-                  className="mt-3"
-                  disabled={!roofEstimateReady}
+                  className="secondary-mini"
+                  onClick={() =>
+                    setRoofSelectionConfirmed(false)
+                  }
+                >
+                  Adjust selection
+                </button>
+              </div>
+
+              <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                Exact panel positions and usable roof space will still be
+                confirmed during the survey and final design.
+              </p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-800">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Roof layout
+              </p>
+
+              <h4 className="mt-1 text-lg font-semibold text-slate-950">
+                Choose the roof areas to include
+              </h4>
+
+              <p className="mt-1 text-sm text-slate-600">
+                We&apos;ve selected the roof areas we&apos;d use as the starting point.
+              </p>
+
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    aria-hidden="true"
+                    className="h-2.5 w-2.5 rounded-full bg-emerald-400"
+                  />
+                  Recommended
+                </span>
+
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    aria-hidden="true"
+                    className="h-2.5 w-2.5 rounded-full bg-amber-400"
+                  />
+                  Potential
+                </span>
+              </div>
+            </div>
+
+            {!layoutReady && (
+              <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-amber-950">
+                Confirm the property boundary above before using this layout.
+              </div>
+            )}
+
+            <div className="mt-4 space-y-3">
+              {buildings.map((building) => {
+                const model =
+                  building.roofSelectionModel || null;
+
+                const selectableSegments =
+                  getSelectableRoofSelectionSegments(model);
+
+                if (!model) {
+                  return null;
+                }
+
+                if (selectableSegments.length === 0) {
+                  const avoidSegmentCount =
+                    numberOrNull(
+                      model?.summary?.avoidSegmentCount
+                    ) ||
+                    (Array.isArray(model?.notRecommendedSegments)
+                      ? model.notRecommendedSegments.length
+                      : 0) +
+                    (Array.isArray(model?.hiddenSegments)
+                      ? model.hiddenSegments.length
+                      : 0);
+
+                  return (
+                    <div
+                      key={building.id}
+                      className="overflow-hidden rounded-xl border border-slate-200"
+                    >
+                      {buildings.length > 1 && (
+                        <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            {building.targetLabel ||
+                              building.label ||
+                              "Building"}
+                          </p>
+
+                          <p className="text-xs text-slate-500">
+                            {selectableSegments.length} roof area
+                            {selectableSegments.length === 1 ? "" : "s"}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="px-4 py-4">
+                        <div className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                          No suitable roof areas found
+                        </div>
+
+                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                          {avoidSegmentCount > 0
+                            ? "All detected roof areas on this building were classed as Avoid, so this building has not been included in your solar estimate."
+                            : "We could not identify any Recommended or Potential roof areas on this building, so it has not been included in your solar estimate."}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div
+                    key={building.id}
+                    className="overflow-hidden rounded-xl border border-slate-200"
+                  >
+                    {buildings.length > 1 && (
+                      <div className="border-b border-slate-200 bg-slate-50 px-4 py-2.5">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          {building.targetLabel ||
+                            building.label ||
+                            "Building"}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="divide-y divide-slate-100">
+                      {selectableSegments.map(
+                        (segment, visibleIndex) => {
+                          const key =
+                            getRoofSelectionSegmentKey(
+                              building,
+                              segment
+                            );
+
+                          const status =
+                            segment.selectionStatus ||
+                            "optional";
+
+                          const isRecommended =
+                            status === "recommended";
+
+                          const checked =
+                            selectedRoofSegmentKeySet.has(
+                              key
+                            );
+
+                          const roofAreaNumber =
+                            visibleIndex + 1;
+
+                          const previousSegment =
+                            selectableSegments[visibleIndex - 1] || null;
+
+                          const nextSegment =
+                            selectableSegments[visibleIndex + 1] || null;
+
+                          const previousSelected =
+                            previousSegment
+                              ? selectedRoofSegmentKeySet.has(
+                                  getRoofSelectionSegmentKey(
+                                    building,
+                                    previousSegment
+                                  )
+                                )
+                              : false;
+
+                          const nextSelected =
+                            nextSegment
+                              ? selectedRoofSegmentKeySet.has(
+                                  getRoofSelectionSegmentKey(
+                                    building,
+                                    nextSegment
+                                  )
+                                )
+                              : false;
+
+                          const previousIsRecommended =
+                            previousSegment
+                              ? (previousSegment.selectionStatus ||
+                                  "optional") === "recommended"
+                              : false;
+
+                          const nextIsRecommended =
+                            nextSegment
+                              ? (nextSegment.selectionStatus ||
+                                  "optional") === "recommended"
+                              : false;
+
+                          const joinsPrevious =
+                            checked &&
+                            previousSelected &&
+                            previousIsRecommended === isRecommended;
+
+                          const joinsNext =
+                            checked &&
+                            nextSelected &&
+                            nextIsRecommended === isRecommended;
+
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              aria-pressed={checked}
+                              aria-label={`${
+                                isRecommended
+                                  ? "Recommended"
+                                  : "Potential"
+                              } roof ${roofAreaNumber}, ${getCustomerRoofFacingLabel(
+                                segment
+                              )}, ${segment.maxPanels ?? "unknown"} panels`}
+                              onMouseDown={(event) => {
+                                // Keep mouse focus from looking like another
+                                // selection state. Keyboard focus still works.
+                                event.preventDefault();
+                              }}
+                              onClick={() =>
+                                toggleRoofSelectionSegment(
+                                  building,
+                                  segment
+                                )
+                              }
+                              className={`roof-selection-row ${
+                                isRecommended
+                                  ? "roof-selection-row--recommended"
+                                  : "roof-selection-row--potential"
+                              } ${
+                                checked
+                                  ? "roof-selection-row--selected"
+                                  : ""
+                              } ${
+                                checked && !joinsPrevious
+                                  ? "roof-selection-row--selected-start"
+                                  : ""
+                              } ${
+                                checked && !joinsNext
+                                  ? "roof-selection-row--selected-end"
+                                  : ""
+                              }`}
+                            >
+                              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                                <div className="min-w-0 flex flex-wrap items-center gap-2">
+                                  <span
+                                    className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                      isRecommended
+                                        ? "bg-emerald-100 text-emerald-800"
+                                        : "bg-amber-100 text-amber-800"
+                                    }`}
+                                  >
+                                    Roof {roofAreaNumber}
+                                  </span>
+
+                                  <span
+                                    aria-hidden="true"
+                                    className="text-slate-300"
+                                  >
+                                    ·
+                                  </span>
+
+                                  <span className="text-sm text-slate-600">
+                                    {getCustomerRoofFacingLabel(segment)}
+                                  </span>
+                                </div>
+
+                                <span className="shrink-0 font-medium text-slate-900">
+                                  {segment.maxPanels ?? "—"} panel
+                                  {Number(segment.maxPanels) === 1 ? "" : "s"}
+                                </span>
+                              </div>
+
+                              {!isRecommended && (
+                                <p className="mt-1.5 text-xs leading-5 text-amber-800/80">
+                                  {getCustomerPotentialReason(segment)}
+                                </p>
+                              )}
+                            </button>
+                          );
+                        }
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {editableRoofEstimates.length > 0 && (
+              <div className="mt-4 flex flex-col gap-3 rounded-xl bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Current selection
+                  </p>
+
+                  <p className="mt-1 text-xl font-semibold text-slate-950">
+                    {selectedKwp
+                      ? `${selectedKwp} kWp`
+                      : `${selectedPanels} panels`}
+                  </p>
+
+                  <p className="mt-0.5 text-sm text-slate-600">
+                    {selectedPanels} panel
+                    {selectedPanels === 1
+                      ? ""
+                      : "s"}{" "}
+                    selected
+                  </p>
+
+
+                </div>
+
+                <button
+                  type="button"
+                  className="next-step-button"
+                  disabled={!layoutReady}
                   onClick={() => {
-                    if (onUseCalculationRoofEstimate) {
-                      onUseCalculationRoofEstimate(editableRoofEstimates);
+                    if (
+                      layoutReady &&
+                      onUseCalculationRoofEstimate
+                    ) {
+                      onUseCalculationRoofEstimate(
+                        editableRoofEstimates
+                      );
+                      setRoofSelectionConfirmed(true);
                     }
                   }}
                 >
-                  {hasCalculationRoofs
-                    ? "Replace current roof estimate"
-                    : "Use this roof estimate"}
+                  Confirm selected layout
                 </button>
               </div>
             )}
 
-            <div className="mt-4 border-t border-slate-200 pt-4">
-              <button
-                type="button"
-                className="secondary-mini"
-                onClick={() => setShowTechnicalDetails((value) => !value)}
-              >
-                {showTechnicalDetails
-                  ? "Hide technical roof model details"
-                  : "Show technical roof model details"}
-              </button>
-            </div>
-
-            {showTechnicalDetails && (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <h5 className="font-semibold text-slate-950">
-                  Technical Google Solar model details
-                </h5>
-
-                <div className="mt-4 grid gap-3 md:grid-cols-4">
-                  <div className="rounded-lg bg-white p-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-500">
-                      Unique buildings
-                    </p>
-                    <p className="text-lg font-semibold">
-                      {solarApiAnalysis.summary.uniqueBuildingsReturned}
-                    </p>
-                  </div>
-
-                  <div className="rounded-lg bg-white p-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-500">
-                      Roof segments
-                    </p>
-                    <p className="text-lg font-semibold">{totals.roofSegments}</p>
-                  </div>
-
-                  <div className="rounded-lg bg-white p-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-500">
-                      Google max panels
-                    </p>
-                    <p className="text-lg font-semibold">{totals.maxPanels}</p>
-                  </div>
-
-                  <div className="rounded-lg bg-white p-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-500">
-                      Google array size
-                    </p>
-                    <p className="text-lg font-semibold">
-                      {totals.googleArrayKw
-                        ? `${totals.googleArrayKw.toFixed(1)} kWp`
-                        : "Unknown"}
-                    </p>
-                  </div>
-                </div>
-
-                {solarApiAnalysis.summary.duplicateBuildingsRemoved > 0 && (
-                  <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900">
-                    {solarApiAnalysis.summary.duplicateBuildingsRemoved} duplicate target
-                    {solarApiAnalysis.summary.duplicateBuildingsRemoved === 1 ? "" : "s"} removed.
-                    This usually means two clicks matched the same Google building model.
-                  </div>
-                )}
-
-                {solarApiAnalysis.summary.notFoundTargets > 0 && (
-                  <div className="mt-4 rounded-lg border border-red-300 bg-red-50 p-3 text-red-900">
-                    Google Solar API could not find a known building for{" "}
-                    {solarApiAnalysis.summary.notFoundTargets} selected target
-                    {solarApiAnalysis.summary.notFoundTargets === 1 ? "" : "s"}. Try clicking
-                    closer to the centre of the building roof.
-                  </div>
-                )}
-
-                {buildings.length > 0 && (
-                  <div className="mt-4 space-y-4">
-                    {buildings.map((building) => {
-                      const googleArrayKw = getGooglePanelPowerKw(building);
-                      const roofSegments = Array.isArray(building.roofSegments)
-                        ? building.roofSegments
-                        : [];
-
-                      const model = building.roofSelectionModel || null;
-
-                      return (
-                        <div
-                          key={building.id}
-                          className="rounded-lg border border-slate-200 bg-white p-4"
-                        >
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                              <p className="font-semibold text-slate-950">
-                                {building.targetLabel || building.id}
-                              </p>
-
-                              <p className="mt-1 text-slate-600">
-                                {building.postalCode || "Unknown postcode"} · Imagery{" "}
-                                {building.imagery?.quality || "Unknown"}
-                                {building.imagery?.date ? ` · ${building.imagery.date}` : ""}
-                              </p>
-                            </div>
-
-                            <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                              Diagnostic only
-                            </div>
-                          </div>
-
-                          <div className="mt-4 grid gap-3 md:grid-cols-4">
-                            <div>
-                              <p className="text-xs uppercase tracking-wide text-slate-500">
-                                Segments
-                              </p>
-                              <p className="font-semibold">
-                                {building.roofSegmentCount ?? "Unknown"}
-                              </p>
-                            </div>
-
-                            <div>
-                              <p className="text-xs uppercase tracking-wide text-slate-500">
-                                Google max panels
-                              </p>
-                              <p className="font-semibold">
-                                {building.solarPotential?.maxArrayPanelsCount ?? "Unknown"}
-                              </p>
-                            </div>
-
-                            <div>
-                              <p className="text-xs uppercase tracking-wide text-slate-500">
-                                Google array
-                              </p>
-                              <p className="font-semibold">
-                                {googleArrayKw ? `${googleArrayKw.toFixed(1)} kWp` : "Unknown"}
-                              </p>
-                            </div>
-
-                            <div>
-                              <p className="text-xs uppercase tracking-wide text-slate-500">
-                                Array area
-                              </p>
-                              <p className="font-semibold">
-                                {formatArea(building.solarPotential?.maxArrayAreaM2)}
-                              </p>
-                            </div>
-                          </div>
-
-                          {model && (
-                            <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-blue-950">
-                              <p className="font-semibold">
-                                {getRoofSelectionTitle(model)}
-                              </p>
-
-                              <p className="mt-1 text-sm">
-                                {getRoofSelectionDescription(model)}
-                              </p>
-
-                              <p className="mt-3 text-xs">
-                                {model.summary?.recommendedSegmentCount || 0} recommended,{" "}
-                                {model.summary?.optionalSegmentCount || 0} optional,{" "}
-                                {model.summary?.hiddenSegmentCount || 0} hidden roof areas.
-                              </p>
-                            </div>
-                          )}
-
-                          {roofSegments.length > 0 && (
-                            <div className="mt-4">
-                              <p className="font-semibold">Detected roof segments</p>
-
-                              <div className="mt-2 grid gap-2">
-                                {roofSegments.slice(0, 6).map((segment, index) => (
-                                  <div
-                                    key={segment.id || index}
-                                    className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 md:grid-cols-4"
-                                  >
-                                    <div>
-                                      <p className="text-xs uppercase tracking-wide text-slate-500">
-                                        Segment
-                                      </p>
-                                      <p className="font-semibold">{index + 1}</p>
-                                    </div>
-
-                                    <div>
-                                      <p className="text-xs uppercase tracking-wide text-slate-500">
-                                        Direction
-                                      </p>
-                                      <p className="font-semibold">
-                                        {azimuthToCompass(segment.azimuthDegrees)}{" "}
-                                        <span className="font-normal">
-                                          ({formatDegrees(segment.azimuthDegrees)})
-                                        </span>
-                                      </p>
-                                    </div>
-
-                                    <div>
-                                      <p className="text-xs uppercase tracking-wide text-slate-500">
-                                        Pitch
-                                      </p>
-                                      <p className="font-semibold">
-                                        {formatDegrees(segment.pitchDegrees)}
-                                      </p>
-                                    </div>
-
-                                    <div>
-                                      <p className="text-xs uppercase tracking-wide text-slate-500">
-                                        Area
-                                      </p>
-                                      <p className="font-semibold">
-                                        {formatArea(segment.areaM2)}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-
-                              {roofSegments.length > 6 && (
-                                <p className="mt-2 text-xs text-slate-500">
-                                  Showing first 6 of {roofSegments.length} detected segments.
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                <p className="mt-4 text-xs text-slate-500">
-                  Technical details are diagnostic only. Google panel counts use Google’s
-                  assumptions, not Zion Energy’s final product catalogue, setbacks,
-                  obstructions or installation design.
-                </p>
-              </div>
-            )}
+            <p className="mt-3 text-xs text-slate-500">
+              This is an initial satellite-based estimate. Final panel
+              positions, clearances and usable roof space will be confirmed
+              during the survey and final design.
+            </p>
           </div>
         );
       })()}

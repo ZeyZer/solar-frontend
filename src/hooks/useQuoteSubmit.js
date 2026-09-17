@@ -101,7 +101,7 @@ export default function useQuoteSubmit({
     if (!roofs.length || totalPanels <= 0) {
       setError(
         roofInputMode === "draw_my_roof"
-          ? "Please also add an estimated panel count for now. The AI roof model is saved diagnostically, but this quote version still needs a panel-count estimate for the calculation."
+          ? "Please confirm your selected roof layout before continuing."
           : "Please enter at least 1 panel across your roof spaces."
       );
       return;

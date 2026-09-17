@@ -2678,3 +2678,162 @@ select:focus {
   }
 
 }
+/* Step 3: gently draw attention to the next required customer action */
+.next-step-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid #047857;
+  border-radius: 0.65rem;
+  background: #059669;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.18);
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.next-step-button:hover:not(:disabled) {
+  background: #047857;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.24);
+}
+
+.next-step-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  animation: none;
+}
+
+.next-step-button:not(:disabled) {
+  animation: zeyzer-next-step-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes zeyzer-next-step-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 2px 8px rgba(5, 150, 105, 0.18),
+      0 0 0 0 rgba(5, 150, 105, 0);
+  }
+
+  50% {
+    box-shadow:
+      0 3px 10px rgba(5, 150, 105, 0.24),
+      0 0 0 5px rgba(5, 150, 105, 0.10);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .next-step-button:not(:disabled) {
+    animation: none;
+  }
+}
+
+/* Roof-layout rows:
+   The grey outer building card remains the container.
+   Selected roofs use a separate inset suitability-coloured frame. */
+.roof-selection-row {
+  --roof-selection-color: #94a3b8;
+  --roof-selection-bg: #ffffff;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: #ffffff;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  box-shadow: none;
+  transition: background-color 140ms ease;
+}
+
+.roof-selection-row--recommended {
+  --roof-selection-color: #34d399;
+  --roof-selection-bg: #f0fdf4;
+}
+
+.roof-selection-row--potential {
+  --roof-selection-color: #fbbf24;
+  --roof-selection-bg: #fffbeb;
+}
+
+.roof-selection-row:hover {
+  background: #f8fafc;
+}
+
+.roof-selection-row--selected {
+  background: var(--roof-selection-bg);
+}
+
+/* Draw the selected frame INSIDE the list so it never
+   overlaps or doubles up with the outer container border. */
+.roof-selection-row--selected::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+
+  left: 4px;
+  right: 4px;
+  top: 0;
+  bottom: 0;
+
+  border-left: 2px solid var(--roof-selection-color);
+  border-right: 2px solid var(--roof-selection-color);
+}
+
+/* Start of a selected run */
+.roof-selection-row--selected.roof-selection-row--selected-start::before {
+  top: 4px;
+
+  border-top: 2px solid var(--roof-selection-color);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+/* End of a selected run */
+.roof-selection-row--selected.roof-selection-row--selected-end::before {
+  bottom: 4px;
+
+  border-bottom: 2px solid var(--roof-selection-color);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+/* A single selected roof gets one complete inset frame */
+.roof-selection-row--selected.roof-selection-row--selected-start.roof-selection-row--selected-end::before {
+  top: 4px;
+  bottom: 4px;
+
+  border-top: 2px solid var(--roof-selection-color);
+  border-bottom: 2px solid var(--roof-selection-color);
+  border-radius: 8px;
+}
+
+.roof-selection-row--selected:hover {
+  background: var(--roof-selection-bg);
+}
+
+.roof-selection-row:focus {
+  outline: none;
+}
+
+.roof-selection-row:focus-visible {
+  z-index: 2;
+  outline: 2px solid #2563eb;
+  outline-offset: -5px;
+}

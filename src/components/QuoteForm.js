@@ -19,7 +19,6 @@ import {
     buildConfirmedPostalAddress,
 } from "../utils/selectedAddressUtils";
 
-import RoofInputModeSelector from "./roof/RoofInputModeSelector";
 import SolarTargetBuildingSelector from "./roof/SolarTargetBuildingSelector";
 
 export default function QuoteForm({
@@ -74,6 +73,8 @@ export default function QuoteForm({
   // topbar
   goToHome,
 }) {
+
+
   return (
     <>
         <div className="mobile-tool-topbar">
@@ -121,11 +122,11 @@ export default function QuoteForm({
                     </div>
 
                     <div className="steps">
-                    <div className={`step-label ${step === 1 ? "active" : ""}`}>1. Verification</div>
-                    <div className={`step-label ${step === 2 ? "active" : ""}`}>2. Energy</div>
-                    <div className={`step-label ${step === 3 ? "active" : ""}`}>3. Roofs</div>
-                    <div className={`step-label ${step === 4 ? "active" : ""}`}>4. System</div>
-                    <div className={`step-label ${step === 5 ? "active" : ""}`}>5. Details</div>
+                    <div className={`step-label ${step === 1 ? "active" : ""}`}>1. Your home</div>
+                    <div className={`step-label ${step === 2 ? "active" : ""}`}>2. Energy use</div>
+                    <div className={`step-label ${step === 3 ? "active" : ""}`}>3. Your roof</div>
+                    <div className={`step-label ${step === 4 ? "active" : ""}`}>4. Your system</div>
+                    <div className={`step-label ${step === 5 ? "active" : ""}`}>5. Your details</div>
                     </div>
                 </div>
 
@@ -135,10 +136,13 @@ export default function QuoteForm({
                         {/* STEP 1 */}
                         {step === 1 && (
                         <>
-                            <h2>✅ Before We Start</h2>
+                            <h2>Tell us about your home</h2>
+                            <p className="subheading-print">
+                                We&apos;ll use your address to assess the property and build your solar estimate.
+                            </p>
 
                             <label>
-                            <div className="question-label">🏠 Are you the homeowner?</div>
+                            <div className="question-label">Do you own the property?</div>
                             <div className="choice-row">
                                 <div
                                 className={`choice-pill ${form.homeOwnership === "owner" ? "active" : ""}`}
@@ -164,8 +168,74 @@ export default function QuoteForm({
                                 handleChange={handleChange}
                                 handlePostcodeChange={handlePostcodeChange}
                                 setError={setError}
-                                setRoofGeometry={setRoofGeometry}
+                                setRoofGeometry={(nextGeometry) => {
+                                    setRoofGeometry(nextGeometry);
+
+                                    if (nextGeometry === null) {
+                                        setRoofs([]);
+                                        setRoofInputMode("draw_my_roof");
+                                    }
+                                }}
                             />
+
+                            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <label>
+                                    <div className="question-label">
+                                        What type of property is this?
+                                    </div>
+
+                                    <select
+                                        name="propertyType"
+                                        value={form.propertyType || "unknown"}
+                                        onChange={(event) => {
+                                            const nextPropertyType =
+                                                event.target.value;
+
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                propertyType: nextPropertyType,
+                                            }));
+
+                                            // Property type changes whether a roof
+                                            // ownership-boundary check is required,
+                                            // so an existing roof model is no longer
+                                            // safe to reuse.
+                                            setRoofGeometry(null);
+                                            setRoofs([]);
+                                            setRoofInputMode("draw_my_roof");
+                                            setError("");
+                                        }}
+                                    >
+                                        <option value="unknown">
+                                            Select property type
+                                        </option>
+                                        <option value="detached">
+                                            Detached house
+                                        </option>
+                                        <option value="semi_detached">
+                                            Semi-detached house
+                                        </option>
+                                        <option value="mid_terrace">
+                                            Mid-terrace house
+                                        </option>
+                                        <option value="end_terrace">
+                                            End-terrace house
+                                        </option>
+                                        <option value="bungalow">
+                                            Bungalow
+                                        </option>
+                                        <option value="commercial_or_other">
+                                            Commercial / other
+                                        </option>
+                                    </select>
+
+                                    <p className="small-print">
+                                        This helps us identify your roof correctly.
+                                        For attached homes, we may ask you to mark
+                                        the boundary with your neighbour.
+                                    </p>
+                                </label>
+                            </div>
 
                             <div className="buttons-row">
                             <button
@@ -222,12 +292,20 @@ export default function QuoteForm({
                                     return;
                                 }
 
+                                if (
+                                    !form.propertyType ||
+                                    form.propertyType === "unknown"
+                                ) {
+                                    setError("Please select your property type.");
+                                    return;
+                                }
+
                                 setError("");
                                 setRentingBlocked(false);
                                 handleNext();
                                 }}
                             >
-                                Next: your home →
+                                Next: energy use →
                             </button>
                             </div>
 
@@ -238,17 +316,20 @@ export default function QuoteForm({
                         {/* STEP 2 */}
                         {step === 2 && (
                         <>
-                            <h2>💡 Your Energy Profile</h2>
+                            <h2>How do you use electricity?</h2>
+                            <p className="subheading-print">
+                                A few simple details help us estimate how much solar energy your home could use.
+                            </p>
 
                             <label>
-                            <div className="question-label">📅 Typical Weekday Occupancy</div>
+                            <div className="question-label">When is someone usually at home?</div>
                             <div className="choice-row">
                                 <div
                                 className={`choice-pill ${form.occupancyProfile === "home_all_day" ? "active" : ""}`}
                                 onClick={() => setForm((prev) => ({ ...prev, occupancyProfile: "home_all_day" }))}
                                 >
                                 <div className="choice-title">Home all day</div>
-                                <div className="choice-sub">Work from home or retired</div>
+                                <div className="choice-sub">Someone is usually home during the day</div>
                                 </div>
 
                                 <div
@@ -256,7 +337,7 @@ export default function QuoteForm({
                                 onClick={() => setForm((prev) => ({ ...prev, occupancyProfile: "half_day" }))}
                                 >
                                 <div className="choice-title">Home half day</div>
-                                <div className="choice-sub">Out most the morning</div>
+                                <div className="choice-sub">Someone is home for part of the day</div>
                                 </div>
 
                                 <div
@@ -264,13 +345,13 @@ export default function QuoteForm({
                                 onClick={() => setForm((prev) => ({ ...prev, occupancyProfile: "out_all_day" }))}
                                 >
                                 <div className="choice-title">Out all day</div>
-                                <div className="choice-sub">Typical working household</div>
+                                <div className="choice-sub">The home is usually empty during working hours</div>
                                 </div>
                             </div>
                             </label>
 
                             <label>
-                            <div className="question-label">🔌 Annual electricity use (kWh)</div>
+                            <div className="question-label">Annual electricity use</div>
                             <input
                                 type="number"
                                 name="annualKWh"
@@ -279,12 +360,12 @@ export default function QuoteForm({
                                 placeholder="e.g. 3,000"
                             />
                             <p className="small-print">
-                                If you&apos;re not sure, you can check a recent energy bill or leave this blank and we&apos;ll use the average (3500 kWh).
+                                You&apos;ll usually find this on a recent electricity bill. If you&apos;re not sure, leave it blank and we&apos;ll use a typical household estimate.
                             </p>
                             </label>
 
                             <label>
-                            <div className="question-label">💷 OR average monthly electricity bill (£)</div>
+                            <div className="question-label">Or tell us your average monthly electricity bill</div>
                             <input
                                 type="number"
                                 name="monthlyBill"
@@ -304,7 +385,7 @@ export default function QuoteForm({
 
                             <div className="buttons-row">
                             <button type="button" onClick={handlePrev}>← Back</button>
-                            <button type="button" onClick={handleNext}>Next: Roof spaces →</button>
+                            <button type="button" onClick={handleNext}>Next: your roof →</button>
                             </div>
                         </>
                         )}
@@ -312,42 +393,10 @@ export default function QuoteForm({
                         {/* STEP 3 */}
                         {step === 3 && (
                         <>
-                            <h2>🏡 Your Roof & Solar Model</h2>
+                            <h2>Your roof</h2>
                             <p className="subheading-print">
-                            Select the roof buildings you want us to assess. We’ll use the address,
-                            map selection and Google Solar API data to build a more accurate roof model.
+                                We&apos;ll use satellite data to estimate the roof areas most suitable for solar.
                             </p>
-
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <label>
-                                    <div className="question-label">🏠 Property type</div>
-                                    <select
-                                        name="propertyType"
-                                        value={form.propertyType || "unknown"}
-                                        onChange={handleChange}
-                                    >
-                                        <option value="unknown">Select property type</option>
-                                        <option value="detached">Detached house</option>
-                                        <option value="semi_detached">Semi-detached house</option>
-                                        <option value="mid_terrace">Mid-terrace house</option>
-                                        <option value="end_terrace">End-terrace house</option>
-                                        <option value="bungalow">Bungalow</option>
-                                        <option value="commercial_or_other">Commercial / other</option>
-                                    </select>
-                                    <p className="small-print">
-                                        This helps us decide whether a property-boundary check is needed before using satellite roof measurements.
-                                    </p>
-                                </label>
-                            </div>
-
-                            <RoofInputModeSelector
-                                value={roofInputMode}
-                                onChange={(nextMode) => {
-                                setRoofInputMode(nextMode);
-                                setRoofGeometry(null);
-                                setError("");
-                                }}
-                            />
 
                             {roofInputMode === "draw_my_roof" && (
                             <>
@@ -370,49 +419,82 @@ export default function QuoteForm({
                                     value={roofGeometry}
                                     onChange={setRoofGeometry}
                                     hasCalculationRoofs={roofs.length > 0}
+                                    calculationRoofs={roofs}
                                     onUseCalculationRoofEstimate={(estimatedRoofs) => {
                                         setRoofs(estimatedRoofs);
                                         setError("");
                                     }}
                                 />
 
-                                <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-                                <p className="font-semibold">Current MVP limitation</p>
-                                <p className="mt-1">
-                                    The AI roof model is saved diagnostically and helps us understand the
-                                    property, roof segments and solar potential. For now, please also add an
-                                    estimated panel count below so the existing quote calculation engine can
-                                    still run safely.
-                                </p>
+                                <div className="mt-4 border-t border-slate-100 pt-3">
+                                    <p className="text-xs text-slate-500">
+                                        Having trouble with the satellite view?
+                                    </p>
+
+                                    <button
+                                        type="button"
+                                        className="secondary-mini mt-2"
+                                        onClick={() => {
+                                            setRoofInputMode("panel_count");
+                                            setRoofGeometry(null);
+                                            setRoofs([]);
+                                            setError("");
+                                        }}
+                                    >
+                                        Enter roof details manually
+                                    </button>
                                 </div>
                             </>
                             )}
 
                             {roofInputMode === "panel_count" && (
-                            <p className="small-print">
-                                This is the fastest option. It uses your estimated number of panels
-                                as the basis for the current quote calculation.
-                            </p>
+                                <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div>
+                                            <p className="font-semibold text-slate-900">
+                                                Manual roof estimate
+                                            </p>
+
+                                            <p className="mt-1 text-sm text-slate-600">
+                                                Add the roof areas and approximate panel
+                                                numbers you already know.
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            className="secondary-mini"
+                                            onClick={() => {
+                                                setRoofInputMode("draw_my_roof");
+                                                setRoofGeometry(null);
+                                                setRoofs([]);
+                                                setError("");
+                                            }}
+                                        >
+                                            Try satellite view again
+                                        </button>
+                                    </div>
+                                </div>
                             )}
 
                             {/* Empty state (no editable calculation roof estimate yet) */}
-                            {roofs.length === 0 && (
+                            {roofInputMode === "panel_count" && roofs.length === 0 && (
                             <div className="roof-empty">
                                 <p className="small-print">
-                                You haven&apos;t added the calculation roof estimate yet.
-                                Add at least one estimated roof/panel count so the current quote engine can run.
+                                No roof areas have been added yet.
+                                Add a roof area to continue.
                                 </p>
 
                                 <div className="buttons-row">
                                 <button type="button" onClick={openAddRoofModal}>
-                                    + Add a roof estimate
+                                    + Add roof details
                                 </button>
                                 </div>
                             </div>
                             )}
 
-                            {/* Summary cards (once roof panel-count estimates exist) */}
-                            {roofs.length > 0 && (
+                            {/* Summary cards (manual roof mode only) */}
+                            {roofInputMode === "panel_count" && roofs.length > 0 && (
                             <>
                                 {roofs.map((roof, idx) => (
                                 <div key={roof.id} className="roof-card roof-summary-card">
@@ -476,7 +558,7 @@ export default function QuoteForm({
 
                                 <div className="buttons-row">
                                 <button type="button" onClick={openAddRoofModal}>
-                                    + Add another roof estimate
+                                    + Add another roof area
                                 </button>
                                 </div>
                             </>
@@ -502,7 +584,7 @@ export default function QuoteForm({
                                 if (!roofs.length) {
                                     setError(
                                     roofInputMode === "draw_my_roof"
-                                        ? "Please also add an estimated panel count below so the current quote calculation can run."
+                                        ? "Please confirm your selected roof layout before continuing."
                                         : "Please add at least 1 roof to continue."
                                     );
                                     return;
@@ -522,7 +604,7 @@ export default function QuoteForm({
                                 handleNext();
                                 }}
                             >
-                                Next: system options →
+                                Next: choose your system →
                             </button>
                             </div>
 
@@ -534,22 +616,24 @@ export default function QuoteForm({
                         {/* STEP 4 */}
                         {step === 4 && (
                         <>
-                            <h2>⚡ Your System Options</h2>
+                            <h2>Choose your system preferences</h2>
+                            <p className="subheading-print">
+                                These choices help us tailor the estimate. You can change them later.
+                            </p>
 
                             <label>
-                            <div className="question-label">🏷️ Panel Type</div>
+                            <div className="question-label">Panel option</div>
                             <select name="panelOption" value={form.panelOption} onChange={handleChange}>
-                                <option value="value">Standard (≈465 W)</option>
-                                <option value="premium">Premium (≈490 W)</option>
+                                <option value="value">Standard</option>
+                                <option value="premium">Premium</option>
                             </select>
                             <p className="small-print">
-                                Standard panels use our normal high-output residential panel assumption. 
-                                Premium panels use higher-output modules with a similar footprint, so the panel count can stay the same while the system size increases.
+                                Standard is our usual high-quality residential option. Premium uses higher-output panels where extra performance or roof-space efficiency is useful.
                             </p>
                             </label>
 
                             <label>
-                            <div className="question-label">🔋 Usable Battery Capacity (kWh)</div>
+                            <div className="question-label">Battery size</div>
                             <input
                                 type="number"
                                 name="batteryKWh"
@@ -558,12 +642,11 @@ export default function QuoteForm({
                                 placeholder="e.g. 5, 10 or 13"
                             />
                             <p className="small-print">
-                                Enter the <strong>usable</strong> battery capacity.
-                                If you’re unsure: 5 kWh (small), 9 kWh (medium), 13–15 kWh (large).
+                                If you already have a preferred size, enter it here. If you&apos;re unsure, we&apos;ll still show battery recommendations in your estimate.
                             </p>
                             </label>
 
-                            <div className="checkbox-heading">➕ Optional Extras:</div>
+                            <div className="checkbox-heading">Optional extras</div>
                             <label className="checkbox">
                             <input
                                 type="checkbox"
@@ -594,9 +677,10 @@ export default function QuoteForm({
                         {/* STEP 5 */}
                         {step === 5 && (
                         <>
-                            <h2>👋 Your details</h2>
-                            <p className="text-sm text-slate-500">
-                            Optional — you can skip this for now, as it&apos;s just to pre-fill your next steps!
+                            <h2>Your details</h2>
+                            <p className="subheading-print">
+                                These are optional for now. Adding them makes it easier to email your estimate
+                                or arrange a survey later.
                             </p>
 
                             <label>
@@ -640,7 +724,7 @@ export default function QuoteForm({
                             </button>
 
                             <button type="button" onClick={handleSubmit} disabled={loading}>
-                                {loading ? "Calculating…" : "Generate my quote"}
+                                {loading ? "Calculating…" : "See my solar estimate"}
                             </button>
                             </div>
 
