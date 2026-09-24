@@ -14,6 +14,10 @@ import {
   buildConfirmedPostalAddress,
 } from "../utils/selectedAddressUtils";
 
+import {
+  resolveBatterySelection,
+} from "../utils/batteryScenarioUtils";
+
 export default function useQuoteSubmit({
   form,
   roofs,
@@ -22,6 +26,7 @@ export default function useQuoteSubmit({
 
   setError,
   setQuote,
+  setForm,
   setLoading,
   setPage,
 
@@ -190,7 +195,20 @@ export default function useQuoteSubmit({
 
         panelCount: totalPanels,
 
-        batteryKWh: form.batteryKWh ? Number(form.batteryKWh) : 0,
+        batteryChoiceMode:
+          form.batteryChoiceMode || "recommend",
+
+        batteryStrategy:
+          form.batteryStrategy || "balanced",
+
+        batteryKWh:
+          form.batteryChoiceMode === "custom"
+            ? Number(
+                form.batteryCustomKWh ??
+                form.batteryKWh ??
+                0
+              )
+            : 0,
 
         extras: {
           birdProtection: form.birdProtection,
@@ -206,12 +224,21 @@ export default function useQuoteSubmit({
 
       const data = await generateQuote(payload);
 
+      const resolvedBattery =
+        resolveBatterySelection(data, form);
+
       stopFakeProgress();
       completeProgress();
 
       await new Promise((resolve) => setTimeout(resolve, 450));
 
-      setQuote(data);
+      setForm?.((prev) => ({
+        ...prev,
+        batteryKWh:
+          resolvedBattery.batteryKWh,
+      }));
+
+      setQuote(resolvedBattery.quote);
       setNeedsRecalc?.(false);
       setUpdatedSections?.([]);
       setPage("quote");

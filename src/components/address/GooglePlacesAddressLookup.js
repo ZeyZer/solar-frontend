@@ -26,25 +26,6 @@ export default function GooglePlacesAddressLookup({
 
   const googleConfigured = isGoogleMapsConfigured();
 
-  function clearSelectedAddress() {
-    setForm((prev) => ({
-      ...prev,
-      address: "",
-      houseNumber: "",
-      roadName: "",
-      town: "",
-      postcode: "",
-      selectedAddress: null,
-    }));
-
-    setStatus("");
-    setError?.("");
-
-    if (setRoofGeometry) {
-      setRoofGeometry(null);
-    }
-  }
-
   useEffect(() => {
     if (!googleConfigured || autocompleteRef.current || !containerRef.current) {
       return;
@@ -69,7 +50,7 @@ export default function GooglePlacesAddressLookup({
         autocompleteElement = new PlaceAutocompleteElement();
 
         autocompleteElement.placeholder =
-          "Start typing your full address, e.g. 55 Example Road, Guildford";
+          "Start typing the installation address";
 
         autocompleteElement.includedRegionCodes = ["gb"];
 
@@ -143,7 +124,7 @@ export default function GooglePlacesAddressLookup({
         containerRef.current.appendChild(autocompleteElement);
         autocompleteRef.current = autocompleteElement;
 
-        setStatus("Start typing your address, then select the correct result.");
+        setStatus("");
       } catch (err) {
         console.warn("Google Places address search failed to load:", err);
         setStatus(
@@ -197,7 +178,7 @@ export default function GooglePlacesAddressLookup({
             name="roadName"
             value={form.roadName || ""}
             onChange={handleChange}
-            placeholder="e.g. Shores Road"
+            placeholder="e.g. High Street"
           />
         </label>
 
@@ -208,7 +189,7 @@ export default function GooglePlacesAddressLookup({
             name="town"
             value={form.town || ""}
             onChange={handleChange}
-            placeholder="e.g. Woking"
+            placeholder="e.g. Guildford"
           />
         </label>
 
@@ -219,7 +200,7 @@ export default function GooglePlacesAddressLookup({
             name="postcode"
             value={form.postcode}
             onChange={handlePostcodeChange}
-            placeholder="e.g. GU21 4HN"
+            placeholder="e.g. GU1 1AA"
           />
         </label>
       </>
@@ -227,101 +208,24 @@ export default function GooglePlacesAddressLookup({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <div className="question-label">📍 Find your property</div>
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="form-section-label">
+        Installation Address
+      </div>
 
       <p className="small-print">
-        Start typing your full address and select the correct result. This lets
-        us open the roof map on the right property before you select the roofs to
-        assess.
+        Start typing the property address and select the correct result.
       </p>
 
       <div className="mt-3" ref={containerRef} />
 
-      {form.selectedAddress?.fullAddress && (
-        <div className="mt-4 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900">
-          <p className="font-semibold">Selected address</p>
-          <p className="mt-1">{form.selectedAddress.fullAddress}</p>
-
-          {form.selectedAddress.latitude !== null &&
-            form.selectedAddress.longitude !== null && (
-              <p className="mt-1 text-xs">
-                Map coordinates saved for roof modelling.
-              </p>
-            )}
-
-          <button
-            type="button"
-            className="secondary-mini mt-3"
-            onClick={clearSelectedAddress}
-          >
-            Change address
-          </button>
-        </div>
-      )}
-
-      {form.selectedAddress && (
-        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <div className="question-label">Confirm your postal address</div>
-
-          <p className="small-print">
-            We have filled in the details Google returned. Please correct them
-            or complete any missing fields so we have the full property address
-            for your quote and follow-up.
+      {status &&
+        (!form.selectedAddress || loading) && (
+          <p className="mt-2 text-xs text-slate-500">
+            {loading ? "Loading… " : ""}
+            {status}
           </p>
-
-          <label>
-            <div className="question-label">🏘️ House name or number</div>
-            <input
-              type="text"
-              name="houseNumber"
-              value={form.houseNumber || ""}
-              onChange={handleChange}
-              placeholder="e.g. 44 or Hollydene Cottage"
-            />
-          </label>
-
-          <label>
-            <div className="question-label">🛣️ Road name</div>
-            <input
-              type="text"
-              name="roadName"
-              value={form.roadName || ""}
-              onChange={handleChange}
-              placeholder="e.g. Shores Road"
-            />
-          </label>
-
-          <label>
-            <div className="question-label">🏙️ Town / city</div>
-            <input
-              type="text"
-              name="town"
-              value={form.town || ""}
-              onChange={handleChange}
-              placeholder="e.g. Woking"
-            />
-          </label>
-
-          <label>
-            <div className="question-label">📍 Postcode</div>
-            <input
-              type="text"
-              name="postcode"
-              value={form.postcode || ""}
-              onChange={handlePostcodeChange}
-              placeholder="e.g. GU21 4HN"
-            />
-          </label>
-        </div>
-      )}
-
-      {status && (
-        <p className="mt-3 text-sm text-slate-600">
-          {loading ? "⏳ " : ""}
-          {status}
-        </p>
-      )}
+        )}
     </div>
   );
 }

@@ -271,6 +271,7 @@ function App() {
 
     setError,
     setQuote,
+    setForm,
     setLoading,
     setPage,
 
@@ -334,6 +335,7 @@ function App() {
             <QuotePage
               quote={quote}
               form={form}
+              setForm={setForm}
               roofs={roofs}
               onEdit={(stepNum) => editAnswers(stepNum)}
               onBackToForm={exitQuoteToMarketingSite}

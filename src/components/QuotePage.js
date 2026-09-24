@@ -57,6 +57,11 @@ import {
 } from "../utils/productDisplayUtils";
 
 import {
+  applyBatteryScenarioToQuote,
+  resolveBatterySelection,
+} from "../utils/batteryScenarioUtils";
+
+import {
   recalculateQuote,
   emailQuoteLead,
   requestCallLead,
@@ -69,6 +74,7 @@ import {
 export default function QuotePage({
   quote,
   form,
+  setForm,
   roofs,
   onEdit,
   onBackToForm,
@@ -318,6 +324,49 @@ export default function QuotePage({
     await requestCallLead(payload);
   }
 
+  function selectBatteryScenario({
+    batteryKWh,
+    mode: nextMode,
+    strategy: nextStrategy,
+  }) {
+    const targetBatteryKWh = Number(batteryKWh || 0);
+
+    const updatedQuote = applyBatteryScenarioToQuote(
+      quote,
+      targetBatteryKWh
+    );
+
+    const strategy =
+      nextStrategy ||
+      form?.batteryStrategy ||
+      "balanced";
+
+    setForm?.((prev) => ({
+      ...prev,
+
+      batteryChoiceMode:
+        nextMode || prev.batteryChoiceMode || "recommend",
+
+      batteryStrategy: strategy,
+
+      batteryKWh: targetBatteryKWh,
+
+      ...(nextMode === "custom"
+        ? {
+            batteryCustomKWh: targetBatteryKWh,
+          }
+        : {}),
+    }));
+
+    onUpdateQuote(updatedQuote);
+
+    setUpdatedSections?.([
+      "financials",
+      "optimisations",
+      "performance",
+    ]);
+  }
+
   // TARIFF RECALCULATIONS
   async function recalcWithTariff() {
     try {
@@ -355,9 +404,21 @@ export default function QuotePage({
         batteryRecommendationLifetimeYears,
       });
 
-      onUpdateQuote(updated);
+      const resolvedBattery =
+        resolveBatterySelection(updated, form);
+
+      setForm?.((prev) => ({
+        ...prev,
+        batteryKWh: resolvedBattery.batteryKWh,
+      }));
+
+      onUpdateQuote(resolvedBattery.quote);
       setNeedsRecalc(false);
-      setUpdatedSections(["financials", "optimisations", "performance"]);
+      setUpdatedSections([
+        "financials",
+        "optimisations",
+        "performance",
+      ]);
     } catch (e) {
       console.error(e);
       alert(e?.message || "Failed to recalculate.");
@@ -2154,267 +2215,579 @@ export default function QuotePage({
           </section>
 
           {/* ============================
-              Battery recommendations
+              Battery settings & options
           ============================ */}
           <div className={pdfMode ? "pdf-keep-together mb-4" : ""}>
-            {quote?.batteryRecommendations && (
-              <Card
-                mode={mode} 
-                title="Battery Recommendations"
-                right={!pdfMode && (<button
-                type="button"
-                onClick={() => recalcWithTariff()}
-                className={getRecalcButtonClass(needsRecalc)}
+            {quote?.batteryRecommendations && (() => {
+              const recommendations =
+                quote.batteryRecommendations;
+
+              const activeBatteryKWh = Number(
+                form?.batteryKWh ??
+                quote?.hourlyModel?._batteryKWh ??
+                0
+              );
+
+              const activeMode =
+                form?.batteryChoiceMode || "recommend";
+
+              const activeStrategy =
+                form?.batteryStrategy || "balanced";
+
+              const lifetimeYears =
+                recommendations?.assumptions?.lifetimeYears ||
+                batteryRecommendationLifetimeYears;
+
+              const availableBatterySizes = (
+                recommendations?.availableBatterySizesKWh || []
+              )
+                .map(Number)
+                .filter(
+                  (value) =>
+                    Number.isFinite(value) &&
+                    value > 0
+                )
+                .sort((a, b) => a - b);
+
+              const recommendationOptions = [
+                {
+                  strategy: "fastest_payback",
+                  title: "Fastest payback",
+                  reason:
+                    "The battery with the shortest whole-system payback.",
+                  recommendation:
+                    recommendations.bestPayback,
+                },
+                {
+                  strategy: "balanced",
+                  title: "Balanced",
+                  reason:
+                    "A balance of whole-system payback and long-term savings.",
+                  recommendation:
+                    recommendations.balanced,
+                  recommended: true,
+                },
+                {
+                  strategy: "max_savings",
+                  title: "Maximum savings",
+                  reason:
+                    `The highest estimated net savings over ${lifetimeYears} years.`,
+                  recommendation:
+                    recommendations.bestLifetimeSavings,
+                },
+              ];
+
+              const comparison =
+                recommendations.noBatteryComparison;
+
+              const incremental =
+                comparison?.incremental || {};
+
+              const activeRecommendationLabel =
+                activeMode === "none"
+                  ? "No battery"
+                  : activeMode === "custom"
+                    ? "Custom battery size"
+                    : activeStrategy === "fastest_payback"
+                      ? "Fastest payback"
+                      : activeStrategy === "max_savings"
+                        ? "Maximum savings"
+                        : "Balanced recommendation";
+
+              return (
+                <Card
+                  mode={mode}
+                  title="Battery Settings & Options"
+                  right={
+                    !pdfMode && (
+                      <button
+                        type="button"
+                        onClick={() => recalcWithTariff()}
+                        className={getRecalcButtonClass(
+                          needsRecalc
+                        )}
+                      >
+                        {needsRecalc
+                          ? "Recalculate results"
+                          : "Results up to date"}
+                      </button>
+                    )
+                  }
                 >
-                  {needsRecalc ? "Recalculate results" : "Results up to date"}
-                </button>)}
-                >
-
-                <div>
-                  <p className={pdfMode ? "mt-1 text-sm leading-snug text-slate-700" : "mt-1 text-body text-slate-700"}>
-                    Knowing which battery capacity you need is difficult! So we compare your selected battery
-                    against a no-battery option, then show two recommended battery sizes based on a comparison
-                    period of{" "}
-                    <strong>
-                      {quote?.batteryRecommendations?.assumptions?.lifetimeYears || batteryRecommendationLifetimeYears} years
-                    </strong>.
-                  </p>
-                </div>
-
-                <div className={pdfMode ? "mt-3 grid grid-cols-1 gap-3" : "mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.8fr_1fr]"}>
-                  
-                  {/* LEFT COLUMN: settings (now wider) */}
-                  {!pdfMode && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <div className="text-sm font-semibold uppercase tracking-wide text-accent">
-                            Adjust the Lifetime Savings Period
-                          </div>
-                          <p className="mt-1 text-sm text-slate-600">
-                            The slider below allows you to adjust how many years we use for lifetime savings. Simply move the slider and hit recalculate!
-                            This will only affect your battery recommendation and the cumulative payback chart in the financial section. 
-                          </p>
-                        </div>
-
-                        <div className="rounded-2xl border border-accent bg-accent/5 px-4 py-3 text-center min-w-[140px]">
-                          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                            Active lifetime
-                          </div>
-                          <div className="mt-1 text-2xl font-semibold text-slate-900">
-                            {quote?.batteryRecommendations?.assumptions?.lifetimeYears || batteryRecommendationLifetimeYears} years
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-8">
-                        {/* Floating badge above slider */}
-                        <div className="relative px-1">
-                          <div
-                            className="absolute -top-6 -translate-x-1/2 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-md"
-                            style={{
-                              left: `${((batteryRecommendationLifetimeYears - 5) / (30 - 5)) * 100}%`,
-                            }}
-                          >
-                            {batteryRecommendationLifetimeYears}y
-                          </div>
-
-                          <input
-                            type="range"
-                            min="5"
-                            max="30"
-                            step="1"
-                            value={batteryRecommendationLifetimeYears}
-                            onChange={(e) => {
-                              setBatteryRecommendationLifetimeYears(Number(e.target.value))
-                              setNeedsRecalc(true);
-                              setUpdatedSections([]);
-                            }}
-                            className="w-full"
-                          />
-                        </div>
-
-                        <div className="mt-3 flex justify-between text-xs text-slate-500">
-                          <span>5 years</span>
-                          <span>10 years</span>
-                          <span>15 years</span>
-                          <span>20 years</span>
-                          <span>25 years</span>
-                          <span>30 years</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* RIGHT COLUMN: stacked recommendations */}
-                  <div className="flex flex-col gap-4">
-                  <div className={isPdf ? "battery-rec-grid battery-rec-grid--pdf" : "battery-rec-grid"}>
-
-                    {/* Fastest payback */} 
-                    <div className={pdfMode ? "rounded-2xl border border-slate-200 bg-white p-3 text-center" : "rounded-2xl border border-slate-200 bg-white p-4 text-center"}> 
-                      <div className={pdfMode ? "text-[11px] font-medium leading-tight text-slate-500" : "flex items-center justify-center text-s font-medium text-slate-500"}>
-                        <span>Fastest payback</span>
-                        <InfoTooltip text="The battery size that recovers its extra cost in the shortest time based on your selected tariff and battery settings." />
-                      </div> 
-
-                      <div className={pdfMode ? "mt-1 text-xl font-medium leading-tight text-slate-900" : "mt-1 text-2xl font-semibold text-slate-900"}>
-                        {quote.batteryRecommendations.bestPayback 
-                        ? `${quote.batteryRecommendations.bestPayback.batteryKWhUsable} kWh`
-                        : "N/A"} 
-                      </div>
-
-                      {quote.batteryRecommendations.bestPayback && ( 
-                        <div className={pdfMode ? "mt-1 text-[10px] leading-snug text-slate-500" : "mt-1 text-xs text-slate-500"}>
-                          Payback: {quote.batteryRecommendations.bestPayback.paybackYears ?? "—"} yrs •
-                          Annual benefit: £{Number(quote.batteryRecommendations.bestPayback.annualBenefit || 0).toLocaleString()}
-                        </div>
-                      )} 
-                    </div> 
-
-                    {/* Max lifetime savings */} 
-                    <div className={pdfMode ? "rounded-2xl border border-slate-200 bg-white p-3 text-center" : "rounded-2xl border border-slate-200 bg-white p-4 text-center"}>
-                      <div className={pdfMode ? "text-[11px] font-medium leading-tight text-slate-500" : "flex items-center justify-center text-s font-medium text-slate-500"}>
-                        <span>Max lifetime net savings</span>
-                        <InfoTooltip text="The battery size that produces the highest total net savings over the selected comparison period, even if it does not pay back the fastest." /> 
-                      </div>
-
-                      <div className={pdfMode ? "mt-1 text-xl font-medium leading-tight text-slate-900" : "mt-1 text-2xl font-semibold text-slate-900"}>
-                        {quote.batteryRecommendations.bestLifetimeSavings
-                        ? `${quote.batteryRecommendations.bestLifetimeSavings.batteryKWhUsable} kWh`
-                        : "N/A"}
-                      </div>
-                    
-                      {quote.batteryRecommendations.bestLifetimeSavings && (
-                        <div className={pdfMode ? "mt-1 text-[10px] leading-snug text-slate-500" : "mt-1 text-xs text-slate-500"}>
-                          Net savings: £{Number(quote.batteryRecommendations.bestLifetimeSavings.lifetimeNetSavings || 0).toLocaleString()} • 
-                          Payback: {quote.batteryRecommendations.bestLifetimeSavings.paybackYears ?? "—"} yrs 
-                        </div>
-                      )} 
-                    </div> 
-
-                  </div>  
-                  </div>
-                </div>
-
-                {quote?.batteryRecommendations?.noBatteryComparison && (() => {
-                  const comparison = quote.batteryRecommendations.noBatteryComparison;
-                  const noBattery = comparison.noBattery || {};
-                  const selectedBattery = comparison.selectedBattery || {};
-                  const incremental = comparison.incremental || {};
-                  const verdict = comparison.verdict || {};
-
-                  const selectedBatteryLabel =
-                    selectedBattery.requestedBatteryKWhUsable ||
-                    selectedBattery.batteryKWhUsable ||
-                    form?.batteryKWh ||
-                    quote?.hourlyModel?._batteryKWh ||
-                    0;
-
-                  const extraAnnualBenefit = Number(incremental.annualBenefit || 0);
-                  const extraLifetimeSavings = Number(incremental.lifetimeNetSavings || 0);
-                  const estimatedBatteryCost = Number(incremental.estimatedBatteryCost || incremental.systemCost || 0);
-                  const batteryPaybackYears = incremental.batteryPaybackYears;
-
-                  return (
-                    <div className={pdfMode ? "mt-3 rounded-2xl border border-slate-200 bg-white p-3 pdf-keep-together" : "mt-5 rounded-3xl border border-slate-200 bg-white p-5"}>
-                      <div className={pdfMode ? "text-xs font-semibold uppercase tracking-wide text-accent" : "text-sm font-semibold uppercase tracking-wide text-accent"}>
-                        Battery vs no battery
-                      </div>
-
-                      <p className={pdfMode ? "mt-1 text-xs leading-snug text-slate-600" : "mt-2 text-sm leading-6 text-slate-600"}>
-                        This compares your selected battery size against the same solar system with no battery.
-                      </p>
-
-                      <div className={pdfMode ? "mt-3 grid grid-cols-3 gap-2" : "mt-4 grid grid-cols-1 gap-3 md:grid-cols-3"}>
-                        <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center">
-                          <div className={pdfMode ? "text-[10px] font-medium text-slate-500" : "text-s font-medium text-slate-500"}>
-                            No battery annual benefit
-                          </div>
-                          <div className={pdfMode ? "mt-1 text-lg font-semibold text-slate-900" : "mt-1 text-2xl font-semibold text-slate-900"}>
-                            £{Number(noBattery.annualBenefit || 0).toLocaleString()}
-                          </div>
-                        </div>
-
-                        <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center">
-                          <div className={pdfMode ? "text-[10px] font-medium text-slate-500" : "text-s font-medium text-slate-500"}>
-                            {selectedBatteryLabel} kWh battery benefit
-                          </div>
-                          <div className={pdfMode ? "mt-1 text-lg font-semibold text-slate-900" : "mt-1 text-2xl font-semibold text-slate-900"}>
-                            £{Number(selectedBattery.annualBenefit || 0).toLocaleString()}
-                          </div>
-                        </div>
-
-                        <div className="rounded-2xl border border-accent/25 bg-white p-3 text-center">
-                          <div className={pdfMode ? "text-[10px] font-medium text-slate-500" : "text-s font-medium text-slate-500"}>
-                            Extra annual benefit
-                          </div>
-                          <div className={pdfMode ? "mt-1 text-lg font-semibold text-accent" : "mt-1 text-2xl font-semibold text-accent"}>
-                            {extraAnnualBenefit >= 0 ? "+" : "-"}£{Math.abs(extraAnnualBenefit).toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className={pdfMode ? "mt-3 grid grid-cols-3 gap-2 text-center" : "mt-4 grid grid-cols-1 gap-3 text-center md:grid-cols-3"}>
-                        <div className="rounded-2xl bg-slate-50 p-3">
-                          <div className={pdfMode ? "text-[10px] text-slate-500" : "text-xs text-slate-500"}>
-                            Estimated extra system cost
-                          </div>
-                          <div className={pdfMode ? "mt-1 text-sm font-semibold text-slate-900" : "mt-1 text-base font-semibold text-slate-900"}>
-                            £{estimatedBatteryCost.toLocaleString()}
-                          </div>
-                        </div>
-
-                        <div className="rounded-2xl bg-slate-50 p-3">
-                          <div className={pdfMode ? "text-[10px] text-slate-500" : "text-xs text-slate-500"}>
-                            Battery-only payback
-                          </div>
-                          <div className={pdfMode ? "mt-1 text-sm font-semibold text-slate-900" : "mt-1 text-base font-semibold text-slate-900"}>
-                            {batteryPaybackYears ? `${batteryPaybackYears} yrs` : "N/A"}
-                          </div>
-                        </div>
-
-                        <div className="rounded-2xl bg-slate-50 p-3">
-                          <div className={pdfMode ? "text-[10px] text-slate-500" : "text-xs text-slate-500"}>
-                            Extra lifetime net savings
-                          </div>
-                          <div className={pdfMode ? "mt-1 text-sm font-semibold text-slate-900" : "mt-1 text-base font-semibold text-slate-900"}>
-                            {extraLifetimeSavings >= 0 ? "+" : "-"}£{Math.abs(extraLifetimeSavings).toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className={pdfMode ? "mt-3 rounded-2xl bg-white p-3 text-xs leading-snug text-slate-600" : "mt-4 rounded-2xl bg-white p-4 text-sm leading-6 text-slate-600"}>
-                        {verdict.batteryAddsAnnualValue ? (
-                          <>
-                            Based on the current assumptions, the selected battery adds extra annual value compared with no battery.
-                          </>
-                        ) : (
-                          <>
-                            Based on the current assumptions, the selected battery does not add extra annual value compared with no battery.
-                          </>
-                        )}{" "}
-                        This is still based on the current abstract pricing model. Real product pricing will be improved when the hardware database is added.
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {quote.batteryRecommendations.bestPayback &&
-                  quote.batteryRecommendations.bestLifetimeSavings &&
-                  quote.batteryRecommendations.bestPayback.batteryKWhUsable ===
-                    quote.batteryRecommendations.bestLifetimeSavings.batteryKWhUsable && (
-                    <p
+                  {/* ============================
+                      CURRENT BATTERY / COMPARISON
+                  ============================ */}
+                  <div
+                    className={
+                      pdfMode
+                        ? "mt-1 grid grid-cols-2 gap-3"
+                        : "mt-1 grid grid-cols-1 gap-4 lg:grid-cols-2"
+                    }
+                  >
+                    {/* CURRENT BATTERY */}
+                    <div
                       className={
                         pdfMode
-                          ? "mt-2 text-[10px] leading-snug text-slate-500"
-                          : "mt-4 text-xs text-slate-500"
+                          ? "rounded-2xl border border-slate-200 bg-white p-3"
+                          : "rounded-2xl border border-slate-200 bg-white p-5"
                       }
                     >
-                      Both recommendations select the same battery size for this home.
-                    </p>
-                  )}
-              </Card>
-            )}
+                      <div className="text-body font-semibold uppercase tracking-wide text-accent">
+                        Your Current Battery
+                      </div>
+
+                      <div
+                        className={
+                          pdfMode
+                            ? "mt-2 text-2xl font-semibold text-slate-900"
+                            : "mt-3 text-3xl font-semibold text-slate-900"
+                        }
+                      >
+                        {activeBatteryKWh > 0
+                          ? `${activeBatteryKWh} kWh`
+                          : "No battery"}
+                      </div>
+
+                      <div className="mt-1 text-sm font-medium text-slate-600">
+                        {activeRecommendationLabel}
+                      </div>
+
+                      <div
+                        className={
+                          pdfMode
+                            ? "mt-3 grid grid-cols-2 gap-2"
+                            : "mt-5 grid grid-cols-2 gap-3"
+                        }
+                      >
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <div className="text-xs text-slate-500">
+                            Whole-system payback
+                          </div>
+                          <div className="mt-1 font-semibold text-slate-900">
+                            {quote?.financialSeries?.payback?.paybackYear
+                              ? `${quote.financialSeries.payback.paybackYear} yrs`
+                              : "N/A"}
+                          </div>
+                        </div>
+
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <div className="text-xs text-slate-500">
+                            Annual benefit
+                          </div>
+                          <div className="mt-1 font-semibold text-slate-900">
+                            £
+                            {Number(
+                              quote?.totalAnnualBenefit || 0
+                            ).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+
+                      {!pdfMode && (
+                        <details className="mt-4 rounded-xl border border-slate-200 bg-slate-50">
+                          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-700">
+                            Comparison period:{" "}
+                            {lifetimeYears} years
+                          </summary>
+
+                          <div className="border-t border-slate-200 px-4 py-4">
+                            <p className="text-xs leading-5 text-slate-500">
+                              This period is used for lifetime
+                              savings and can change the recommended
+                              battery size. Recalculate after
+                              adjusting it.
+                            </p>
+
+                            <div className="mt-4">
+                              <input
+                                type="range"
+                                min="5"
+                                max="30"
+                                step="1"
+                                value={
+                                  batteryRecommendationLifetimeYears
+                                }
+                                onChange={(event) => {
+                                  setBatteryRecommendationLifetimeYears(
+                                    Number(event.target.value)
+                                  );
+
+                                  setNeedsRecalc(true);
+                                  setUpdatedSections([]);
+                                }}
+                                className="w-full"
+                              />
+
+                              <div className="mt-2 flex justify-between text-xs text-slate-500">
+                                <span>5 years</span>
+
+                                <strong className="text-slate-900">
+                                  {
+                                    batteryRecommendationLifetimeYears
+                                  }{" "}
+                                  years
+                                </strong>
+
+                                <span>30 years</span>
+                              </div>
+                            </div>
+                          </div>
+                        </details>
+                      )}
+                    </div>
+
+                    {/* BATTERY VS SOLAR ONLY */}
+                    <div
+                      className={
+                        pdfMode
+                          ? "rounded-2xl border border-slate-200 bg-white p-3"
+                          : "rounded-2xl border border-slate-200 bg-white p-5"
+                      }
+                    >
+                      <div className="text-body font-semibold uppercase tracking-wide text-accent">
+                        Battery Compared With Solar Only
+                      </div>
+
+                      {activeBatteryKWh > 0 && comparison ? (
+                        <>
+                          <p className="mt-1 text-sm leading-5 text-slate-500">
+                            This isolates the additional value and
+                            cost of the currently selected battery.
+                          </p>
+
+                          <div
+                            className={
+                              pdfMode
+                                ? "mt-3 grid grid-cols-2 gap-2"
+                                : "mt-5 grid grid-cols-2 gap-3"
+                            }
+                          >
+                            <div className="rounded-xl bg-slate-50 p-3">
+                              <div className="text-xs text-slate-500">
+                                Extra annual value
+                              </div>
+                              <div className="mt-1 text-lg font-semibold text-slate-900">
+                                {Number(
+                                  incremental.annualBenefit || 0
+                                ) >= 0
+                                  ? "+"
+                                  : "-"}
+                                £
+                                {Math.abs(
+                                  Number(
+                                    incremental.annualBenefit || 0
+                                  )
+                                ).toLocaleString()}
+                              </div>
+                            </div>
+
+                            <div className="rounded-xl bg-slate-50 p-3">
+                              <div className="text-xs text-slate-500">
+                                Estimated battery cost
+                              </div>
+                              <div className="mt-1 text-lg font-semibold text-slate-900">
+                                £
+                                {Number(
+                                  incremental.estimatedBatteryCost ||
+                                    incremental.systemCost ||
+                                    0
+                                ).toLocaleString()}
+                              </div>
+                            </div>
+
+                            <div className="rounded-xl bg-slate-50 p-3">
+                              <div className="text-xs text-slate-500">
+                                Battery-only payback
+                              </div>
+                              <div className="mt-1 text-lg font-semibold text-slate-900">
+                                {incremental.batteryPaybackYears
+                                  ? `${incremental.batteryPaybackYears} yrs`
+                                  : "N/A"}
+                              </div>
+                            </div>
+
+                            <div className="rounded-xl bg-slate-50 p-3">
+                              <div className="text-xs text-slate-500">
+                                Extra lifetime savings
+                              </div>
+                              <div className="mt-1 text-lg font-semibold text-slate-900">
+                                {Number(
+                                  incremental.lifetimeNetSavings || 0
+                                ) >= 0
+                                  ? "+"
+                                  : "-"}
+                                £
+                                {Math.abs(
+                                  Number(
+                                    incremental.lifetimeNetSavings ||
+                                      0
+                                  )
+                                ).toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+
+                          <p className="mt-4 text-xs leading-5 text-slate-500">
+                            The recommendations below are based on
+                            the economics of the complete solar and
+                            battery system. This comparison is
+                            supporting information only.
+                          </p>
+                        </>
+                      ) : (
+                        <div className="mt-4 rounded-xl bg-slate-50 p-4">
+                          <div className="font-semibold text-slate-900">
+                            Solar-only selected
+                          </div>
+
+                          <p className="mt-1 text-sm leading-5 text-slate-500">
+                            Choose a battery below to see how much
+                            additional value it could add compared
+                            with solar alone.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ============================
+                      BATTERY SIZE OPTIONS
+                  ============================ */}
+                  <div
+                    className={
+                      pdfMode
+                        ? "mt-3 rounded-2xl border border-slate-200 bg-white p-3"
+                        : "mt-4 rounded-2xl border border-slate-200 bg-white p-5"
+                    }
+                  >
+                    <div>
+                      <div className="text-body font-semibold uppercase tracking-wide text-accent">
+                        Battery Size Options
+                      </div>
+
+                      <div
+                        className={
+                          pdfMode
+                            ? "mb-2 text-sm text-slate-500"
+                            : "mb-2 text-body text-slate-500"
+                        }
+                      >
+                        Choose the option that best matches what you
+                        value. The whole quote updates instantly.
+                      </div>
+                    </div>
+
+                    <div
+                      className={
+                        pdfMode
+                          ? "mt-3 grid grid-cols-3 gap-2"
+                          : "mt-5 grid grid-cols-1 gap-3 lg:grid-cols-3"
+                      }
+                    >
+                      {recommendationOptions.map((option) => {
+                        const recommendation =
+                          option.recommendation;
+
+                        const batteryKWh = Number(
+                          recommendation?.batteryKWhUsable || 0
+                        );
+
+                        const isActive =
+                          activeMode === "recommend" &&
+                          activeStrategy === option.strategy;
+
+                        const recommendationScenario =
+                          recommendations?.scenarios?.[
+                            String(batteryKWh)
+                          ] || null;
+
+                        return (
+                          <button
+                            key={option.strategy}
+                            type="button"
+                            disabled={
+                              pdfMode ||
+                              !(batteryKWh > 0)
+                            }
+                            onClick={() =>
+                              selectBatteryScenario({
+                                batteryKWh,
+                                mode: "recommend",
+                                strategy: option.strategy,
+                              })
+                            }
+                            className={[
+                              "relative rounded-2xl border p-4 text-left transition",
+                              isActive
+                                ? "border-accent bg-accent/5 ring-2 ring-accent/15"
+                                : "border-slate-200 bg-white",
+                              !pdfMode &&
+                              batteryKWh > 0 &&
+                              !isActive
+                                ? "hover:border-accent/40 hover:bg-slate-50"
+                                : "",
+                              pdfMode
+                                ? "cursor-default"
+                                : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="text-sm font-semibold text-slate-900">
+                                {option.title}
+                              </div>
+
+                              {option.recommended && (
+                                <span className="rounded-full bg-accent/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-accent">
+                                  Recommended
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="mt-2 text-2xl font-semibold text-slate-900">
+                              {batteryKWh > 0
+                                ? `${batteryKWh} kWh`
+                                : "N/A"}
+                            </div>
+
+                            <p className="mt-2 text-xs leading-5 text-slate-500">
+                              {option.reason}
+                            </p>
+
+                            {recommendation && (
+                              <div className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-600">
+                                <div>
+                                  System price:{" "}
+                                  <strong className="text-slate-900">
+                                    {recommendationScenario
+                                      ? `£${Math.round(
+                                          Number(
+                                            recommendationScenario.priceLow ||
+                                              0
+                                          )
+                                        ).toLocaleString()} – £${Math.round(
+                                          Number(
+                                            recommendationScenario.priceHigh ||
+                                              0
+                                          )
+                                        ).toLocaleString()}`
+                                      : "—"}
+                                  </strong>
+                                </div>
+
+                                <div className="mt-1">
+                                  Whole-system payback:{" "}
+                                  <strong className="text-slate-900">
+                                    {recommendation.paybackYears ??
+                                      "—"}{" "}
+                                    yrs
+                                  </strong>
+                                </div>
+
+                                <div className="mt-1">
+                                  {lifetimeYears}-year net savings:{" "}
+                                  <strong className="text-slate-900">
+                                    £
+                                    {Math.round(
+                                      Number(
+                                        recommendation.lifetimeNetSavings ||
+                                          0
+                                      )
+                                    ).toLocaleString()}
+                                  </strong>
+                                </div>
+                              </div>
+                            )}
+
+                            {isActive && !pdfMode && (
+                              <div className="mt-3 text-xs font-semibold text-accent">
+                                Currently selected
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {!pdfMode && (
+                      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                        <label>
+                          <div className="text-sm font-semibold text-slate-900">
+                            Choose another size
+                          </div>
+
+                          <p className="mt-1 text-xs text-slate-500">
+                            Select a specific usable capacity if
+                            you already know what you want.
+                          </p>
+
+                          <select
+                            className="mt-2 w-full"
+                            value={
+                              activeMode === "custom"
+                                ? String(activeBatteryKWh)
+                                : ""
+                            }
+                            onChange={(event) => {
+                              const nextBatteryKWh =
+                                Number(event.target.value || 0);
+
+                              if (!(nextBatteryKWh > 0)) {
+                                return;
+                              }
+
+                              selectBatteryScenario({
+                                batteryKWh:
+                                  nextBatteryKWh,
+                                mode: "custom",
+                                strategy:
+                                  activeStrategy,
+                              });
+                            }}
+                          >
+                            <option value="">
+                              Select battery size
+                            </option>
+
+                            {availableBatterySizes.map(
+                              (batteryKWh) => (
+                                <option
+                                  key={batteryKWh}
+                                  value={batteryKWh}
+                                >
+                                  {batteryKWh} kWh
+                                </option>
+                              )
+                            )}
+                          </select>
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            selectBatteryScenario({
+                              batteryKWh: 0,
+                              mode: "none",
+                              strategy:
+                                activeStrategy,
+                            })
+                          }
+                          className={[
+                            "rounded-xl border px-4 py-3 text-sm font-semibold transition",
+                            activeMode === "none"
+                              ? "border-accent bg-accent/5 text-accent"
+                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                          ].join(" ")}
+                        >
+                          No battery
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              );
+            })()}
           </div>
 
           {/* ====================

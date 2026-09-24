@@ -1212,6 +1212,56 @@ export default function SolarTargetBuildingSelector({
     });
   }
 
+  function renderBoundaryProgress(points = []) {
+    const google = googleRef.current;
+    const map = mapRef.current;
+
+    if (!google || !map) {
+      return;
+    }
+
+    clearBoundaryOverlays();
+
+    const safePoints = Array.isArray(points)
+      ? points
+      : [];
+
+    boundaryMarkersRef.current = safePoints.map(
+      (point, index) =>
+        new google.maps.Marker({
+          map,
+          position: point,
+          label: String(index + 1),
+          title: "Property boundary point",
+        })
+    );
+
+    const completedLines = [];
+
+    for (
+      let index = 0;
+      index + 1 < safePoints.length;
+      index += 2
+    ) {
+      completedLines.push([
+        safePoints[index],
+        safePoints[index + 1],
+      ]);
+    }
+
+    boundaryPolylinesRef.current = completedLines.map(
+      (line) =>
+        new google.maps.Polyline({
+          map,
+          path: line,
+          strokeColor: "#f59e0b",
+          strokeOpacity: 0.95,
+          strokeWeight: 4,
+          clickable: false,
+        })
+    );
+  }
+
   function resetPropertyBoundary({ keepDrawingMode = false } = {}) {
     propertyBoundaryRef.current = null;
     boundaryPointsRef.current = [];
@@ -1288,6 +1338,8 @@ export default function SolarTargetBuildingSelector({
 
     boundaryPointsRef.current = nextPoints;
     setBoundaryPoints(nextPoints);
+
+    renderBoundaryProgress(nextPoints);
 
     const nextBoundary = buildPropertyBoundaryFromPoints(
       nextPoints,

@@ -123,7 +123,7 @@ export default function QuoteForm({
 
                     <div className="steps">
                     <div className={`step-label ${step === 1 ? "active" : ""}`}>1. Your home</div>
-                    <div className={`step-label ${step === 2 ? "active" : ""}`}>2. Energy use</div>
+                    <div className={`step-label ${step === 2 ? "active" : ""}`}>2. Energy usage</div>
                     <div className={`step-label ${step === 3 ? "active" : ""}`}>3. Your roof</div>
                     <div className={`step-label ${step === 4 ? "active" : ""}`}>4. Your system</div>
                     <div className={`step-label ${step === 5 ? "active" : ""}`}>5. Your details</div>
@@ -136,106 +136,260 @@ export default function QuoteForm({
                         {/* STEP 1 */}
                         {step === 1 && (
                         <>
-                            <h2>Tell us about your home</h2>
+                            <h2 className="step-title">
+                                <span className="step-title-icon" aria-hidden="true">🏠</span>
+                                <span>Your Home</span>
+                            </h2>
+
                             <p className="subheading-print">
-                                We&apos;ll use your address to assess the property and build your solar estimate.
+                                Tell us where the solar system will be installed.
                             </p>
 
-                            <label>
-                            <div className="question-label">Do you own the property?</div>
-                            <div className="choice-row">
-                                <div
-                                className={`choice-pill ${form.homeOwnership === "owner" ? "active" : ""}`}
-                                onClick={() => setForm((prev) => ({ ...prev, homeOwnership: "owner" }))}
-                                >
-                                <div className="choice-title">Homeowner</div>
-                                <div className="choice-sub">I own or am buying this property</div>
-                                </div>
+                            {/* PROPERTY OWNERSHIP */}
+                            <div className="mt-4">
+                                <div className="form-section-label">Do you own the property?</div>
 
-                                <div
-                                className={`choice-pill ${form.homeOwnership === "renting" ? "active" : ""}`}
-                                onClick={() => setForm((prev) => ({ ...prev, homeOwnership: "renting" }))}
-                                >
-                                <div className="choice-title">Renting</div>
-                                <div className="choice-sub">I&apos;m renting this property</div>
-                                </div>
-                            </div>
-                            </label>
-
-                            <GooglePlacesAddressLookup
-                                form={form}
-                                setForm={setForm}
-                                handleChange={handleChange}
-                                handlePostcodeChange={handlePostcodeChange}
-                                setError={setError}
-                                setRoofGeometry={(nextGeometry) => {
-                                    setRoofGeometry(nextGeometry);
-
-                                    if (nextGeometry === null) {
-                                        setRoofs([]);
-                                        setRoofInputMode("draw_my_roof");
-                                    }
-                                }}
-                            />
-
-                            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <label>
-                                    <div className="question-label">
-                                        What type of property is this?
-                                    </div>
-
-                                    <select
-                                        name="propertyType"
-                                        value={form.propertyType || "unknown"}
-                                        onChange={(event) => {
-                                            const nextPropertyType =
-                                                event.target.value;
-
+                                <div className="choice-row">
+                                    <button
+                                        type="button"
+                                        className={`choice-pill ${
+                                            form.homeOwnership === "owner"
+                                                ? "active"
+                                                : ""
+                                        }`}
+                                        onClick={() =>
                                             setForm((prev) => ({
                                                 ...prev,
-                                                propertyType: nextPropertyType,
-                                            }));
-
-                                            // Property type changes whether a roof
-                                            // ownership-boundary check is required,
-                                            // so an existing roof model is no longer
-                                            // safe to reuse.
-                                            setRoofGeometry(null);
-                                            setRoofs([]);
-                                            setRoofInputMode("draw_my_roof");
-                                            setError("");
-                                        }}
+                                                homeOwnership: "owner",
+                                            }))
+                                        }
                                     >
-                                        <option value="unknown">
-                                            Select property type
-                                        </option>
-                                        <option value="detached">
-                                            Detached house
-                                        </option>
-                                        <option value="semi_detached">
-                                            Semi-detached house
-                                        </option>
-                                        <option value="mid_terrace">
-                                            Mid-terrace house
-                                        </option>
-                                        <option value="end_terrace">
-                                            End-terrace house
-                                        </option>
-                                        <option value="bungalow">
-                                            Bungalow
-                                        </option>
-                                        <option value="commercial_or_other">
-                                            Commercial / other
-                                        </option>
-                                    </select>
+                                        <div className="choice-title">
+                                            Homeowner
+                                        </div>
 
-                                    <p className="small-print">
-                                        This helps us identify your roof correctly.
-                                        For attached homes, we may ask you to mark
-                                        the boundary with your neighbour.
-                                    </p>
-                                </label>
+                                        <div className="choice-sub">
+                                            I own or am buying the property
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className={`choice-pill ${
+                                            form.homeOwnership === "renting"
+                                                ? "active"
+                                                : ""
+                                        }`}
+                                        onClick={() =>
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                homeOwnership: "renting",
+                                            }))
+                                        }
+                                    >
+                                        <div className="choice-title">
+                                            Renting
+                                        </div>
+
+                                        <div className="choice-sub">
+                                            I rent the property
+                                        </div>
+                                    </button>
+                                </div>
                             </div>
+
+                            {/* ADDRESS SEARCH */}
+                            <div className="mt-4">
+                                <GooglePlacesAddressLookup
+                                    form={form}
+                                    setForm={setForm}
+                                    handleChange={handleChange}
+                                    handlePostcodeChange={
+                                        handlePostcodeChange
+                                    }
+                                    setError={setError}
+                                    setRoofGeometry={(nextGeometry) => {
+                                        setRoofGeometry(nextGeometry);
+
+                                        if (nextGeometry === null) {
+                                            setRoofs([]);
+                                            setRoofInputMode(
+                                                "draw_my_roof"
+                                            );
+                                        }
+                                    }}
+                                />
+                            </div>
+
+                            {/* CHECK SELECTED PROPERTY */}
+                            {form.selectedAddress && (
+                                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                        <div>
+                                            <div className="form-section-label">Check Your Details</div>
+
+                                            <p className="mt-1 text-sm text-slate-600">
+                                                We found this property. Check the details before continuing.
+                                            </p>
+
+                                            {form.selectedAddress?.fullAddress && (
+                                                <p className="mt-2 text-sm font-medium text-slate-900">
+                                                    {form.selectedAddress.fullAddress}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            className="secondary-mini shrink-0"
+                                            onClick={() => {
+                                                setForm((prev) => ({
+                                                    ...prev,
+                                                    address: "",
+                                                    houseNumber: "",
+                                                    roadName: "",
+                                                    town: "",
+                                                    postcode: "",
+                                                    selectedAddress: null,
+                                                    propertyType: "unknown",
+                                                }));
+
+                                                setRoofGeometry(null);
+                                                setRoofs([]);
+                                                setRoofInputMode(
+                                                    "draw_my_roof"
+                                                );
+                                                setError("");
+                                            }}
+                                        >
+                                            Change address
+                                        </button>
+                                    </div>
+
+                                    <div className="property-details-grid mt-3 grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
+                                        <label>
+                                            <div className="question-label">
+                                                House number / name
+                                            </div>
+
+                                            <input
+                                                type="text"
+                                                name="houseNumber"
+                                                value={form.houseNumber}
+                                                onChange={handleChange}
+                                            />
+                                        </label>
+
+                                        <label>
+                                            <div className="question-label">
+                                                Road name
+                                            </div>
+
+                                            <input
+                                                type="text"
+                                                name="roadName"
+                                                value={form.roadName}
+                                                onChange={handleChange}
+                                            />
+                                        </label>
+
+                                        <label>
+                                            <div className="question-label">
+                                                Town / city
+                                            </div>
+
+                                            <input
+                                                type="text"
+                                                name="town"
+                                                value={form.town}
+                                                onChange={handleChange}
+                                            />
+                                        </label>
+
+                                        <label>
+                                            <div className="question-label">
+                                                Postcode
+                                            </div>
+
+                                            <input
+                                                type="text"
+                                                name="postcode"
+                                                value={form.postcode}
+                                                onChange={
+                                                    handlePostcodeChange
+                                                }
+                                            />
+                                        </label>
+
+                                        <label className="md:col-span-2">
+                                            <div className="question-label">
+                                                Property type
+                                            </div>
+
+                                            <select
+                                                name="propertyType"
+                                                value={
+                                                    form.propertyType ||
+                                                    "unknown"
+                                                }
+                                                onChange={(event) => {
+                                                    const nextPropertyType =
+                                                        event.target.value;
+
+                                                    setForm((prev) => ({
+                                                        ...prev,
+                                                        propertyType:
+                                                            nextPropertyType,
+                                                    }));
+
+                                                    // Property type affects the
+                                                    // boundary workflow, so any
+                                                    // existing roof analysis
+                                                    // must be invalidated.
+                                                    setRoofGeometry(null);
+                                                    setRoofs([]);
+                                                    setRoofInputMode(
+                                                        "draw_my_roof"
+                                                    );
+                                                    setError("");
+                                                }}
+                                            >
+                                                <option value="unknown">
+                                                    Select property type
+                                                </option>
+
+                                                <option value="detached">
+                                                    Detached house
+                                                </option>
+
+                                                <option value="semi_detached">
+                                                    Semi-detached house
+                                                </option>
+
+                                                <option value="mid_terrace">
+                                                    Mid-terrace house
+                                                </option>
+
+                                                <option value="end_terrace">
+                                                    End-terrace house
+                                                </option>
+
+                                                <option value="bungalow">
+                                                    Bungalow
+                                                </option>
+
+                                                <option value="commercial_or_other">
+                                                    Commercial / other
+                                                </option>
+                                            </select>
+
+                                            <p className="small-print">
+                                                For attached homes, we may ask you to mark the boundary with your neighbour.
+                                            </p>
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="buttons-row">
                             <button
@@ -305,7 +459,7 @@ export default function QuoteForm({
                                 handleNext();
                                 }}
                             >
-                                Next: energy use →
+                                Next: energy usage →
                             </button>
                             </div>
 
@@ -316,76 +470,176 @@ export default function QuoteForm({
                         {/* STEP 2 */}
                         {step === 2 && (
                         <>
-                            <h2>How do you use electricity?</h2>
+                            <h2 className="step-title">
+                                <span className="step-title-icon" aria-hidden="true">⚡</span>
+                                <span>Energy Usage</span>
+                            </h2>
+
                             <p className="subheading-print">
-                                A few simple details help us estimate how much solar energy your home could use.
+                                A few details help us estimate how your home uses electricity.
                             </p>
 
-                            <label>
-                            <div className="question-label">When is someone usually at home?</div>
-                            <div className="choice-row">
-                                <div
-                                className={`choice-pill ${form.occupancyProfile === "home_all_day" ? "active" : ""}`}
-                                onClick={() => setForm((prev) => ({ ...prev, occupancyProfile: "home_all_day" }))}
-                                >
-                                <div className="choice-title">Home all day</div>
-                                <div className="choice-sub">Someone is usually home during the day</div>
-                                </div>
+                            <div className="energy-occupancy">
+                                <div className="form-section-label">When is someone usually at home?</div>
 
-                                <div
-                                className={`choice-pill ${form.occupancyProfile === "half_day" ? "active" : ""}`}
-                                onClick={() => setForm((prev) => ({ ...prev, occupancyProfile: "half_day" }))}
-                                >
-                                <div className="choice-title">Home half day</div>
-                                <div className="choice-sub">Someone is home for part of the day</div>
-                                </div>
+                                <div className="choice-row">
+                                    <button
+                                        type="button"
+                                        className={`choice-pill ${
+                                            form.occupancyProfile === "home_all_day"
+                                                ? "active"
+                                                : ""
+                                        }`}
+                                        onClick={() =>
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                occupancyProfile: "home_all_day",
+                                            }))
+                                        }
+                                    >
+                                        <div className="choice-title">
+                                            Home all day
+                                        </div>
 
-                                <div
-                                className={`choice-pill ${form.occupancyProfile === "out_all_day" ? "active" : ""}`}
-                                onClick={() => setForm((prev) => ({ ...prev, occupancyProfile: "out_all_day" }))}
-                                >
-                                <div className="choice-title">Out all day</div>
-                                <div className="choice-sub">The home is usually empty during working hours</div>
+                                        <div className="choice-sub">
+                                            Usually occupied during the day
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className={`choice-pill ${
+                                            form.occupancyProfile === "half_day"
+                                                ? "active"
+                                                : ""
+                                        }`}
+                                        onClick={() =>
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                occupancyProfile: "half_day",
+                                            }))
+                                        }
+                                    >
+                                        <div className="choice-title">
+                                            Home half day
+                                        </div>
+
+                                        <div className="choice-sub">
+                                            Occupied for part of the day
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className={`choice-pill ${
+                                            form.occupancyProfile === "out_all_day"
+                                                ? "active"
+                                                : ""
+                                        }`}
+                                        onClick={() =>
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                occupancyProfile: "out_all_day",
+                                            }))
+                                        }
+                                    >
+                                        <div className="choice-title">
+                                            Out all day
+                                        </div>
+
+                                        <div className="choice-sub">
+                                            Usually empty during working hours
+                                        </div>
+                                    </button>
                                 </div>
                             </div>
-                            </label>
 
-                            <label>
-                            <div className="question-label">Annual electricity use</div>
-                            <input
-                                type="number"
-                                name="annualKWh"
-                                value={form.annualKWh}
-                                onChange={handleChange}
-                                placeholder="e.g. 3,000"
-                            />
-                            <p className="small-print">
-                                You&apos;ll usually find this on a recent electricity bill. If you&apos;re not sure, leave it blank and we&apos;ll use a typical household estimate.
-                            </p>
-                            </label>
+                            <div className="energy-usage-card">
+                                <div className="form-section-label">Electricity Usage</div>
 
-                            <label>
-                            <div className="question-label">Or tell us your average monthly electricity bill</div>
-                            <input
-                                type="number"
-                                name="monthlyBill"
-                                value={form.monthlyBill}
-                                onChange={handleChange}
-                                placeholder="e.g. 100"
-                            />
-                            </label>
+                                <p className="form-section-copy">
+                                    Enter your annual electricity use if you know it.
+                                </p>
 
-                            <button
-                            type="button"
-                            onClick={openTariffModal}
-                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-                            >
-                            Edit tariff
-                            </button>
+                                <label className="energy-primary-field">
+                                    <div className="energy-field-label">
+                                        Annual electricity usage
+                                    </div>
+
+                                    <div className="energy-input-wrap">
+                                        <input
+                                            type="number"
+                                            name="annualKWh"
+                                            value={form.annualKWh}
+                                            onChange={handleChange}
+                                            placeholder="e.g. 3000"
+                                        />
+
+                                        <span>kWh/year</span>
+                                    </div>
+                                </label>
+
+                                <details className="energy-alternative">
+                                    <summary>
+                                        Don&apos;t know your annual usage? Use your average monthly bill
+                                    </summary>
+
+                                    <div className="energy-alternative-body">
+                                        <label>
+                                            <div className="energy-field-label">
+                                                Average monthly electricity bill
+                                            </div>
+
+                                            <div className="energy-input-wrap energy-input-wrap--money">
+                                                <span>£</span>
+
+                                                <input
+                                                    type="number"
+                                                    name="monthlyBill"
+                                                    value={form.monthlyBill}
+                                                    onChange={handleChange}
+                                                    placeholder="e.g. 100"
+                                                />
+
+                                                <span>/month</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </details>
+                            </div>
+
+                            <div className="energy-tariff-row">
+                                <div>
+                                    <div className="form-section-label">Electricity Tariff</div>
+
+                                    <p className="form-section-copy">
+                                        Review the electricity prices used in your estimate.
+                                    </p>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={openTariffModal}
+                                    className="energy-tariff-button"
+                                >
+                                    Edit tariff
+                                </button>
+                            </div>
 
                             <div className="buttons-row">
-                            <button type="button" onClick={handlePrev}>← Back</button>
-                            <button type="button" onClick={handleNext}>Next: your roof →</button>
+                                <button
+                                    type="button"
+                                    onClick={handlePrev}
+                                >
+                                    ← Back
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={handleNext}
+                                >
+                                    Next: your roof →
+                                </button>
                             </div>
                         </>
                         )}
@@ -393,7 +647,10 @@ export default function QuoteForm({
                         {/* STEP 3 */}
                         {step === 3 && (
                         <>
-                            <h2>Your roof</h2>
+                            <h2 className="step-title">
+                                <span className="step-title-icon" aria-hidden="true">☀️</span>
+                                <span>Your Roof</span>
+                            </h2>
                             <p className="subheading-print">
                                 We&apos;ll use satellite data to estimate the roof areas most suitable for solar.
                             </p>
@@ -616,119 +873,340 @@ export default function QuoteForm({
                         {/* STEP 4 */}
                         {step === 4 && (
                         <>
-                            <h2>Choose your system preferences</h2>
+                            <h2 className="step-title">
+                                <span className="step-title-icon" aria-hidden="true">🔋</span>
+                                <span>Your System</span>
+                            </h2>
                             <p className="subheading-print">
-                                These choices help us tailor the estimate. You can change them later.
+                                Choose your preferences and we&apos;ll tailor the estimate.
                             </p>
 
-                            <label>
-                            <div className="question-label">Panel option</div>
-                            <select name="panelOption" value={form.panelOption} onChange={handleChange}>
-                                <option value="value">Standard</option>
-                                <option value="premium">Premium</option>
-                            </select>
+                            <div className="form-section-label">Panels</div>
                             <p className="small-print">
-                                Standard is our usual high-quality residential option. Premium uses higher-output panels where extra performance or roof-space efficiency is useful.
+                                Choose our standard option or higher-output panels where roof space is more limited.
                             </p>
-                            </label>
+                            <div className="choice-row">
+                                <button
+                                    type="button"
+                                    className={`choice-pill ${form.panelOption === "value" ? "active" : ""}`}
+                                    onClick={() =>
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            panelOption: "value",
+                                        }))
+                                    }
+                                >
+                                    <div className="choice-title">Standard</div>
+                                    <div className="choice-sub">
+                                        Our usual high-quality option
+                                    </div>
+                                </button>
 
-                            <label>
-                            <div className="question-label">Battery size</div>
-                            <input
-                                type="number"
-                                name="batteryKWh"
-                                value={form.batteryKWh}
-                                onChange={handleChange}
-                                placeholder="e.g. 5, 10 or 13"
-                            />
+                                <button
+                                    type="button"
+                                    className={`choice-pill ${form.panelOption === "premium" ? "active" : ""}`}
+                                    onClick={() =>
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            panelOption: "premium",
+                                        }))
+                                    }
+                                >
+                                    <div className="choice-title">Premium</div>
+                                    <div className="choice-sub">
+                                        Higher output where space matters
+                                    </div>
+                                </button>
+                            </div>
+
+                            <div className="form-section-label">Battery</div>
                             <p className="small-print">
-                                If you already have a preferred size, enter it here. If you&apos;re unsure, we&apos;ll still show battery recommendations in your estimate.
+                                We&apos;ll compare battery sizes using your solar generation, electricity use and tariff.
                             </p>
-                            </label>
+                            <div className="choice-row">
+                                <button
+                                    type="button"
+                                    className={`choice-pill ${
+                                        (form.batteryChoiceMode || "recommend") === "recommend"
+                                            ? "active"
+                                            : ""
+                                    }`}
+                                    onClick={() =>
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            batteryChoiceMode: "recommend",
+                                            batteryStrategy: "balanced",
+                                            batteryKWh: 0,
+                                        }))
+                                    }
+                                >
+                                    <div className="choice-title">
+                                        Recommend for me
+                                    </div>
+                                    <div className="choice-sub">
+                                        We&apos;ll find the best balance
+                                    </div>
+                                </button>
 
-                            <div className="checkbox-heading">Optional extras</div>
-                            <label className="checkbox">
-                            <input
-                                type="checkbox"
-                                name="birdProtection"
-                                checked={form.birdProtection}
-                                onChange={handleChange}
-                            />
-                            <span>Include bird protection</span>
-                            </label>
+                                <button
+                                    type="button"
+                                    className={`choice-pill ${
+                                        form.batteryChoiceMode === "none"
+                                            ? "active"
+                                            : ""
+                                    }`}
+                                    onClick={() =>
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            batteryChoiceMode: "none",
+                                            batteryKWh: 0,
+                                        }))
+                                    }
+                                >
+                                    <div className="choice-title">
+                                        No battery
+                                    </div>
+                                    <div className="choice-sub">
+                                        Solar panels only
+                                    </div>
+                                </button>
 
-                            <label className="checkbox">
-                            <input
-                                type="checkbox"
-                                name="evCharger"
-                                checked={form.evCharger}
-                                onChange={handleChange}
-                            />
-                            <span>Include EV charger</span>
-                            </label>
+                                <button
+                                    type="button"
+                                    className={`choice-pill ${
+                                        form.batteryChoiceMode === "custom"
+                                            ? "active"
+                                            : ""
+                                    }`}
+                                    onClick={() =>
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            batteryChoiceMode: "custom",
+                                            batteryKWh:
+                                                Number(prev.batteryCustomKWh) > 0
+                                                    ? Number(prev.batteryCustomKWh)
+                                                    : 10,
+                                            batteryCustomKWh:
+                                                Number(prev.batteryCustomKWh) > 0
+                                                    ? Number(prev.batteryCustomKWh)
+                                                    : 10,
+                                        }))
+                                    }
+                                >
+                                    <div className="choice-title">
+                                        Choose a size
+                                    </div>
+                                    <div className="choice-sub">
+                                        If you already know what you want
+                                    </div>
+                                </button>
+                            </div>
+
+                            {form.batteryChoiceMode === "custom" && (
+                                <label className="mt-3">
+                                    <div className="question-label">
+                                        Battery size
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            name="batteryKWh"
+                                            min="1"
+                                            max="35"
+                                            step="1"
+                                            value={
+                                                form.batteryCustomKWh ??
+                                                form.batteryKWh ??
+                                                10
+                                            }
+                                            onChange={(event) => {
+                                                const value = event.target.value;
+
+                                                setForm((prev) => ({
+                                                    ...prev,
+                                                    batteryCustomKWh: value,
+                                                    batteryKWh: value,
+                                                }));
+                                            }}
+                                            placeholder="e.g. 10"
+                                        />
+                                        <span className="text-sm font-medium text-slate-600">
+                                            kWh
+                                        </span>
+                                    </div>
+                                </label>
+                            )}
+
+                            <div className="form-section-label">Optional Extras</div>
+                            <p className="small-print">
+                                Add anything else you&apos;d like included in your estimate.
+                            </p>
+
+                            <div className="choice-row">
+                                <button
+                                    type="button"
+                                    className={`choice-pill ${form.birdProtection ? "active" : ""}`}
+                                    aria-pressed={!!form.birdProtection}
+                                    onClick={() =>
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            birdProtection: !prev.birdProtection,
+                                        }))
+                                    }
+                                >
+                                    <div className="choice-title">
+                                        Bird protection
+                                    </div>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className={`choice-pill ${form.evCharger ? "active" : ""}`}
+                                    aria-pressed={!!form.evCharger}
+                                    onClick={() =>
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            evCharger: !prev.evCharger,
+                                        }))
+                                    }
+                                >
+                                    <div className="choice-title">
+                                        EV charger
+                                    </div>
+                                </button>
+                            </div>
 
                             <div className="buttons-row">
-                            <button type="button" onClick={handlePrev}>← Back</button>
-                            <button type="button" onClick={handleNext}>Next: your details →</button>
+                                <button type="button" onClick={handlePrev}>
+                                    ← Back
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="next-step-button"
+                                    onClick={() => {
+                                        if (form.batteryChoiceMode === "custom") {
+                                            const customBatteryKWh = Number(
+                                                form.batteryCustomKWh ??
+                                                form.batteryKWh ??
+                                                0
+                                            );
+
+                                            if (
+                                                !Number.isInteger(customBatteryKWh) ||
+                                                customBatteryKWh < 1 ||
+                                                customBatteryKWh > 35
+                                            ) {
+                                                setError(
+                                                    "Please enter a whole battery size between 1 and 35 kWh."
+                                                );
+                                                return;
+                                            }
+                                        }
+
+                                        setError("");
+                                        handleNext();
+                                    }}
+                                >
+                                    Next: your details →
+                                </button>
                             </div>
+
+                            {error && <div className="error">{error}</div>}
                         </>
                         )}
 
                         {/* STEP 5 */}
                         {step === 5 && (
                         <>
-                            <h2>Your details</h2>
+                            <h2 className="step-title">
+                                <span className="step-title-icon" aria-hidden="true">👤</span>
+                                <span>Your Details</span>
+                            </h2>
+
                             <p className="subheading-print">
-                                These are optional for now. Adding them makes it easier to email your estimate
-                                or arrange a survey later.
+                                Optional — you can view your estimate without entering any details.
                             </p>
 
-                            <label>
-                            <div className="question-label">Full name</div>
-                            <input
-                                type="text"
-                                name="name"
-                                value={form.name}
-                                onChange={handleChange}
-                                placeholder="Your name"
-                            />
-                            </label>
+                            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                    <label>
+                                        <div className="question-label">
+                                            Full name
+                                        </div>
 
-                            <label>
-                            <div className="question-label">Email address</div>
-                            <input
-                                type="email"
-                                name="email"
-                                value={form.email}
-                                onChange={handleChange}
-                                placeholder="you@example.com"
-                            />
-                            </label>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={form.name}
+                                            onChange={handleChange}
+                                            placeholder="Your name"
+                                            autoComplete="name"
+                                        />
+                                    </label>
 
-                            <label>
-                            <div className="question-label">Phone number (optional)</div>
-                            <input
-                                type="tel"
-                                name="phone"
-                                value={form.phone}
-                                onChange={handleChange}
-                                placeholder="For follow-up questions"
-                            />
-                            </label>
+                                    <label>
+                                        <div className="question-label">
+                                            Email address
+                                        </div>
 
-                            <LegalNotice variant="compact" className="mt-4" />
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={form.email}
+                                            onChange={handleChange}
+                                            placeholder="you@example.com"
+                                            autoComplete="email"
+                                        />
+                                    </label>
 
-                            <div className="buttons-row">
-                            <button type="button" onClick={handlePrev}>
-                                ← Back
-                            </button>
+                                    <label>
+                                        <div className="question-label">
+                                            Phone number
+                                        </div>
 
-                            <button type="button" onClick={handleSubmit} disabled={loading}>
-                                {loading ? "Calculating…" : "See my solar estimate"}
-                            </button>
+                                        <input
+                                            type="tel"
+                                            name="phone"
+                                            value={form.phone}
+                                            onChange={handleChange}
+                                            placeholder="e.g. 07123 456789"
+                                            autoComplete="tel"
+                                        />
+                                    </label>
+                                </div>
                             </div>
 
-                            {error && <div className="error">{error}</div>}
+                            <LegalNotice
+                                variant="compact"
+                                className="mt-4"
+                            />
+
+                            <div className="buttons-row">
+                                <button
+                                    type="button"
+                                    onClick={handlePrev}
+                                >
+                                    ← Back
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="next-step-button"
+                                    onClick={handleSubmit}
+                                    disabled={loading}
+                                >
+                                    {loading
+                                        ? "Calculating…"
+                                        : "See my solar estimate →"}
+                                </button>
+                            </div>
+
+                            {error && (
+                                <div className="error">
+                                    {error}
+                                </div>
+                            )}
                         </>
                         )}
                     </div>

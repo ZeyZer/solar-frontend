@@ -2837,3 +2837,888 @@ select:focus {
   outline: 2px solid #2563eb;
   outline-offset: -5px;
 }
+
+/* Step 1: compact confirmed-property form */
+.property-details-grid > label {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.property-details-grid .question-label {
+  margin-bottom: 6px;
+}
+
+.property-details-grid input,
+.property-details-grid select {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.property-details-grid .small-print {
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+/* =========================================================
+   Quote form: Step 2 compact energy layout
+   ========================================================= */
+
+.energy-occupancy {
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.energy-occupancy .question-label,
+.energy-usage-card .question-label,
+.energy-tariff-row .question-label {
+  margin: 0 0 0.4rem;
+}
+
+.energy-occupancy .choice-row {
+  margin-top: 0.35rem;
+}
+
+.energy-occupancy .choice-pill {
+  margin-top: 0;
+}
+
+.energy-usage-card {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #f9fafb;
+}
+
+.energy-usage-card .small-print,
+.energy-tariff-row .small-print {
+  margin: 0;
+}
+
+.energy-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 0.9rem;
+}
+
+.energy-input-grid > label {
+  margin: 0;
+}
+
+.energy-field-label {
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.energy-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 46px;
+  padding: 0 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.energy-input-wrap:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+}
+
+.energy-input-wrap input {
+  min-width: 0;
+  margin: 0;
+  padding: 0.65rem 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.energy-input-wrap input:focus {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.energy-input-wrap span {
+  flex: 0 0 auto;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.energy-input-wrap--money > span:first-child {
+  font-size: 1rem;
+  color: #111827;
+}
+
+.energy-tariff-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.energy-tariff-button {
+  flex: 0 0 auto;
+  padding: 0.55rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.energy-tariff-button:hover {
+  background: #f3f4f6;
+}
+
+@media (max-width: 640px) {
+  .energy-input-grid {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .energy-tariff-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .energy-tariff-button {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   Quote form: shared visual polish
+   ========================================================= */
+
+/* Main step heading -> description */
+.step-content > h2 {
+  margin-bottom: 0.45rem;
+}
+
+.step-content > .subheading-print {
+  margin-top: 0;
+  margin-bottom: 1.35rem;
+}
+
+/*
+ * Remove the legacy 30px margin from question labels
+ * inside the main 5-step form only.
+ * This does not affect the separate roof wizard modal.
+ */
+.step-content .question-label {
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0.35rem;
+}
+
+/* Shared section heading, matching "Check your details" */
+.form-section-label {
+  margin: 0 0 0.2rem;
+  color: var(--color-primary);
+  font-size: 0.82rem;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* Explanation immediately underneath a section heading */
+.form-section-copy {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+/* =========================================================
+   Step 2: final compact energy layout
+   ========================================================= */
+
+.energy-occupancy {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.energy-occupancy .choice-row {
+  margin-top: 0.55rem;
+}
+
+.energy-occupancy .choice-pill {
+  margin-top: 0;
+}
+
+.energy-usage-card {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #f9fafb;
+}
+
+.energy-primary-field {
+  max-width: 460px;
+  margin: 0.85rem 0 0;
+}
+
+.energy-field-label {
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.energy-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 46px;
+  padding: 0 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.energy-input-wrap:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+}
+
+.energy-input-wrap input {
+  min-width: 0;
+  margin: 0;
+  padding: 0.65rem 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.energy-input-wrap input:focus {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.energy-input-wrap span {
+  flex: 0 0 auto;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.energy-input-wrap--money > span:first-child {
+  color: #111827;
+  font-size: 1rem;
+}
+
+.energy-alternative {
+  margin-top: 0.8rem;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 0.7rem;
+}
+
+.energy-alternative summary {
+  width: fit-content;
+  color: var(--color-primary);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.energy-alternative-body {
+  max-width: 460px;
+  margin-top: 0.8rem;
+}
+
+.energy-alternative-body label {
+  margin-bottom: 0;
+}
+
+.energy-tariff-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.energy-tariff-button {
+  flex: 0 0 auto;
+  padding: 0.55rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.energy-tariff-button:hover {
+  background: #f3f4f6;
+}
+
+@media (max-width: 640px) {
+  .step-content > h2 {
+    margin-bottom: 0.35rem;
+  }
+
+  .step-content > .subheading-print {
+    margin-bottom: 1.1rem;
+  }
+
+  .energy-tariff-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .energy-tariff-button {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   Quote form: final shared hierarchy + spacing
+   ========================================================= */
+
+/* Less empty space at the top of every step */
+.form {
+  padding-top: 1.25rem;
+}
+
+/* Main step titles */
+.step-content > .step-title {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0 0 0.4rem;
+  line-height: 1.05;
+}
+
+/* Warm accent to break up the blue/grey palette */
+.step-title-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  background: #fff7ed;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+/*
+ * Tight title -> description,
+ * then a clearer gap before the actual form content.
+ */
+.step-content > .subheading-print {
+  margin-top: 0;
+  margin-bottom: 1.55rem;
+}
+
+/* All true subsection headings */
+.step-content .form-section-label {
+  margin: 0 0 0.2rem;
+  color: var(--color-primary);
+  font-size: 0.82rem;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* Description directly beneath a subsection */
+.step-content .form-section-label + p {
+  margin-top: 0.25rem;
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 0.65rem;
+  color: var(--color-muted);
+}
+
+/*
+ * Step 4 headings are direct children.
+ * Give Battery / Optional Extras breathing room from
+ * the option cards above them.
+ */
+.step-content > .form-section-label {
+  margin-top: 1.3rem;
+}
+
+.step-content > .subheading-print + .form-section-label {
+  margin-top: 0;
+}
+
+/* If a section follows a choice row or custom field */
+.step-content .choice-row + .form-section-label,
+.step-content label + .form-section-label {
+  margin-top: 1.3rem;
+}
+
+/* Keep choice groups visually attached to their descriptions */
+.step-content .form-section-label + p + .choice-row {
+  margin-top: 0.5rem;
+}
+
+/* Step 1 ownership should not inherit old question-label spacing */
+.step-content .form-section-label + .choice-row {
+  margin-top: 0.55rem;
+}
+
+/* Step 2 fallback is an input choice, not a section heading */
+.energy-alternative summary {
+  color: #111827;
+  font-weight: 600;
+}
+
+.energy-alternative summary::marker {
+  color: #6b7280;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .form {
+    padding-top: 1rem;
+  }
+
+  .step-content > .step-title {
+    gap: 0.55rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .step-title-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 10px;
+    font-size: 1.15rem;
+  }
+
+  .step-content > .subheading-print {
+    margin-bottom: 1.3rem;
+  }
+}
+
+/* Step 4 preference grouping */
+.step-content .form-section-label + .small-print {
+  margin-top: 0.25rem;
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 0.65rem;
+}
+
+.step-content .form-section-label + .text-sm {
+  margin-top: 0.25rem;
+  margin-bottom: 0.65rem;
+}
+
+/* =========================================================
+   Quote form: spacing + typography refinement
+   ========================================================= */
+
+/*
+ * MAIN STEP HEADER
+ * Keep title + description visually together,
+ * then create a clearer break before the first section.
+ */
+
+.step-content > .step-title {
+  margin-bottom: 0.45rem;
+}
+
+.step-content > .subheading-print {
+  margin-top: 0;
+  margin-bottom: 2.25rem;
+  line-height: 1.5;
+}
+
+
+/*
+ * SECTION HEADINGS
+ * One consistent hierarchy throughout the quote form.
+ */
+
+.step-content .form-section-label {
+  margin-bottom: 0.3rem;
+
+  font-size: 0.85rem;
+  line-height: 1.35;
+  font-weight: 700;
+
+  letter-spacing: 0.065em;
+  text-transform: uppercase;
+
+  color: var(--color-primary);
+}
+
+
+/*
+ * Subsequent top-level sections need a stronger gap
+ * from the content above.
+ */
+
+.step-content > .form-section-label {
+  margin-top: 1.95rem;
+}
+
+/*
+ * The first section already gets its separation from
+ * the main description above, so don't double it.
+ */
+.step-content > .subheading-print + .form-section-label {
+  margin-top: 0;
+}
+
+
+/*
+ * SECTION DESCRIPTION
+ * Keep it closely attached to its heading,
+ * but leave a comfortable gap before controls.
+ */
+
+.step-content .form-section-label + p {
+  margin-top: 0.3rem;
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 0.9rem;
+
+  font-size: 0.94rem;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+
+/*
+ * Choice controls should sit clearly beneath their section.
+ */
+
+.step-content .form-section-label + .choice-row {
+  margin-top: 0.75rem;
+}
+
+.step-content .form-section-label + p + .choice-row {
+  margin-top: 0.75rem;
+}
+
+
+/* =========================================================
+   Step 1: confirmed property hierarchy
+   ========================================================= */
+
+/*
+ * Field labels must be subordinate to
+ * CHECK YOUR DETAILS.
+ */
+
+.property-details-grid .question-label {
+  margin: 0 0 0.35rem;
+
+  font-size: 0.9rem;
+  line-height: 1.3;
+  font-weight: 600;
+
+  letter-spacing: 0;
+  text-transform: none;
+  color: #111827;
+}
+
+.property-details-grid {
+  margin-top: 1rem;
+  column-gap: 1rem;
+  row-gap: 1rem;
+}
+
+.property-details-grid > label {
+  margin: 0 !important;
+}
+
+.property-details-grid input,
+.property-details-grid select {
+  font-size: 0.96rem;
+}
+
+/*
+ * Property-type explanatory copy should stay visually
+ * secondary to both the section title and field label.
+ */
+.property-details-grid .small-print {
+  margin-top: 0.45rem;
+  margin-left: 0;
+  margin-right: 0;
+
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   Step 2
+   ========================================================= */
+
+/* Input alternative — this is not a section heading. */
+.energy-alternative summary {
+  color: #111827;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.energy-alternative summary::marker {
+  color: #6b7280;
+}
+
+/* Slightly more separation between actual Step 2 sections. */
+.energy-usage-card {
+  margin-top: 1.5rem;
+}
+
+.energy-tariff-row {
+  margin-top: 1.5rem;
+}
+
+
+/* =========================================================
+   Step 4
+   ========================================================= */
+
+/*
+ * A new heading after an option group should clearly
+ * begin a new section rather than look attached above.
+ */
+
+.step-content .choice-row + .form-section-label {
+  margin-top: 1.95rem;
+}
+
+.step-content label + .form-section-label {
+  margin-top: 1.95rem;
+}
+
+
+/* =========================================================
+   Mobile
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .step-content > .subheading-print {
+    margin-bottom: 1.8rem;
+  }
+
+  .step-content .form-section-label {
+    font-size: 0.94rem;
+    line-height: 1.4;
+  }
+
+  .step-content > .form-section-label,
+  .step-content .choice-row + .form-section-label,
+  .step-content label + .form-section-label {
+    margin-top: 1.65rem;
+  }
+
+  .step-content > .subheading-print + .form-section-label {
+    margin-top: 0;
+  }
+
+  .property-details-grid {
+    row-gap: 0.85rem;
+  }
+}
+
+
+/* =========================================================
+   V1 mobile form width + compact quote navigation
+   ========================================================= */
+
+.sticky-quote-nav-mobile {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  /*
+   * The tool previously had horizontal padding on both
+   * .tool-section and .section-inner. Keep one small gutter.
+   */
+  .tool-section {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .tool-section .section-inner {
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .layout,
+  .layout-single {
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .form {
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .step-content {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /*
+   * .form h2 is more specific than the older mobile
+   * .step-title rule, so explicitly size the mobile heading.
+   */
+  .form .step-content > .step-title {
+    font-size: 2rem;
+    line-height: 1.08;
+  }
+
+  .progress-wrapper {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Compact quote navigation */
+  .sticky-quote-nav-desktop {
+    display: none;
+  }
+
+  .sticky-quote-nav-mobile {
+    display: block;
+  }
+
+  .quote-shell .sticky-quote-nav,
+  .sticky-quote-nav {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .sticky-quote-nav .container-app {
+    padding: 0.45rem 0.55rem;
+  }
+
+  .sticky-quote-nav-mobile-row {
+    display: grid;
+    grid-template-columns: 2.15rem minmax(0, 1fr) 2.15rem;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .sticky-quote-nav-mobile-back,
+  .sticky-quote-nav-mobile-toggle {
+    display: inline-flex;
+    width: 2.15rem;
+    height: 2.15rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #172554;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .sticky-quote-nav-mobile-initials {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .sticky-quote-nav-mobile-initial {
+    display: inline-flex;
+    width: 100%;
+    min-width: 0;
+    height: 2.15rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #5eead4;
+    border-radius: 999px;
+    background: #99f6e4;
+    color: #172554;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .sticky-quote-nav-mobile-initial.is-updated {
+    border-color: #6ee7b7;
+    background: #d1fae5;
+  }
+
+  .sticky-quote-nav-mobile-expanded {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    margin-top: 0.55rem;
+  }
+
+  .sticky-quote-nav-mobile-label {
+    min-width: 0;
+    border: 1px solid #5eead4;
+    border-radius: 999px;
+    background: #ccfbf1;
+    padding: 0.45rem 0.5rem;
+    color: #172554;
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+  }
+
+  .sticky-quote-nav-mobile-label.is-updated {
+    border-color: #6ee7b7;
+    background: #d1fae5;
+  }
+}
+
+/* Mobile quote nav: full-width viewport bar */
+@media (max-width: 640px) {
+  .quote-shell .sticky-quote-nav {
+    width: calc(100% + 1.5rem);
+    max-width: none;
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+  }
+
+  .sticky-quote-nav .container-app {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+  }
+}

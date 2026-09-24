@@ -45,7 +45,20 @@ const DEFAULT_FORM = {
   occupancyProfile: "half_day",
 
   panelOption: "value",
+
+  // Battery choice intent is separate from the physical capacity.
+  // "recommend" lets Zeyzer activate the balanced recommendation
+  // once the quote's battery scenarios have been calculated.
+  batteryChoiceMode: "recommend",
+  batteryStrategy: "balanced",
+
+  // batteryKWh is the battery currently active in the quote.
   batteryKWh: 0,
+
+  // Keep the customer's own requested size even while they
+  // temporarily view a recommendation or the no-battery option.
+  batteryCustomKWh: 10,
+
   birdProtection: false,
   evCharger: false,
 
