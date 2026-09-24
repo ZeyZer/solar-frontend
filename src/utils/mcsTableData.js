@@ -253,6 +253,29 @@ export function getMcsTableData({ quote, form, roofs }) {
   const annualGenerationRounded = Math.round(annualGeneration);
   const annualConsumptionRounded = Math.round(annualConsumption);
 
+  const shadeV2Diagnostics =
+    quote?.shadeStrengthV2Candidate?.diagnostics || null;
+
+  const shadeV2IsCanonical =
+    quote?.shadeStrengthV2Candidate?.canonicalProduction === true &&
+    quote?.shadeStrengthV2Candidate?.applied === true;
+
+  const unshadedAnnualGeneration =
+    Number(shadeV2Diagnostics?.unshadedAnnualKwh || 0);
+
+  const effectiveShadeFactor =
+    shadeV2IsCanonical &&
+    annualGeneration > 0 &&
+    unshadedAnnualGeneration > 0
+      ? Math.min(
+          1,
+          Math.max(
+            0,
+            annualGeneration / unshadedAnnualGeneration
+          )
+        )
+      : null;
+
   return { hasBattery,
     sectionA: [
       ["Installed capacity of PV system - kWp (stc)", formatNumber(systemSizeKwp, 3), "kWp"],
@@ -279,8 +302,16 @@ export function getMcsTableData({ quote, form, roofs }) {
         "kWh/kWp",
       ],
       [
-        "Shade Factor (SF)",
-        buildGroupText(roofGroups, "shadeFactor", (value) => formatNumber(value, 3)),
+        shadeV2IsCanonical
+          ? "Effective Shade Factor (SF)"
+          : "Shade Factor (SF)",
+        effectiveShadeFactor != null
+          ? formatNumber(effectiveShadeFactor, 3)
+          : buildGroupText(
+              roofGroups,
+              "shadeFactor",
+              (value) => formatNumber(value, 3)
+            ),
         "",
       ],
       [
