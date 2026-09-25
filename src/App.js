@@ -4,6 +4,7 @@ import "./App.css";
 import {
   PLATFORM,
   INSTALLER,
+  ACTIVE_THEME_STYLE,
   CONTACT_EMAIL,
   CALCULATOR_STARTS_OPEN,
   MARKETING_SITE_URL,
@@ -318,7 +319,10 @@ function App() {
   }
 
   return (
-    <div className={started || CALCULATOR_STARTS_OPEN ? "app app-started" : "app app-landing"}>
+    <div
+      className={started || CALCULATOR_STARTS_OPEN ? "app app-started" : "app app-landing"}
+      style={ACTIVE_THEME_STYLE}
+    >
       {!started && !CALCULATOR_STARTS_OPEN && (
         <LandingPage
           platform={PLATFORM}

@@ -1,6 +1,7 @@
 import React from "react";
 
 import {
+  ACTIVE_BRAND,
   PRIVACY_POLICY_URL,
   ESTIMATE_DISCLAIMER_URL,
   ESTIMATE_DISCLAIMER_SHORT,
@@ -26,7 +27,7 @@ export default function LegalNotice({
       </p>
 
       <p className={isCompact ? "mt-1" : "mt-2"}>
-        By using this calculator, you agree that Zeyzer Solar may use the
+        By using this calculator, you agree that {ACTIVE_BRAND.name} may use the
         information you provide to calculate your estimate, save your quote and
         contact you if you request a follow-up. We DO NOT sell your data.
       </p>

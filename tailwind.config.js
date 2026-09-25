@@ -5,21 +5,23 @@ module.exports = {
     extend: {
       // ---- COLORS (semantic tokens) ----
       colors: {
-        ink: "#20163c",        // main text (slate-900)
-        muted: "#2f54c6",      // secondary text (slate-500)
-        subtle: "#94a3b8",     // tertiary text (slate-400)
+        ink: "rgb(var(--theme-ink) / <alpha-value>)",
+        muted: "rgb(var(--theme-muted) / <alpha-value>)",
+        subtle: "rgb(var(--theme-subtle) / <alpha-value>)",
 
-        surface: "#ffffff",    // cards / surfaces
-        canvas: "#f8fafc",     // page background (slate-50)
-        soft: "#f1f5f9",       // soft panels (slate-100)
+        surface: "rgb(var(--theme-surface) / <alpha-value>)",
+        canvas: "rgb(var(--theme-canvas) / <alpha-value>)",
+        soft: "rgb(var(--theme-soft) / <alpha-value>)",
 
-        line: "#e2e8f0",       // borders (slate-200)
+        line: "rgb(var(--theme-line) / <alpha-value>)",
 
-        brand: "#20163c",      // keep brand neutral for now (same as ink)
-        brandSoft: "#ebebeb",
-        accent: "#2563eb",
-        pop: "#D9E021",
-        gentle: "#059e94",
+        brand: "rgb(var(--theme-brand) / <alpha-value>)",
+        brandSoft: "rgb(var(--theme-brand-soft) / <alpha-value>)",
+        accent: "rgb(var(--theme-accent) / <alpha-value>)",
+        pop: "rgb(var(--theme-pop) / <alpha-value>)",
+        gentle: "rgb(var(--theme-gentle) / <alpha-value>)",
+
+        // Legacy/non-white-label utility colours remain static for now.
         test: "#48BEFF",
         green: "#96F7E4"
       },

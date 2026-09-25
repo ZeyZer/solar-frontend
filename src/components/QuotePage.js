@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { ACTIVE_BRAND, ADVICE_URL } from "../config/siteConfig";
 
 import SectionHeader from "../ui/SectionHeader";
 import Card from "../ui/Card";
@@ -518,7 +519,7 @@ export default function QuotePage({
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              This will clear your current estimate and take you back to Zeyzer Solar.
+              This will clear your current estimate and take you back to {ACTIVE_BRAND.name}.
             </p>
 
             <p className="mt-3 text-sm leading-6 text-slate-600">
@@ -2819,7 +2820,7 @@ export default function QuotePage({
               onEmailQuote={onEmailQuoteLead}
               onRequestCall={onRequestCallLead}
               onDownloadPdf={handlePdfDownload}
-              infoUrl="https://zeyzersolar.com/solar-advice-hub/"
+              infoUrl={ADVICE_URL}
               initialName={form.name}
               initialEmail={form.email}
               initialPhone={form.phone}

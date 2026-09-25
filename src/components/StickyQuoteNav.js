@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ACTIVE_BRAND } from "../config/siteConfig";
 
 export default function StickyQuoteNav({
   updatedSections = [],
@@ -6,6 +7,10 @@ export default function StickyQuoteNav({
 }) {
   const [mobileExpanded, setMobileExpanded] =
     useState(false);
+
+  const brandName = ACTIVE_BRAND.name;
+  const brandInitials = ACTIVE_BRAND.initials || brandName.slice(0, 2).toUpperCase();
+  const brandLogo = ACTIVE_BRAND.assets?.logo || null;
 
   const items = [
     {
@@ -53,7 +58,7 @@ export default function StickyQuoteNav({
               onClick={onExit}
               className="inline-flex items-center gap-2 rounded-xl bg-pop px-3 py-2 text-sm font-medium text-brand hover:bg-white hover:text-ink ring-1 ring-transparent hover:ring-line"
             >
-              ← Back to Zeyzer Solar
+              ← Back to {brandName}
             </button>
           </div>
 
@@ -82,9 +87,20 @@ export default function StickyQuoteNav({
           </div>
 
           <div className="flex items-center justify-center gap-2 xl:justify-end">
-            <div className="h-8 w-8 rounded-xl bg-ink" />
+            {brandLogo ? (
+              <img
+                src={brandLogo}
+                alt={`${brandName} logo`}
+                className="h-8 w-8 object-contain"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink text-xs font-bold text-white">
+                {brandInitials}
+              </div>
+            )}
+
             <div className="text-sm font-semibold text-ink">
-              Zeyzer Solar
+              {brandName}
             </div>
           </div>
         </div>
@@ -96,7 +112,7 @@ export default function StickyQuoteNav({
               type="button"
               onClick={onExit}
               className="sticky-quote-nav-mobile-back"
-              aria-label="Back to Zeyzer Solar"
+              aria-label={`Back to ${brandName}`}
             >
               ←
             </button>
