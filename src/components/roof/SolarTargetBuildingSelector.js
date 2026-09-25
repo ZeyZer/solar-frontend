@@ -288,6 +288,78 @@ function getSelectableRoofSelectionSegments(model) {
   return segments;
 }
 
+function getNumberedSelectableRoofOptions(buildings) {
+  let roofNumber = 0;
+
+  return (Array.isArray(buildings) ? buildings : []).flatMap((building) => {
+    const selectableSegments = getSelectableRoofSelectionSegments(
+      building?.roofSelectionModel || null
+    );
+
+    return selectableSegments.map((segment) => ({
+      building,
+      segment,
+      roofNumber: ++roofNumber,
+    }));
+  });
+}
+
+function getRoofOptionPosition(building, segment) {
+  const segmentIndex = segment?.segmentIndex;
+
+  if (segmentIndex === null || segmentIndex === undefined) {
+    return null;
+  }
+
+  const toFiniteCoordinate = (value) => {
+    if (value === null || value === undefined || value === "") {
+      return null;
+    }
+
+    const coordinate = Number(value);
+    return Number.isFinite(coordinate) ? coordinate : null;
+  };
+  const matchingPanelCenters = (
+    Array.isArray(building?.googlePanelPositions)
+      ? building.googlePanelPositions
+      : []
+  )
+    .filter((panel) => String(panel?.segmentIndex) === String(segmentIndex))
+    .map((panel) => ({
+      lat: toFiniteCoordinate(panel?.center?.latitude),
+      lng: toFiniteCoordinate(panel?.center?.longitude),
+    }))
+    .filter(
+      (center) => Number.isFinite(center.lat) && Number.isFinite(center.lng)
+    );
+
+  if (matchingPanelCenters.length > 0) {
+    const totals = matchingPanelCenters.reduce(
+      (sum, center) => ({
+        lat: sum.lat + center.lat,
+        lng: sum.lng + center.lng,
+      }),
+      { lat: 0, lng: 0 }
+    );
+
+    return {
+      lat: totals.lat / matchingPanelCenters.length,
+      lng: totals.lng / matchingPanelCenters.length,
+    };
+  }
+
+  const roofSegment = (
+    Array.isArray(building?.roofSegments) ? building.roofSegments : []
+  ).find((candidate) => String(candidate?.sourceIndex) === String(segmentIndex));
+
+  const lat = toFiniteCoordinate(roofSegment?.center?.latitude);
+  const lng = toFiniteCoordinate(roofSegment?.center?.longitude);
+
+  return Number.isFinite(lat) && Number.isFinite(lng)
+    ? { lat, lng }
+    : null;
+}
+
 function buildDefaultRoofSelectionSegmentKeys(analysis) {
   const buildings = Array.isArray(analysis?.solarBuildingModels)
     ? analysis.solarBuildingModels
@@ -1009,6 +1081,7 @@ export default function SolarTargetBuildingSelector({
   const googleRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
+  const roofOptionMarkersRef = useRef([]);
   const boundaryMarkersRef = useRef([]);
   const boundaryPolylinesRef = useRef([]);
   const mapClickListenerRef = useRef(null);
@@ -1167,11 +1240,75 @@ export default function SolarTargetBuildingSelector({
     });
   }
 
-  function clearBoundaryOverlays() {
+  function clearRoofOptionMarkers() {
+    roofOptionMarkersRef.current.forEach((marker) => marker.setMap(null));
+    roofOptionMarkersRef.current = [];
+  }
+
+  function renderRoofOptionMarkers(analysis) {
+    const google = googleRef.current;
+    const map = mapRef.current;
+
+    clearRoofOptionMarkers();
+
+    if (!google || !map) {
+      return;
+    }
+
+    const buildings = Array.isArray(analysis?.solarBuildingModels)
+      ? analysis.solarBuildingModels
+      : [];
+
+    roofOptionMarkersRef.current = getNumberedSelectableRoofOptions(buildings)
+      .map(({ building, segment, roofNumber }) => {
+        const position = getRoofOptionPosition(building, segment);
+
+        if (!position) {
+          return null;
+        }
+
+        const isRecommended =
+          (segment.selectionStatus || "optional") === "recommended";
+        const statusLabel = isRecommended ? "Recommended" : "Potential";
+        const buildingLabel =
+          building.targetLabel || building.label || "Building";
+
+        return new google.maps.Marker({
+          map,
+          position,
+          clickable: false,
+          draggable: false,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: isRecommended ? "#059669" : "#d97706",
+            fillOpacity: 1,
+            strokeColor: "#ffffff",
+            strokeOpacity: 1,
+            strokeWeight: 2,
+            scale: 13,
+          },
+          label: {
+            text: String(roofNumber),
+            color: "#ffffff",
+            fontSize: "13px",
+            fontWeight: "700",
+          },
+          title: `${buildingLabel} — Roof ${roofNumber} — ${statusLabel}`,
+          zIndex: 20,
+        });
+      })
+      .filter(Boolean);
+  }
+
+  function clearBoundaryMarkers() {
     boundaryMarkersRef.current.forEach((marker) => marker.setMap(null));
+    boundaryMarkersRef.current = [];
+  }
+
+  function clearBoundaryOverlays() {
+    clearBoundaryMarkers();
     boundaryPolylinesRef.current.forEach((polyline) => polyline.setMap(null));
 
-    boundaryMarkersRef.current = [];
     boundaryPolylinesRef.current = [];
   }
 
@@ -1703,6 +1840,7 @@ export default function SolarTargetBuildingSelector({
 
     setAnalysisLoading(true);
     setAnalysisError("");
+    clearRoofOptionMarkers();
 
     setMapStatus(
       currentPropertyBoundary
@@ -1736,6 +1874,7 @@ export default function SolarTargetBuildingSelector({
         propertyBoundaryRef.current = currentPropertyBoundary;
         setPropertyBoundary(currentPropertyBoundary);
         renderBoundaryOverlay(currentPropertyBoundary);
+        clearBoundaryMarkers();
       } else {
         propertyBoundaryRef.current = null;
         setPropertyBoundary(null);
@@ -1819,7 +1958,13 @@ export default function SolarTargetBuildingSelector({
 
         if (propertyBoundaryRef.current) {
           renderBoundaryOverlay(propertyBoundaryRef.current);
+
+          if (solarApiAnalysisRef.current?.summary) {
+            clearBoundaryMarkers();
+          }
         }
+
+        renderRoofOptionMarkers(solarApiAnalysisRef.current);
 
         setMapStatus(
           selectedAddressRef.current
@@ -1851,6 +1996,7 @@ export default function SolarTargetBuildingSelector({
       }
 
       clearMarkers();
+      clearRoofOptionMarkers();
 
       mapRef.current = null;
       googleRef.current = null;
@@ -1859,6 +2005,11 @@ export default function SolarTargetBuildingSelector({
     // Initialise the map once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    renderRoofOptionMarkers(solarApiAnalysis);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [solarApiAnalysis]);
 
   useEffect(() => {
     selectedAddressRef.current = selectedAddress;
@@ -2123,11 +2274,7 @@ export default function SolarTargetBuildingSelector({
 
         <div
           ref={mapContainerRef}
-          className={`h-[460px] w-full overflow-hidden rounded-xl border border-slate-200 ${
-            homeSelectionComplete && !addingSecondaryBuilding
-              ? "hidden"
-              : "mt-4"
-          }`}
+          className="mt-4 h-[460px] w-full overflow-hidden rounded-xl border border-slate-200"
         />
 
         {addingSecondaryBuilding && (
@@ -2342,6 +2489,15 @@ export default function SolarTargetBuildingSelector({
         )
           ? solarApiAnalysis.solarBuildingModels
           : [];
+
+        const roofOptionNumberByKey = new Map(
+          getNumberedSelectableRoofOptions(buildings).map(
+            ({ building, segment, roofNumber }) => [
+              getRoofSelectionSegmentKey(building, segment),
+              roofNumber,
+            ]
+          )
+        );
 
         const primaryBuilding = buildings[0] || null;
 
@@ -2609,7 +2765,7 @@ export default function SolarTargetBuildingSelector({
                             );
 
                           const roofAreaNumber =
-                            visibleIndex + 1;
+                            roofOptionNumberByKey.get(key);
 
                           const previousSegment =
                             selectableSegments[visibleIndex - 1] || null;
