@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { analyseSolarTargetBuildings } from "../../api/solarRoofApi";
 import { loadGoogleMapsLibrary } from "../../utils/googleMapsLoader";
+import { ACTIVE_BRAND } from "../../config/siteConfig";
 
 const DEFAULT_CENTER = {
   lat: 51.2362,
@@ -900,7 +901,7 @@ function buildSolarRoofGeometryPayload({
 
     warnings: [
       "Diagnostic only. Google Solar API roof models are not survey verified.",
-      "Final panel layout, roof suitability and installation details must be confirmed by Zion Energy.",
+      `Final panel layout, roof suitability and installation details must be confirmed by ${ACTIVE_BRAND.name}.`,
     ],
   };
 }

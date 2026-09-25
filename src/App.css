@@ -364,6 +364,10 @@ body {
   background: #ffffff;
 }
 
+.tool-section--branded {
+  padding-top: 1.5rem;
+}
+
 .tool-section .section-inner {
   max-width: 1180px;
 }

@@ -1,5 +1,7 @@
 import React from "react";
 
+import { ACTIVE_BRAND, PLATFORM } from "../config/siteConfig";
+
 import {
   isValidUkPostcode,
 } from "../utils/postcodeUtils";
@@ -74,6 +76,10 @@ export default function QuoteForm({
   goToHome,
 }) {
 
+  const brandName = ACTIVE_BRAND.name;
+  const brandInitials =
+    ACTIVE_BRAND.initials || brandName.slice(0, 2).toUpperCase();
+  const brandLogo = ACTIVE_BRAND.assets?.logo || null;
 
   return (
     <>
@@ -83,7 +89,47 @@ export default function QuoteForm({
             </button>
         </div>
 
-        <section className="tool-section">
+        {!rentingBlocked && (
+            <div className="w-full bg-white px-4 pb-2 pt-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        {brandLogo ? (
+                            <img
+                                src={brandLogo}
+                                alt={`${brandName} logo`}
+                                className="h-10 w-10 object-contain"
+                            />
+                        ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-sm font-bold text-white">
+                                {brandInitials}
+                            </div>
+                        )}
+
+                        <div>
+                            <div className="text-sm font-semibold text-ink">
+                                {brandName}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                                Your solar estimate
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="text-xs text-slate-500 sm:text-right">
+                        Powered by{" "}
+                        <span className="font-semibold text-brand">
+                            {PLATFORM.toolName}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        <section
+            className={`tool-section ${
+                !rentingBlocked ? "tool-section--branded" : ""
+            }`}
+        >
             <div className="section-inner">
             {rentingBlocked ? (
                 <div className="renting-message-card">

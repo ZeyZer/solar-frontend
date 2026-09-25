@@ -2,8 +2,11 @@ import React, { useState } from "react";
 import SectionHeader from "../ui/SectionHeader.js";
 import Card from "../ui/Card.js";
 import LegalNotice from "./LegalNotice";
+import { ACTIVE_BRAND } from "../config/siteConfig";
 
 export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, infoUrl, onDownloadPdf, initialName, initialEmail, initialPhone }) {
+  const brandName = ACTIVE_BRAND.name;
+
   const [name, setName] = useState(initialName || "");
   const [email, setEmail] = useState(initialEmail || "");
   const [phone, setPhone] = useState(initialPhone || "");
@@ -39,7 +42,7 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
     <section className="mt-10">
       <SectionHeader
         title="Next Steps"
-        description="Choose what you’d like to do next. We can email your quote, arrange a call, or point you to useful guides."
+        description={`Choose what you’d like to do next. We can email your quote, arrange a call with ${brandName}, or point you to useful guides.`}
         action={
           <button
             onClick={onDownloadPdf}
@@ -55,7 +58,7 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
           Store Your Quote
         </span>
         <span className="rounded-full bg-accent px-3 py-2 text-xs font-medium text-white">
-          Get you system installed
+          Talk to {brandName}
         </span>
       </div>
 
@@ -105,7 +108,7 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
 
             <button
               type="submit"
-              className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+              className="mt-2 w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
             >
               Email my quote
             </button>
@@ -115,9 +118,9 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
         </Card>
 
         {/* Card 2: Talk to an installer */}
-        <Card title="Talk to an installer">
+        <Card title={`Talk to ${brandName}`}>
           <p className="text-sm text-slate-600">
-            Ask questions, confirm suitability, and take the next step. We’ll also email your quote for reference.
+            Ask questions, confirm suitability, and take the next step with {brandName}. We’ll also email your quote for reference.
           </p>
 
           <form className="mt-4 space-y-3" onSubmit={handleCallSubmit}>
@@ -171,7 +174,7 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
 
             <button
               type="submit"
-              className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+              className="mt-2 w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
             >
               Request a call
             </button>

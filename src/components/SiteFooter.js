@@ -8,13 +8,18 @@ import {
 export default function SiteFooter({ platform, installer }) {
   return (
     <footer className="site-footer">
-      {platform.toolName} estimate tool •{" "}
       {installer ? (
         <>
           Estimate provided by <strong>{installer.name}</strong>
+          {" • "}
+          Powered by {platform.toolName}
         </>
       ) : (
-        "Providing realistic Solar estimates - Connecting homeowners with installers"
+        <>
+          <strong>{platform.toolName}</strong> estimate tool
+          {" • "}
+          Providing realistic solar estimates
+        </>
       )}
       
       <div className="mt-3 flex flex-wrap justify-center gap-4 text-xs text-slate-500">
