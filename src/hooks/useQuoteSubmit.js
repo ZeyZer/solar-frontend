@@ -18,6 +18,10 @@ import {
   resolveBatterySelection,
 } from "../utils/batteryScenarioUtils";
 
+import {
+  ACTIVE_TENANT_ID,
+} from "../config/siteConfig";
+
 export default function useQuoteSubmit({
   form,
   roofs,
@@ -128,6 +132,8 @@ export default function useQuoteSubmit({
       );
 
       const payload = {
+        tenantId: ACTIVE_TENANT_ID,
+
         name: form.name,
         email: form.email,
         address: derivedAddress,
