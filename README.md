@@ -2,6 +2,24 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Tenant configuration
+
+ZeyZer uses a small frontend tenant registry in `src/config/siteConfig.js`.
+
+The active installer can be selected at build time with the environment variable:
+
+REACT_APP_TENANT_ID=zion-energy
+
+Current behaviour:
+
+- If `REACT_APP_TENANT_ID` is not set, the app uses the current default tenant: `zion-energy`.
+- If it matches a tenant in the `TENANTS` registry, that tenant becomes `ACTIVE_TENANT`.
+- If an explicitly configured tenant ID is unknown, the app uses neutral ZeyZer platform branding instead of silently falling back to another installer.
+
+Use `ACTIVE_TENANT_ID` as the canonical tenant identifier for future tenant-aware features such as lead ownership, pricing, hardware catalogues, email/PDF branding and analytics.
+
+See `.env.example` for the public environment-variable shape. Do not commit secrets to frontend environment files.
+
 ## Available Scripts
 
 In the project directory, you can run:

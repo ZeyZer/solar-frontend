@@ -34,7 +34,7 @@ export const PLATFORM = {
   },
 };
 
-export const INSTALLER = {
+const ZION_ENERGY_TENANT = {
   id: "zion-energy",
   name: "Zion Energy",
   shortName: "Zion Energy",
@@ -78,6 +78,36 @@ export const INSTALLER = {
   accreditations: [],
 };
 
+export const TENANTS = {
+  [ZION_ENERGY_TENANT.id]: ZION_ENERGY_TENANT,
+};
+
+export const DEFAULT_TENANT_ID = "zion-energy";
+
+const configuredTenantId = String(
+  process.env.REACT_APP_TENANT_ID || ""
+).trim();
+
+export const REQUESTED_TENANT_ID =
+  configuredTenantId || DEFAULT_TENANT_ID;
+
+export const ACTIVE_TENANT =
+  TENANTS[REQUESTED_TENANT_ID] || null;
+
+export const ACTIVE_TENANT_ID =
+  ACTIVE_TENANT?.id || null;
+
+// Compatibility alias for existing components.
+// New tenant-aware code should prefer ACTIVE_TENANT.
+export const INSTALLER = ACTIVE_TENANT;
+
+if (configuredTenantId && !ACTIVE_TENANT) {
+  console.warn(
+    `[ZeyZer] Unknown REACT_APP_TENANT_ID "${configuredTenantId}". ` +
+      "Using neutral ZeyZer platform branding instead."
+  );
+}
+
 const PLATFORM_BRAND = {
   id: "zeyzer-solar",
   name: PLATFORM.toolName,
@@ -98,7 +128,7 @@ const PLATFORM_BRAND = {
   accreditations: [],
 };
 
-export const ACTIVE_BRAND = INSTALLER || PLATFORM_BRAND;
+export const ACTIVE_BRAND = ACTIVE_TENANT || PLATFORM_BRAND;
 
 export const ACTIVE_THEME = {
   ...DEFAULT_THEME,
