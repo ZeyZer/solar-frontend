@@ -3742,3 +3742,316 @@ select:focus {
     padding-right: 0.65rem;
   }
 }
+
+/* =========================================================
+   Sleek professional tenant: form and roof journey
+   ========================================================= */
+
+.app[data-style-preset="sleek-professional"] {
+  background: rgb(var(--theme-canvas));
+  color: rgb(var(--theme-ink));
+}
+
+.app[data-style-preset="sleek-professional"] .brand-header {
+  border-bottom: 1px solid rgb(var(--theme-line));
+  background: rgb(var(--theme-surface));
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.app[data-style-preset="sleek-professional"] .brand-header-inner {
+  width: 100%;
+  max-width: 840px;
+  margin: 0 auto;
+}
+
+.app[data-style-preset="sleek-professional"] .brand-header img {
+  height: 2.5rem;
+  max-width: 11rem;
+}
+
+.app[data-style-preset="sleek-professional"] .brand-header-context,
+.app[data-style-preset="sleek-professional"] .brand-header-powered-by {
+  color: rgb(var(--theme-muted));
+}
+
+.app[data-style-preset="sleek-professional"] .tool-section {
+  background: rgb(var(--theme-canvas));
+  padding-top: 2rem;
+}
+
+.app[data-style-preset="sleek-professional"] .tool-section .section-inner {
+  width: 100%;
+  max-width: 1180px;
+}
+
+.app[data-style-preset="sleek-professional"] .progress-wrapper {
+  width: 100%;
+  max-width: 840px;
+  margin-right: auto;
+  margin-bottom: 1.75rem;
+  margin-left: auto;
+}
+
+.app[data-style-preset="sleek-professional"] .progress {
+  height: 6px;
+  background: rgb(var(--theme-line));
+}
+
+.app[data-style-preset="sleek-professional"] .progress-bar {
+  background: rgb(var(--theme-accent));
+}
+
+.app[data-style-preset="sleek-professional"] .steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+  color: rgb(var(--theme-muted));
+}
+
+.app[data-style-preset="sleek-professional"] .step-label {
+  min-width: 0;
+  padding-top: 0.25rem;
+  overflow-wrap: anywhere;
+  color: rgb(var(--theme-muted));
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: none;
+}
+
+.app[data-style-preset="sleek-professional"] .step-label.active {
+  color: rgb(var(--theme-brand));
+  font-weight: 650;
+}
+
+.app[data-style-preset="sleek-professional"] .form,
+.app[data-style-preset="sleek-professional"] .renting-message-card {
+  border: 1px solid rgb(var(--theme-line));
+  border-radius: 14px;
+  background: rgb(var(--theme-surface));
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.07);
+}
+
+.app[data-style-preset="sleek-professional"] .form {
+  padding: 1.75rem;
+}
+
+.app[data-style-preset="sleek-professional"] .form .step-content > .step-title {
+  gap: 0;
+  color: rgb(var(--theme-ink));
+  font-size: 2.1rem;
+  font-weight: 650;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+}
+
+.app[data-style-preset="sleek-professional"] .step-title-icon {
+  display: none;
+}
+
+.app[data-style-preset="sleek-professional"] .subheading-print,
+.app[data-style-preset="sleek-professional"] .small-print,
+.app[data-style-preset="sleek-professional"] .form-section-copy,
+.app[data-style-preset="sleek-professional"] .choice-sub {
+  color: rgb(var(--theme-muted));
+}
+
+.app[data-style-preset="sleek-professional"] .step-content .form-section-label {
+  color: rgb(var(--theme-brand));
+  letter-spacing: 0.035em;
+}
+
+.app[data-style-preset="sleek-professional"] label,
+.app[data-style-preset="sleek-professional"] .question-label,
+.app[data-style-preset="sleek-professional"] .choice-title {
+  color: rgb(var(--theme-ink));
+}
+
+.app[data-style-preset="sleek-professional"] input,
+.app[data-style-preset="sleek-professional"] select,
+.app[data-style-preset="sleek-professional"] textarea {
+  border: 1px solid rgb(var(--theme-line));
+  border-radius: 11px;
+  background: rgb(var(--theme-surface));
+  color: rgb(var(--theme-ink));
+}
+
+.app[data-style-preset="sleek-professional"] input:focus,
+.app[data-style-preset="sleek-professional"] select:focus,
+.app[data-style-preset="sleek-professional"] textarea:focus {
+  border-color: rgb(var(--theme-accent));
+  background: rgb(var(--theme-surface));
+  box-shadow: 0 0 0 3px rgb(var(--theme-accent) / 0.12);
+}
+
+.app[data-style-preset="sleek-professional"] .choice-pill,
+.app[data-style-preset="sleek-professional"] .roof-card .choice-pill {
+  border: 1px solid rgb(var(--theme-line));
+  border-radius: 12px;
+  background: rgb(var(--theme-surface));
+  box-shadow: none;
+  transform: none;
+}
+
+.app[data-style-preset="sleek-professional"] .choice-pill:hover,
+.app[data-style-preset="sleek-professional"] .roof-card .choice-pill:hover {
+  border-color: rgb(var(--theme-subtle));
+  background: rgb(var(--theme-soft));
+  box-shadow: none;
+  transform: none;
+}
+
+.app[data-style-preset="sleek-professional"] .choice-pill.active,
+.app[data-style-preset="sleek-professional"] .roof-card .choice-pill.active {
+  border-color: rgb(var(--theme-accent));
+  background: rgb(var(--theme-brand-soft));
+  box-shadow: 0 0 0 1px rgb(var(--theme-accent) / 0.14);
+}
+
+.app[data-style-preset="sleek-professional"] .buttons-row button,
+.app[data-style-preset="sleek-professional"] .modal-actions button,
+.app[data-style-preset="sleek-professional"] .next-step-button {
+  border-radius: 11px;
+  box-shadow: none;
+  transform: none;
+}
+
+.app[data-style-preset="sleek-professional"] .buttons-row button:last-child,
+.app[data-style-preset="sleek-professional"] .modal-actions button:last-child,
+.app[data-style-preset="sleek-professional"] .next-step-button {
+  border: 1px solid rgb(var(--theme-accent));
+  background: rgb(var(--theme-accent));
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.app[data-style-preset="sleek-professional"] .buttons-row button:last-child:hover,
+.app[data-style-preset="sleek-professional"] .modal-actions button:last-child:hover,
+.app[data-style-preset="sleek-professional"] .next-step-button:hover:not(:disabled) {
+  background: rgb(var(--theme-brand) / 0.88);
+  box-shadow: none;
+  transform: none;
+}
+
+.app[data-style-preset="sleek-professional"] .buttons-row button:first-child,
+.app[data-style-preset="sleek-professional"] .modal-actions button:first-child,
+.app[data-style-preset="sleek-professional"] .find-address-row button {
+  border: 1px solid rgb(var(--theme-line));
+  background: rgb(var(--theme-surface));
+  color: rgb(var(--theme-brand));
+}
+
+.app[data-style-preset="sleek-professional"] .buttons-row button:first-child:hover,
+.app[data-style-preset="sleek-professional"] .modal-actions button:first-child:hover,
+.app[data-style-preset="sleek-professional"] .find-address-row button:hover {
+  border-color: rgb(var(--theme-subtle));
+  background: rgb(var(--theme-soft));
+}
+
+.app[data-style-preset="sleek-professional"] .next-step-button:not(:disabled) {
+  animation: none;
+}
+
+.app[data-style-preset="sleek-professional"] .secondary-mini {
+  color: rgb(var(--theme-muted));
+}
+
+.app[data-style-preset="sleek-professional"] .secondary-mini:hover {
+  color: rgb(var(--theme-brand));
+  text-decoration: underline;
+}
+
+.app[data-style-preset="sleek-professional"] .roof-empty,
+.app[data-style-preset="sleek-professional"] .roof-summary-card,
+.app[data-style-preset="sleek-professional"] .roof-card {
+  border-color: rgb(var(--theme-line));
+  background: rgb(var(--theme-surface));
+}
+
+.app[data-style-preset="sleek-professional"] .modal-overlay {
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.app[data-style-preset="sleek-professional"] .modal-card {
+  border: 1px solid rgb(var(--theme-line));
+  border-radius: 14px;
+  background: rgb(var(--theme-surface));
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.2);
+}
+
+.app[data-style-preset="sleek-professional"] .modal-card h3 {
+  color: rgb(var(--theme-ink));
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+.app[data-style-preset="sleek-professional"] .modal-card h4 {
+  color: rgb(var(--theme-ink));
+  font-size: 1.9rem;
+  line-height: 1.15;
+}
+
+.app[data-style-preset="sleek-professional"] .modal-close {
+  border-color: rgb(var(--theme-line));
+  border-radius: 10px;
+  color: rgb(var(--theme-ink));
+}
+
+@media (max-width: 640px) {
+  .app[data-style-preset="sleek-professional"] .brand-header-inner {
+    align-items: flex-start;
+  }
+
+  .app[data-style-preset="sleek-professional"] .brand-header img {
+    height: 2.25rem;
+    max-width: min(10rem, 65vw);
+  }
+
+  .app[data-style-preset="sleek-professional"] .brand-header-powered-by {
+    padding-left: 0;
+  }
+
+  .app[data-style-preset="sleek-professional"] .tool-section {
+    padding-top: 1.25rem;
+  }
+
+  .app[data-style-preset="sleek-professional"] .steps {
+    gap: 0.2rem;
+  }
+
+  .app[data-style-preset="sleek-professional"] .step-label {
+    font-size: 0.68rem;
+    line-height: 1.25;
+  }
+
+  .app[data-style-preset="sleek-professional"] .step-label::after {
+    display: none;
+    content: none;
+  }
+
+  .app[data-style-preset="sleek-professional"] .form {
+    border-radius: 12px;
+    padding: 1.25rem 1rem;
+  }
+
+  .app[data-style-preset="sleek-professional"] .form .step-content > .step-title {
+    font-size: 1.8rem;
+  }
+
+  .app[data-style-preset="sleek-professional"] .choice-row,
+  .app[data-style-preset="sleek-professional"] .buttons-row,
+  .app[data-style-preset="sleek-professional"] .modal-actions {
+    max-width: 100%;
+  }
+
+  .app[data-style-preset="sleek-professional"] .modal-card {
+    border-radius: 14px 14px 0 0;
+  }
+
+  .app[data-style-preset="sleek-professional"] .modal-card h4 {
+    font-size: 1.65rem;
+  }
+}

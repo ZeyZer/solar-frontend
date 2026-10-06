@@ -80,6 +80,9 @@ export default function QuoteForm({
   const brandInitials =
     ACTIVE_BRAND.initials || brandName.slice(0, 2).toUpperCase();
   const brandLogo = getBrandLogo(ACTIVE_BRAND, "light");
+  const logoIncludesBrandName = Boolean(
+    brandLogo && ACTIVE_BRAND.assets?.logoIncludesBrandName
+  );
 
   return (
     <>
@@ -90,9 +93,9 @@ export default function QuoteForm({
         </div>
 
         {!rentingBlocked && (
-            <div className="w-full bg-white px-4 pb-2 pt-4 sm:px-6 lg:px-8">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
+            <div className="brand-header w-full bg-white px-4 pb-2 pt-4 sm:px-6 lg:px-8">
+                <div className="brand-header-inner flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="brand-header-identity flex items-center gap-3">
                         {brandLogo ? (
                             <img
                                 src={brandLogo}
@@ -105,17 +108,19 @@ export default function QuoteForm({
                             </div>
                         )}
 
-                        <div>
-                            <div className="text-sm font-semibold text-ink">
-                                {brandName}
-                            </div>
-                            <div className="text-xs text-slate-500">
+                        <div className="brand-header-copy">
+                            {!logoIncludesBrandName && (
+                                <div className="text-sm font-semibold text-ink">
+                                    {brandName}
+                                </div>
+                            )}
+                            <div className="brand-header-context text-xs text-slate-500">
                                 Your solar estimate
                             </div>
                         </div>
                     </div>
 
-                    <div className="text-xs text-slate-500 sm:text-right">
+                    <div className="brand-header-powered-by text-xs text-slate-500 sm:text-right">
                         Powered by{" "}
                         <span className="font-semibold text-brand">
                             {PLATFORM.toolName}

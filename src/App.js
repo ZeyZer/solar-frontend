@@ -4,6 +4,7 @@ import "./App.css";
 import {
   PLATFORM,
   INSTALLER,
+  ACTIVE_BRAND,
   ACTIVE_THEME_STYLE,
   CONTACT_EMAIL,
   CALCULATOR_STARTS_OPEN,
@@ -321,6 +322,7 @@ function App() {
   return (
     <div
       className={started || CALCULATOR_STARTS_OPEN ? "app app-started" : "app app-landing"}
+      data-style-preset={ACTIVE_BRAND.stylePreset}
       style={ACTIVE_THEME_STYLE}
     >
       {!started && !CALCULATOR_STARTS_OPEN && (

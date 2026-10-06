@@ -25,6 +25,9 @@ export default function LoadingScreen({
   const brandInitials =
     ACTIVE_BRAND.initials || brandName.slice(0, 2).toUpperCase();
   const brandLogo = getBrandLogo(ACTIVE_BRAND, "light");
+  const logoIncludesBrandName = Boolean(
+    brandLogo && ACTIVE_BRAND.assets?.logoIncludesBrandName
+  );
 
   const clamped = Math.max(0, Math.min(100, pct));
 
@@ -56,9 +59,11 @@ export default function LoadingScreen({
               )}
 
               <div>
-                <div className="text-sm font-semibold text-ink">
-                  {brandName}
-                </div>
+                {!logoIncludesBrandName && (
+                  <div className="text-sm font-semibold text-ink">
+                    {brandName}
+                  </div>
+                )}
                 <div className="text-xs text-slate-500">
                   Powered by {PLATFORM.toolName}
                 </div>

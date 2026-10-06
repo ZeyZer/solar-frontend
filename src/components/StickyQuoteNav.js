@@ -11,6 +11,9 @@ export default function StickyQuoteNav({
   const brandName = ACTIVE_BRAND.name;
   const brandInitials = ACTIVE_BRAND.initials || brandName.slice(0, 2).toUpperCase();
   const brandLogo = getBrandLogo(ACTIVE_BRAND, "light");
+  const logoIncludesBrandName = Boolean(
+    brandLogo && ACTIVE_BRAND.assets?.logoIncludesBrandName
+  );
 
   const items = [
     {
@@ -99,9 +102,11 @@ export default function StickyQuoteNav({
               </div>
             )}
 
-            <div className="text-sm font-semibold text-ink">
-              {brandName}
-            </div>
+            {!logoIncludesBrandName && (
+              <div className="text-sm font-semibold text-ink">
+                {brandName}
+              </div>
+            )}
           </div>
         </div>
 

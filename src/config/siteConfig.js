@@ -60,6 +60,7 @@ const ZION_ENERGY_TENANT = {
     logo: null,
     logoOnLight: "/branding/zion/zion-energy-logo-on-light.png",
     logoOnDark: "/branding/zion/zion-energy-logo-on-dark.png",
+    logoIncludesBrandName: true,
     heroImage: null,
 
     // Reserved for later hardware catalogue / installer imagery work.
