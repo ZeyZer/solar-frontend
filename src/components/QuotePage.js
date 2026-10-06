@@ -1003,7 +1003,16 @@ export default function QuotePage({
           {/* =======================
                 SYSTEM CHOICES (SaaS UI — grouped cards)
             ======================= */}
-          <section id="system-choices"   className={pdfMode ? "mt-1" : "mt-[2rem]"}>
+          <section
+            id="system-choices"
+            className={
+              pdfMode
+                ? "mt-1"
+                : `quote-collapsible-section mt-[2rem] ${
+                    expandedSections.systemChoices ? "" : "is-collapsed"
+                  }`
+            }
+          >
             <SectionHeader
               title="System Choices"
               description="Review your home assumptions and system configuration. Edit any section to compare options."
@@ -1285,7 +1294,16 @@ export default function QuotePage({
           {/* =======================
                 SYSTEM PERFORMANCE (SaaS UI)
             ======================= */}
-          <section id="performance" className={pdfMode ? "mt-1 pdf-page-break-before" : "mt-[2rem]"}>
+          <section
+            id="performance"
+            className={
+              pdfMode
+                ? "mt-1 pdf-page-break-before"
+                : `quote-collapsible-section mt-[2rem] ${
+                    expandedSections.performance ? "" : "is-collapsed"
+                  }`
+            }
+          >
             <SectionHeader
               title="System Performance"
               description="How your new solar PV system affects your home's energy usage."
@@ -1513,7 +1531,16 @@ export default function QuotePage({
           {/* =======================
                 FINANCIALS (SaaS UI)
             ======================= */}
-          <section id="financials" className={pdfMode ? "mt-1 pdf-page-break-before" : "mt-[2rem]"}>
+          <section
+            id="financials"
+            className={
+              pdfMode
+                ? "mt-1 pdf-page-break-before"
+                : `quote-collapsible-section mt-[2rem] ${
+                    expandedSections.financials ? "" : "is-collapsed"
+                  }`
+            }
+          >
             <SectionHeader
               title="Financials"
               description="How your system changes your energy bills and savings in the short and long term."

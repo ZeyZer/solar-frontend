@@ -4107,6 +4107,12 @@ select:focus {
   transform: translateY(0.12rem) rotate(225deg);
 }
 
+.quote-content--clean
+  > .quote-collapsible-section.is-collapsed
+  + .quote-collapsible-section.is-collapsed {
+  margin-top: 1rem;
+}
+
 .app[data-style-preset="sleek-professional"] .sticky-quote-nav {
   border-color: rgb(var(--theme-line));
   background: rgb(var(--theme-canvas) / 0.96);
