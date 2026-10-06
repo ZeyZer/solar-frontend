@@ -59,7 +59,7 @@ export default function StickyQuoteNav({
             <button
               type="button"
               onClick={onExit}
-              className="inline-flex items-center gap-2 rounded-xl bg-pop px-3 py-2 text-sm font-medium text-brand hover:bg-white hover:text-ink ring-1 ring-transparent hover:ring-line"
+              className="sticky-quote-nav-back inline-flex items-center gap-2 rounded-xl bg-pop px-3 py-2 text-sm font-medium text-brand hover:bg-white hover:text-ink ring-1 ring-transparent hover:ring-line"
             >
               ← Back to {brandName}
             </button>
@@ -79,8 +79,8 @@ export default function StickyQuoteNav({
                   }
                   className={
                     isUpdated
-                      ? "rounded-full bg-emerald-100 px-4 py-1 mb-2 mt-2 text-body font-medium text-ink ring-1 ring-emerald-300 animate-pulse hover:bg-pop/80"
-                      : "rounded-full bg-teal-200 px-4 py-1 mb-2 mt-2 text-body font-medium text-ink ring-1 ring-emerald-300 hover:bg-pop/80"
+                      ? "sticky-quote-nav-section is-updated rounded-full bg-emerald-100 px-4 py-1 mb-2 mt-2 text-body font-medium text-ink ring-1 ring-emerald-300 animate-pulse hover:bg-pop/80"
+                      : "sticky-quote-nav-section rounded-full bg-teal-200 px-4 py-1 mb-2 mt-2 text-body font-medium text-ink ring-1 ring-emerald-300 hover:bg-pop/80"
                   }
                 >
                   {item.label}

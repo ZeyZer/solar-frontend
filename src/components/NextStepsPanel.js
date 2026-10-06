@@ -55,21 +55,21 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
   }
 
   return (
-    <section className="mt-10">
+    <section className="next-steps-panel mt-10">
       <SectionHeader
         title="Next Steps"
         description={`Choose what you’d like to do next. We can email your quote, arrange a call with ${brandName}, or point you to useful guides.`}
         action={
           <button
             onClick={onDownloadPdf}
-            className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+            className="next-steps-primary rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
           >
             Download PDF Quote
           </button>
         }
       />
       {/* Badge row (subtle polish) */}
-      <div className="mt-4 mb-8 flex items-center gap-2">
+      <div className="next-steps-badges mt-4 mb-8 flex items-center gap-2">
         <span className="rounded-full bg-accent px-3 py-2 text-xs font-medium text-white">
           Store Your Quote
         </span>
@@ -125,7 +125,7 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
             <button
               type="submit"
               disabled={emailSubmitting || emailAccepted}
-              className="mt-2 w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="next-steps-primary mt-2 w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {emailSubmitting ? "Sending…" : "Email my quote"}
             </button>
@@ -192,7 +192,7 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
             <button
               type="submit"
               disabled={callSubmitting || callAccepted}
-              className="mt-2 w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="next-steps-primary mt-2 w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {callSubmitting ? "Sending…" : "Request a call"}
             </button>
@@ -211,7 +211,7 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
             <a href={infoUrl} className="block">
               <button
                 type="button"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                className="next-steps-secondary w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
               >
                 Visit information centre
               </button>

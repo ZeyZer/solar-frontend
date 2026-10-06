@@ -2,7 +2,7 @@ import cx from "./cx";
 
 const styles = {
   outerBase: "rounded-2xl border-2 border-slate-200 bg-white h-full",
-  outerScreen: "p-5 shadow-bubble",
+  outerScreen: "product-tile-screen p-5 shadow-bubble",
   outerPdf: "mode-pdf-tight",
 
   titleBase: "font-semibold text-brand",
@@ -32,7 +32,7 @@ const styles = {
   aboutColPdf: "col-span-3",
 
   aboutBoxBase: "h-full rounded-2xl border-2 border-sky-100",
-  aboutBoxScreen: "bg-sky-50 shadow-soft p-4",
+  aboutBoxScreen: "product-tile-about-screen bg-sky-50 shadow-soft p-4",
   aboutBoxPdf: "p-2",
 
   aboutLabelBase: "font-semibold uppercase tracking-wide text-accent",

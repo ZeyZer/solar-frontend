@@ -1277,7 +1277,7 @@ export default function QuotePage({
                         <div className={pdfMode ? "grid grid-cols-3 gap-2" : "grid grid-cols-1 gap-4 sm:grid-cols-3"}>
 
                           {/* Annual generation */}
-                          <div className={pdfMode ? "rounded-2xl border-2 border-amber-500 bg-amber-200 px-3 py-3 text-center" : "rounded-2xl border-2 border-amber-500 bg-amber-200 px-6 py-5 text-center"}>
+                          <div className={pdfMode ? "rounded-2xl border-2 border-amber-500 bg-amber-200 px-3 py-3 text-center" : "quote-performance-stat quote-performance-stat--generation rounded-2xl border-2 border-amber-500 bg-amber-200 px-6 py-5 text-center"}>
                             <div className={pdfMode ? "text-lg font-normal leading-tight text-slate-900" : "text-2xl font-semibold text-slate-900"}>
                               {`${Math.round(totalGen).toLocaleString()} kWh`}
                             </div>
@@ -1285,7 +1285,7 @@ export default function QuotePage({
                           </div>
 
                           {/* Solar used */}
-                          <div className={pdfMode ? "rounded-2xl border-2 border-accent bg-blue-300 px-3 py-3 text-center" : "rounded-2xl border-2 border-accent bg-blue-300 px-6 py-5 text-center"}>
+                          <div className={pdfMode ? "rounded-2xl border-2 border-accent bg-blue-300 px-3 py-3 text-center" : "quote-performance-stat quote-performance-stat--home rounded-2xl border-2 border-accent bg-blue-300 px-6 py-5 text-center"}>
                             <div className={pdfMode ? "text-lg font-normal leading-tight text-slate-900" : "text-2xl font-semibold text-slate-900"}>
                               {`${Math.round(totalSolarUsed).toLocaleString()} kWh`}
                             </div>
@@ -1293,7 +1293,7 @@ export default function QuotePage({
                           </div>
 
                           {/* Exported */}
-                          <div className={pdfMode ? "rounded-2xl border-2 border-slate-400 bg-slate-200 px-3 py-3 text-center" : "rounded-2xl border-2 border-slate-400 bg-slate-200 px-6 py-5 text-center"}>
+                          <div className={pdfMode ? "rounded-2xl border-2 border-slate-400 bg-slate-200 px-3 py-3 text-center" : "quote-performance-stat quote-performance-stat--export rounded-2xl border-2 border-slate-400 bg-slate-200 px-6 py-5 text-center"}>
                             <div className={pdfMode ? "text-lg font-normal leading-tight text-slate-900" : "text-2xl font-semibold text-slate-900"}>
                               {`${Math.round(totalSolarExport).toLocaleString()} kWh`}
                             </div>
@@ -1482,18 +1482,18 @@ export default function QuotePage({
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:gap-4">
-                      <div className="rounded-2xl bg-blue-100 px-6 py-4 text-center">
+                      <div className="quote-financial-summary-card rounded-2xl bg-blue-100 px-6 py-4 text-center">
                         <div className="text-2xl font-semibold text-slate-900">
                           £{Number(quote.annualBillSavings || 0).toLocaleString()}
                         </div>
                         <div className="mt-1 text-s text-slate-500">Bill saving</div>
                       </div>
 
-                      <div className="hidden sm:block text-3xl font-medium text-teal-500 text-center">
+                      <div className="quote-financial-operator hidden sm:block text-3xl font-medium text-teal-500 text-center">
                         +
                       </div>
 
-                      <div className="rounded-2xl bg-blue-100 px-6 py-4 text-center">
+                      <div className="quote-financial-summary-card rounded-2xl bg-blue-100 px-6 py-4 text-center">
                         <div className="text-2xl font-semibold text-slate-900">
                           £{Number(quote.annualSegIncome || 0).toLocaleString()}
                         </div>
@@ -1503,11 +1503,11 @@ export default function QuotePage({
                         </div>
                       </div>
 
-                      <div className="hidden sm:block text-3xl font-medium text-teal-500 text-center">
+                      <div className="quote-financial-operator hidden sm:block text-3xl font-medium text-teal-500 text-center">
                         =
                       </div>
 
-                      <div className="rounded-2xl bg-blue-300 px-6 py-4 text-center">
+                      <div className="quote-financial-summary-card quote-financial-summary-card--total rounded-2xl bg-blue-300 px-6 py-4 text-center">
                         <div className="text-3xl font-semibold text-slate-900">
                           £{Number(quote.totalAnnualBenefit || 0).toLocaleString()}
                         </div>
@@ -1533,7 +1533,7 @@ export default function QuotePage({
 
                 {/* Payback + IRR */}
                 <div className={pdfMode ? "mt-3 grid grid-cols-2 gap-2" : "mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2"}>
-                  <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "rounded-2xl border-2 border-teal-200 bg-white p-4 text-center"}>
+                  <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "quote-financial-secondary rounded-2xl border-2 border-teal-200 bg-white p-4 text-center"}>
                     <div className={pdfMode ? "text-[11px] font-medium leading-tight text-slate-500" : "flex items-center justify-center text-s font-medium text-slate-500"}>
                       <span>Projected payback</span>
                       <InfoTooltip text="The estimated number of years it takes for cumulative savings and export income to recover the upfront system cost." />
@@ -1548,7 +1548,7 @@ export default function QuotePage({
                     </div>
                   </div>
 
-                  <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "rounded-2xl border-2 border-teal-200 bg-white p-4 text-center"}>
+                  <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "quote-financial-secondary rounded-2xl border-2 border-teal-200 bg-white p-4 text-center"}>
                     <div className={pdfMode ? "text-[11px] font-medium leading-tight text-slate-500" : "text-s font-medium text-slate-500"}>
                       <span>Investment rate of return (IRR)</span>
                       <InfoTooltip text="A way of comparing the financial return of your solar investment over time, taking into account annual savings and system cost." />
@@ -1821,7 +1821,7 @@ export default function QuotePage({
                     </div>
 
                     {/* ================= AFTER TARIFF ================= */}
-                    <div className={pdfMode ? "rounded-xl border border-white p-3 bg-blue-50" : "rounded-xl border border-white p-4 bg-blue-50"}>
+                    <div className={pdfMode ? "rounded-xl border border-white p-3 bg-blue-50" : "quote-tariff-after rounded-xl border border-white p-4 bg-blue-50"}>
                       <div className={pdfMode ? 
                         "flex items-start justify-between gap-2 border-b-2 border-blue-100 text-sm font-semibold text-slate-900 mb-1" : 
                         "flex items-start justify-between gap-2 border-b-2 border-blue-100 text-body font-semibold text-slate-900 mb-2"}>

@@ -2,7 +2,7 @@ import cx from "./cx";
 
 const styles = {
   statBox: "rounded-2xl border-2 border-gentle text-center",
-  statBoxScreen: "shadow-bubble bg-teal-200 p-4",
+  statBoxScreen: "quote-stat-screen shadow-bubble bg-teal-200 p-4",
   statBoxPdf: "bg-white mode-pdf-tight",
 
   labelScreen: "text-s font-medium text-gentle",
