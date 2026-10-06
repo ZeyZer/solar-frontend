@@ -118,8 +118,8 @@ export default function useQuoteSubmit({
 
     try {
       setLoading(true);
-      setProgress({ pct: 0, label: "Preparing your quote…" });
-      startFakeProgress(12000);
+      setProgress({ pct: 0, label: "Building your solar estimate…" });
+      startFakeProgress(40000);
 
       const cleanedTariffBefore = cleanTariffObject(
         form.tariffBefore,
@@ -225,7 +225,7 @@ export default function useQuoteSubmit({
       setProgress({
         pct: 5,
         step: "starting",
-        label: "Starting…",
+        label: "Building your solar estimate…",
       });
 
       const data = await generateQuote(payload);

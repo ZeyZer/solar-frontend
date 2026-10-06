@@ -19,7 +19,7 @@ function SkeletonCard() {
 export default function LoadingScreen({
   pct = 0,
   label = "Calculating your quote…",
-  hint = "This usually takes around 10–15 seconds.",
+  hint = "This usually takes around 30–40 seconds.",
 }) {
   const brandName = ACTIVE_BRAND.name;
   const brandInitials =

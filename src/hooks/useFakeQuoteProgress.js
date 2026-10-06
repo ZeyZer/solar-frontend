@@ -2,45 +2,45 @@ import { useEffect, useRef, useState } from "react";
 
 const DEFAULT_PROGRESS = {
   pct: 0,
-  label: "Preparing your quote…",
+  label: "Building your solar estimate…",
   step: "starting",
 };
 
 const PROGRESS_STEPS = [
   {
-    pct: 8,
+    pct: 0,
     step: "starting",
-    label: "Preparing your quote…",
+    label: "Building your solar estimate…",
   },
   {
     pct: 18,
     step: "fetching_pvgis",
-    label: "Checking your roof and solar generation…",
+    label: "Modelling your solar potential…",
   },
   {
     pct: 34,
     step: "modelling_demand",
-    label: "Building your energy profile…",
+    label: "Matching generation to your energy use…",
   },
   {
     pct: 52,
     step: "simulating_battery",
-    label: "Simulating solar and battery performance…",
+    label: "Comparing solar and battery options…",
   },
   {
     pct: 70,
     step: "financials",
-    label: "Calculating savings and payback…",
+    label: "Calculating estimated savings and payback…",
   },
   {
     pct: 86,
     step: "optimising_battery",
-    label: "Finding battery recommendations…",
+    label: "Preparing your recommendations…",
   },
   {
     pct: 94,
     step: "finalising",
-    label: "Finalising your quote…",
+    label: "Finalising your personalised estimate…",
   },
 ];
 
@@ -62,14 +62,14 @@ export default function useFakeQuoteProgress() {
     setProgress(DEFAULT_PROGRESS);
   }
 
-  function startFakeProgress(durationMs = 12000) {
+  function startFakeProgress(durationMs = 40000) {
     stopFakeProgress();
 
     fakeStartRef.current = Date.now();
 
     setProgress({
       pct: 0,
-      label: "Preparing your quote…",
+      label: "Building your solar estimate…",
       step: "starting",
     });
 
@@ -106,7 +106,7 @@ export default function useFakeQuoteProgress() {
       ...prev,
       pct: 100,
       step: "finalising",
-      label: "Quote ready.",
+      label: "Your estimate is ready.",
     }));
   }
 
