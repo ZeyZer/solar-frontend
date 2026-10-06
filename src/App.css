@@ -4115,6 +4115,13 @@ select:focus {
   border-top: 1px solid rgb(var(--theme-line) / 0.7);
 }
 
+.quote-content--clean
+  > .quote-collapsible-section.is-collapsed
+  + .quote-collapsible-section.is-collapsed
+  > :first-child {
+  margin-top: 0.75rem;
+}
+
 .app[data-style-preset="sleek-professional"] .sticky-quote-nav {
   border-color: rgb(var(--theme-line));
   background: rgb(var(--theme-canvas) / 0.96);
