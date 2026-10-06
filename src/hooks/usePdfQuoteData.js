@@ -67,11 +67,6 @@ export default function usePdfQuoteData() {
         setPdfQuote(data.quote || null);
         setPdfForm(data.form || null);
         setPdfRoofs(data.roofs || []);
-
-        if (typeof window !== "undefined") {
-          window.__QUOTE_PDF_READY__ = true;
-          window.__QUOTE_PDF_ERROR__ = "";
-        }
       } catch (err) {
         if (cancelled) return;
 

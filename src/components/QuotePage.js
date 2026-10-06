@@ -595,7 +595,7 @@ export default function QuotePage({
                 <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-2xl border-2 border-gentle">
                   <div className="relative">
                     <img
-                      src="/images/solar-home.png"
+                      src="/images/solar-home.jpeg"
                       alt="Solar panels on a residential home"
                       className="h-[200px] w-full object-cover sm:h-[240px] lg:h-[350px]"
                     />

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import QuotePage from "./QuotePage";
 
@@ -9,6 +9,23 @@ export default function PdfQuoteRoute({
   pdfError,
   contactEmail,
 }) {
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    window.__QUOTE_PDF_READY__ = false;
+
+    if (!pdfQuote || !pdfForm || pdfError) return undefined;
+
+    const frameId = window.requestAnimationFrame(() => {
+      window.__QUOTE_PDF_READY__ = true;
+      window.__QUOTE_PDF_ERROR__ = "";
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [pdfQuote, pdfForm, pdfError]);
+
   if (pdfError) {
     return (
       <div style={{ padding: 32 }}>
