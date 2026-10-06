@@ -3761,8 +3761,6 @@ select:focus {
 
 .app[data-style-preset="sleek-professional"] .brand-header-inner {
   width: 100%;
-  max-width: 840px;
-  margin: 0 auto;
 }
 
 .app[data-style-preset="sleek-professional"] .brand-header img {
@@ -3885,6 +3883,25 @@ select:focus {
   border-color: rgb(var(--theme-accent));
   background: rgb(var(--theme-surface));
   box-shadow: 0 0 0 3px rgb(var(--theme-accent) / 0.12);
+}
+
+.app[data-style-preset="sleek-professional"] .energy-input-wrap {
+  border: 1px solid rgb(var(--theme-line));
+  border-radius: 11px;
+  background: rgb(var(--theme-surface));
+}
+
+.app[data-style-preset="sleek-professional"] .energy-input-wrap:focus-within {
+  border-color: rgb(var(--theme-accent));
+  box-shadow: 0 0 0 3px rgb(var(--theme-accent) / 0.12);
+}
+
+.app[data-style-preset="sleek-professional"] .energy-input-wrap input,
+.app[data-style-preset="sleek-professional"] .energy-input-wrap input:focus {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .app[data-style-preset="sleek-professional"] .choice-pill,
