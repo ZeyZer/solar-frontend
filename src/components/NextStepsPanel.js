@@ -13,28 +13,44 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
 
   const [emailStatus, setEmailStatus] = useState("");
   const [callStatus, setCallStatus] = useState("");
+  const [emailSubmitting, setEmailSubmitting] = useState(false);
+  const [callSubmitting, setCallSubmitting] = useState(false);
+  const [emailAccepted, setEmailAccepted] = useState(false);
+  const [callAccepted, setCallAccepted] = useState(false);
 
   const [marketingConsent, setMarketingConsent] = useState(false);
 
   async function handleEmailSubmit(e) {
     e.preventDefault();
+    if (emailSubmitting || emailAccepted) return;
+
+    setEmailSubmitting(true);
     setEmailStatus("Sending…");
     try {
       await onEmailQuote({ name, email, marketingConsent });
-      setEmailStatus("✅ Sent! Please check your inbox (and spam/junk).");
+      setEmailAccepted(true);
+      setEmailStatus("✅ Request received. We’re preparing your PDF and will email it to you shortly.");
     } catch (err) {
-      setEmailStatus("❌ Something went wrong. Please try again.");
+      setEmailStatus("❌ We couldn’t receive your request. Please try again.");
+    } finally {
+      setEmailSubmitting(false);
     }
   }
 
   async function handleCallSubmit(e) {
     e.preventDefault();
+    if (callSubmitting || callAccepted) return;
+
+    setCallSubmitting(true);
     setCallStatus("Sending…");
     try {
       await onRequestCall({ name, email, phone, marketingConsent });
-      setCallStatus("✅ Thanks! We’ll be in touch soon. Check your inbox for your quote.");
+      setCallAccepted(true);
+      setCallStatus("✅ Call request received. We’ll be in touch soon. We’re also preparing your quote and will email it shortly.");
     } catch (err) {
-      setCallStatus("❌ Something went wrong. Please try again.");
+      setCallStatus("❌ We couldn’t receive your call request. Please try again.");
+    } finally {
+      setCallSubmitting(false);
     }
   }
 
@@ -108,9 +124,10 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
 
             <button
               type="submit"
-              className="mt-2 w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+              disabled={emailSubmitting || emailAccepted}
+              className="mt-2 w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Email my quote
+              {emailSubmitting ? "Sending…" : "Email my quote"}
             </button>
 
             {emailStatus && <p className="text-xs text-slate-500">{emailStatus}</p>}
@@ -174,9 +191,10 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
 
             <button
               type="submit"
-              className="mt-2 w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+              disabled={callSubmitting || callAccepted}
+              className="mt-2 w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Request a call
+              {callSubmitting ? "Sending…" : "Request a call"}
             </button>
 
             {callStatus && <p className="text-xs text-slate-500">{callStatus}</p>}
