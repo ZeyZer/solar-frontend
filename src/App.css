@@ -4078,9 +4078,54 @@ select:focus {
    The PDF route is rendered outside the themed .app shell.
    ========================================================= */
 
+.quote-detail-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 42px;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #172554;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.quote-detail-toggle-chevron {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-0.12rem) rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.quote-detail-toggle-chevron.is-expanded {
+  transform: translateY(0.12rem) rotate(225deg);
+}
+
 .app[data-style-preset="sleek-professional"] .sticky-quote-nav {
   border-color: rgb(var(--theme-line));
   background: rgb(var(--theme-canvas) / 0.96);
+}
+
+.app[data-style-preset="sleek-professional"] .quote-detail-toggle {
+  border-color: rgb(var(--theme-line));
+  border-radius: 11px;
+  background: rgb(var(--theme-surface));
+  color: rgb(var(--theme-brand));
+  box-shadow: none;
+}
+
+.app[data-style-preset="sleek-professional"] .quote-detail-toggle:hover,
+.app[data-style-preset="sleek-professional"] .quote-detail-toggle:focus-visible {
+  border-color: rgb(var(--theme-accent));
+  background: rgb(var(--theme-brand-soft));
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(var(--theme-accent) / 0.12);
 }
 
 .app[data-style-preset="sleek-professional"] .sticky-quote-nav-back {
@@ -4266,6 +4311,10 @@ select:focus {
 }
 
 @media (max-width: 640px) {
+  .quote-detail-toggle {
+    width: 100%;
+  }
+
   .app[data-style-preset="sleek-professional"] .sticky-quote-nav-mobile-back,
   .app[data-style-preset="sleek-professional"] .sticky-quote-nav-mobile-toggle,
   .app[data-style-preset="sleek-professional"] .sticky-quote-nav-mobile-initial,

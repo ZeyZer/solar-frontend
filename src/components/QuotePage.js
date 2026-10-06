@@ -100,6 +100,12 @@ export default function QuotePage({
   const [financeModalOpen, setFinanceModalOpen] = useState(false);
   const [monthlySavingsModalOpen, setMonthlySavingsModalOpen] = useState(false);
 
+  const [expandedSections, setExpandedSections] = useState({
+    systemChoices: false,
+    performance: false,
+    financials: false,
+  });
+
   const monthlySavingsRows = buildMonthlySavingsRows(quote);
 
   // PDF Loading Pages
@@ -115,6 +121,65 @@ export default function QuotePage({
   const [batteryRecommendationLifetimeYears, setBatteryRecommendationLifetimeYears] = useState(
     quote?.batteryRecommendations?.assumptions?.lifetimeYears || 25
   );
+
+  const hasBattery = Number(form.batteryKWh || 0) > 0;
+  const hasHourlyModel =
+    quote?.hourlyModel &&
+    Array.isArray(quote.hourlyModel.monthlyGenerationKWh);
+
+  function toggleDetailSection(sectionKey) {
+    setExpandedSections((current) => ({
+      ...current,
+      [sectionKey]: !current[sectionKey],
+    }));
+  }
+
+  function jumpToQuoteSection(id) {
+    const sectionKeyById = {
+      "system-choices": "systemChoices",
+      performance: "performance",
+      financials: "financials",
+    };
+    const sectionKey = sectionKeyById[id];
+
+    if (sectionKey) {
+      setExpandedSections((current) => ({
+        ...current,
+        [sectionKey]: true,
+      }));
+    }
+
+    window.requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }
+
+  function renderDetailToggle(sectionKey, label, contentId) {
+    if (pdfMode) return null;
+
+    const isExpanded = expandedSections[sectionKey];
+
+    return (
+      <button
+        type="button"
+        className="quote-detail-toggle"
+        onClick={() => toggleDetailSection(sectionKey)}
+        aria-expanded={isExpanded}
+        aria-controls={contentId}
+      >
+        <span>{isExpanded ? `Hide ${label}` : `View ${label}`}</span>
+        <span
+          className={`quote-detail-toggle-chevron ${
+            isExpanded ? "is-expanded" : ""
+          }`}
+          aria-hidden="true"
+        />
+      </button>
+    );
+  }
 
   useEffect(() => {
     const nextLifetime = quote?.batteryRecommendations?.assumptions?.lifetimeYears;
@@ -547,14 +612,20 @@ export default function QuotePage({
         </div>
       )}
 
-        {!isPdf && <StickyQuoteNav updatedSections={updatedSections} onExit={exitToWebsite}/>}
+        {!isPdf && (
+          <StickyQuoteNav
+            updatedSections={updatedSections}
+            onExit={exitToWebsite}
+            onSectionJump={jumpToQuoteSection}
+          />
+        )}
         {!isPdf && (
           <QuoteHeader
             onExit={exitToWebsite}
             quote={quote}
             mode={mode}
             showNav={!pdfMode}
-            onJumpTo={(id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            onJumpTo={jumpToQuoteSection}
           />
         )}
         
@@ -955,6 +1026,15 @@ export default function QuotePage({
               </span>
             </div>
 
+            {renderDetailToggle(
+              "systemChoices",
+              "system details",
+              "system-choices-detail"
+            )}
+
+            {(pdfMode || expandedSections.systemChoices) && (
+            <div id="system-choices-detail" className="contents">
+
             {/* =======================
                   A) Home & roof assumptions
             ======================= */}
@@ -1197,6 +1277,8 @@ export default function QuotePage({
                 })()}
               </CardAlt>
             </div>
+            </div>
+            )}
           </section>
 
 
@@ -1212,7 +1294,29 @@ export default function QuotePage({
                 <ButtonLink onClick={() => onEdit(3)}>Edit</ButtonLink>)}
             />
 
-            {!quote.hourlyModel || !Array.isArray(quote.hourlyModel.monthlyGenerationKWh) ? (
+            {!pdfMode && hasHourlyModel && (
+              <div className="mt-4 mb-8 flex items-center gap-2">
+                <span className="rounded-full bg-accent px-3 py-2 text-xs font-medium text-white">
+                  PVGIS hourly simulation
+                </span>
+                {hasBattery && (
+                  <span className="rounded-full bg-accent px-3 py-2 text-xs font-medium text-white">
+                    Battery modelled
+                  </span>
+                )}
+              </div>
+            )}
+
+            {renderDetailToggle(
+              "performance",
+              "performance details",
+              "performance-detail"
+            )}
+
+            {(pdfMode || expandedSections.performance) && (
+            <div id="performance-detail" className="contents">
+
+            {!hasHourlyModel ? (
               <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -1228,13 +1332,13 @@ export default function QuotePage({
               </div>
             ) : (() => {
                 const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-                const hasBattery = Number(form.batteryKWh || 0) > 0;
 
                 return (
                 <>
 
                 {/* BADGES */}
-                <div className={pdfMode ? "mt-2 mb-3 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
+                {pdfMode && (
+                <div className="mt-2 mb-3 flex items-center gap-2">
                   <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
                     PVGIS hourly simulation
                   </span>
@@ -1244,6 +1348,7 @@ export default function QuotePage({
                     </span>
                   }
                 </div>
+                )}
 
 
                 {/* STATS + DONUT */}
@@ -1394,6 +1499,8 @@ export default function QuotePage({
               </>
             );
             })()}
+            </div>
+            )}
           </section>
 
           {isPdf && (
@@ -1422,6 +1529,15 @@ export default function QuotePage({
                 Payback period & ROI
               </span>
             </div>
+
+            {renderDetailToggle(
+              "financials",
+              "financial details",
+              "financials-detail"
+            )}
+
+            {(pdfMode || expandedSections.financials) && (
+            <div id="financials-detail" className="contents">
 
             {/* Financial snapshot (stats + Year 1 chart in one clean row) */}
             <div
@@ -1678,6 +1794,8 @@ export default function QuotePage({
                   Net position = cumulative bill savings minus system cost (mid price). Solar generation is held constant unless degradation is applied.
                 </p>
               </div>
+            )}
+            </div>
             )}
           </section>
 

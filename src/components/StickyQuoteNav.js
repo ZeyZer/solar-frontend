@@ -4,6 +4,7 @@ import { ACTIVE_BRAND, getBrandLogo } from "../config/siteConfig";
 export default function StickyQuoteNav({
   updatedSections = [],
   onExit,
+  onSectionJump,
 }) {
   const [mobileExpanded, setMobileExpanded] =
     useState(false);
@@ -44,6 +45,11 @@ export default function StickyQuoteNav({
   ];
 
   function jumpToSection(id) {
+    if (onSectionJump) {
+      onSectionJump(id);
+      return;
+    }
+
     document.getElementById(id)?.scrollIntoView({
       behavior: "smooth",
       block: "start",
