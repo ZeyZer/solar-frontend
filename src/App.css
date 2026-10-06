@@ -2642,6 +2642,10 @@ select:focus {
     box-sizing: border-box !important;
   }
 
+  .quote-content--clean {
+    display: block !important;
+  }
+
   .quote-shell,
   .quote-shell--clean,
   .quote-container,
