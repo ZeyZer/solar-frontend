@@ -4110,7 +4110,9 @@ select:focus {
 .quote-content--clean
   > .quote-collapsible-section.is-collapsed
   + .quote-collapsible-section.is-collapsed {
-  margin-top: 1rem;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgb(var(--theme-line) / 0.7);
 }
 
 .app[data-style-preset="sleek-professional"] .sticky-quote-nav {
