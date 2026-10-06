@@ -57,8 +57,9 @@ const ZION_ENERGY_TENANT = {
   },
 
   assets: {
-    // A real installer logo can be added without changing consuming UI.
     logo: null,
+    logoOnLight: "/branding/zion/zion-energy-logo-on-light.png",
+    logoOnDark: "/branding/zion/zion-energy-logo-on-dark.png",
     heroImage: null,
 
     // Reserved for later hardware catalogue / installer imagery work.
@@ -68,12 +69,23 @@ const ZION_ENERGY_TENANT = {
   // Runtime theme values use space-separated RGB channels so Tailwind
   // opacity modifiers such as bg-accent/10 continue to work.
   theme: {
-    ...DEFAULT_THEME,
+    ink: "15 23 42",
+    muted: "71 85 105",
+    subtle: "100 116 139",
+
+    surface: "255 255 255",
+    canvas: "248 250 252",
+    soft: "241 245 249",
+    line: "226 232 240",
+
+    brand: "0 0 102",
+    brandSoft: "238 240 249",
+    accent: "0 0 102",
+    pop: "226 143 25",
+    gentle: "15 118 110",
   },
 
-  // Reserved for future controlled presets such as
-  // "sleek-professional" or "fun-friendly".
-  stylePreset: "default",
+  stylePreset: "sleek-professional",
 
   accreditations: [],
 };
@@ -129,6 +141,16 @@ const PLATFORM_BRAND = {
 };
 
 export const ACTIVE_BRAND = ACTIVE_TENANT || PLATFORM_BRAND;
+
+export function getBrandLogo(brand, surface = "light") {
+  const assets = brand?.assets || {};
+
+  if (surface === "dark") {
+    return assets.logoOnDark || assets.logo || assets.logoOnLight || null;
+  }
+
+  return assets.logoOnLight || assets.logo || assets.logoOnDark || null;
+}
 
 export const ACTIVE_THEME = {
   ...DEFAULT_THEME,

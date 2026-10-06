@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ACTIVE_BRAND, PLATFORM } from "../config/siteConfig";
+import { ACTIVE_BRAND, PLATFORM, getBrandLogo } from "../config/siteConfig";
 
 function SkeletonCard() {
   return (
@@ -24,7 +24,7 @@ export default function LoadingScreen({
   const brandName = ACTIVE_BRAND.name;
   const brandInitials =
     ACTIVE_BRAND.initials || brandName.slice(0, 2).toUpperCase();
-  const brandLogo = ACTIVE_BRAND.assets?.logo || null;
+  const brandLogo = getBrandLogo(ACTIVE_BRAND, "light");
 
   const clamped = Math.max(0, Math.min(100, pct));
 
@@ -47,7 +47,7 @@ export default function LoadingScreen({
                 <img
                   src={brandLogo}
                   alt={`${brandName} logo`}
-                  className="h-10 w-10 object-contain"
+                  className="h-10 w-auto max-w-[10rem] object-contain"
                 />
               ) : (
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-sm font-bold text-white">
