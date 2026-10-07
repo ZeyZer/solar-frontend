@@ -4,7 +4,7 @@ import Card from "../ui/Card.js";
 import LegalNotice from "./LegalNotice";
 import { ACTIVE_BRAND } from "../config/siteConfig";
 
-export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, infoUrl, onDownloadPdf, initialName, initialEmail, initialPhone }) {
+export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, infoUrl, initialName, initialEmail, initialPhone }) {
   const brandName = ACTIVE_BRAND.name;
 
   const [name, setName] = useState(initialName || "");
@@ -59,14 +59,6 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
       <SectionHeader
         title="Next Steps"
         description={`Choose what you’d like to do next. We can email your quote, arrange a call with ${brandName}, or point you to useful guides.`}
-        action={
-          <button
-            onClick={onDownloadPdf}
-            className="next-steps-primary rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-          >
-            Download PDF Quote
-          </button>
-        }
       />
       {/* Badge row (subtle polish) */}
       <div className="next-steps-badges mt-4 mb-8 flex items-center gap-2">
