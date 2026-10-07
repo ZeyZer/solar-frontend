@@ -47,11 +47,9 @@ const ZION_ENERGY_TENANT = {
 
   urls: {
     website: "https://www.zionenergy.co.uk",
-    // Keep legal/advice destinations on the platform until their
-    // installer-specific ownership and URLs are deliberately configured.
-    privacy: null,
+    privacy: "https://zionenergy.co.uk/privacy-cookies/",
     estimateDisclaimer: null,
-    advice: null,
+    advice: "https://zionenergy.co.uk/solar-pv/",
   },
 
   assets: {
@@ -178,7 +176,9 @@ export const PRIVACY_POLICY_URL =
   ACTIVE_BRAND.urls?.privacy || PLATFORM.urls.privacy;
 
 export const ESTIMATE_DISCLAIMER_URL =
-  ACTIVE_BRAND.urls?.estimateDisclaimer || PLATFORM.urls.estimateDisclaimer;
+  ACTIVE_TENANT
+    ? ACTIVE_TENANT.urls?.estimateDisclaimer || null
+    : PLATFORM.urls.estimateDisclaimer;
 
 export const ADVICE_URL =
   ACTIVE_BRAND.urls?.advice || PLATFORM.urls.advice;

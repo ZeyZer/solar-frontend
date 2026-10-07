@@ -32,14 +32,16 @@ export default function SiteFooter({ platform, installer }) {
           Privacy Policy
         </a>
 
-        <a
-          href={ESTIMATE_DISCLAIMER_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="hover:text-accent"
-        >
-          Estimate Disclaimer
-        </a>
+        {ESTIMATE_DISCLAIMER_URL ? (
+          <a
+            href={ESTIMATE_DISCLAIMER_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-accent"
+          >
+            Estimate Disclaimer
+          </a>
+        ) : null}
       </div>
     </footer>
   );

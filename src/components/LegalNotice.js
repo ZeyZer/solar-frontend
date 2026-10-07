@@ -41,16 +41,20 @@ export default function LegalNotice({
           className="font-semibold text-accent underline underline-offset-2"
         >
           Privacy Policy
-        </a>{" "}
-        and{" "}
-        <a
-          href={ESTIMATE_DISCLAIMER_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="font-semibold text-accent underline underline-offset-2"
-        >
-          Estimate Disclaimer
         </a>
+        {ESTIMATE_DISCLAIMER_URL ? (
+          <>
+            {" "}and{" "}
+            <a
+              href={ESTIMATE_DISCLAIMER_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-accent underline underline-offset-2"
+            >
+              Estimate Disclaimer
+            </a>
+          </>
+        ) : null}
         .
       </p>
     </div>
