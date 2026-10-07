@@ -1,5 +1,6 @@
 function getBackendBaseUrl() {
   const explicitBaseUrl =
+    process.env.REACT_APP_API_BASE ||
     process.env.REACT_APP_BACKEND_URL ||
     process.env.REACT_APP_API_BASE_URL ||
     process.env.REACT_APP_API_URL ||

@@ -41,9 +41,7 @@ const ZION_ENERGY_TENANT = {
   initials: "ZE",
 
   contact: {
-    // Falls back to the platform contact until a Zion-specific
-    // calculator contact address is deliberately configured.
-    email: null,
+    email: "hello@zion-energy.org",
     phone: null,
   },
 
