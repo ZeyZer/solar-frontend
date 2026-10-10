@@ -110,6 +110,7 @@ export default function QuotePage({
 
   // PDF Loading Pages
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [recalcLoading, setRecalcLoading] = useState(false);
 
   // Charge types (charge from grid and energy trading)
   const [batteryControls, setBatteryControls] = useState(() => ({
@@ -435,6 +436,10 @@ export default function QuotePage({
 
   // TARIFF RECALCULATIONS
   async function recalcWithTariff() {
+    if (recalcLoading) return;
+
+    setRecalcLoading(true);
+
     try {
       // ✅ Use the latest tariff values from the form (TariffModal edits these)
       const tb = form?.tariffBefore || quote?.tariffBefore || {};
@@ -488,6 +493,8 @@ export default function QuotePage({
     } catch (e) {
       console.error(e);
       alert(e?.message || "Failed to recalculate.");
+    } finally {
+      setRecalcLoading(false);
     }
   }
 
@@ -1853,9 +1860,14 @@ export default function QuotePage({
                 right={!pdfMode && (<button
                 type="button"
                 onClick={() => recalcWithTariff()}
-                className={getRecalcButtonClass(needsRecalc)}
+                disabled={recalcLoading}
+                className={`${getRecalcButtonClass(needsRecalc)} disabled:cursor-wait disabled:opacity-60`}
                 >
-                  {needsRecalc ? "Recalculate results" : "Results up to date"}
+                  {recalcLoading
+                    ? "Recalculating…"
+                    : needsRecalc
+                      ? "Recalculate results"
+                      : "Results up to date"}
                 </button>)}
               >
               <div className={pdfMode ? "mt-1 rounded-2xl bg-white p-2" : "mt-1 rounded-2xl bg-white p-4"}>
@@ -2107,9 +2119,14 @@ export default function QuotePage({
                       <button
                         type="button"
                         onClick={recalcWithTariff}
-                        className={getRecalcButtonClass(needsRecalc)}
+                        disabled={recalcLoading}
+                        className={`${getRecalcButtonClass(needsRecalc)} disabled:cursor-wait disabled:opacity-60`}
                       >
-                        {needsRecalc ? "Recalculate results" : "Results up to date"}
+                        {recalcLoading
+                          ? "Recalculating…"
+                          : needsRecalc
+                            ? "Recalculate results"
+                            : "Results up to date"}
                       </button>
                     </div>
 
@@ -2449,13 +2466,16 @@ export default function QuotePage({
                       <button
                         type="button"
                         onClick={() => recalcWithTariff()}
-                        className={getRecalcButtonClass(
+                        disabled={recalcLoading}
+                        className={`${getRecalcButtonClass(
                           needsRecalc
-                        )}
+                        )} disabled:cursor-wait disabled:opacity-60`}
                       >
-                        {needsRecalc
-                          ? "Recalculate results"
-                          : "Results up to date"}
+                        {recalcLoading
+                          ? "Recalculating…"
+                          : needsRecalc
+                            ? "Recalculate results"
+                            : "Results up to date"}
                       </button>
                     )
                   }
@@ -2950,6 +2970,26 @@ export default function QuotePage({
 
                 <p className="mt-2 text-sm text-slate-600">
                   Please wait while we generate your proposal.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {recalcLoading && !pdfMode && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4">
+              <div
+                className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-xl"
+                role="status"
+                aria-live="polite"
+              >
+                <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-accent" />
+
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Updating your quote
+                </h3>
+
+                <p className="mt-2 text-sm text-slate-600">
+                  Recalculating your savings, battery performance and payback with your new choices.
                 </p>
               </div>
             </div>
