@@ -21,7 +21,9 @@ async function postJson(path, payload, fallbackMessage) {
 
   if (!resp.ok) {
     const message = await readErrorResponse(resp, fallbackMessage);
-    throw new Error(message);
+    const error = new Error(message);
+    error.status = resp.status;
+    throw error;
   }
 
   return resp.json();
@@ -35,12 +37,85 @@ export async function generateQuote(payload) {
   );
 }
 
+function buildCompactRecalcQuote(quote = {}) {
+  const hourlyModel = quote?.hourlyModel || {};
+
+  return {
+    priceLow: quote?.priceLow,
+    priceHigh: quote?.priceHigh,
+    panelOption: quote?.panelOption,
+    estAnnualGenerationKWh: quote?.estAnnualGenerationKWh,
+    assumedAnnualConsumptionKWh: quote?.assumedAnnualConsumptionKWh,
+    hardwareCatalog: quote?.hardwareCatalog,
+    systemSizeKwp: quote?.systemSizeKwp,
+    panelCount: quote?.panelCount,
+    roofs: quote?.roofs,
+    batteryKWh: quote?.batteryKWh,
+    tariffBefore: quote?.tariffBefore,
+    tariffAfter: quote?.tariffAfter,
+    tariff: quote?.tariff,
+    hourlyModel: {
+      _pvHourlyKWh: hourlyModel._pvHourlyKWh,
+      _loadHourlyKWh: hourlyModel._loadHourlyKWh,
+      _monthIdx: hourlyModel._monthIdx,
+      _hourOfDay: hourlyModel._hourOfDay,
+      _batteryKWh: hourlyModel._batteryKWh,
+      monthlyLoadKWh: hourlyModel.monthlyLoadKWh,
+    },
+  };
+}
+
 export async function recalculateQuote(payload) {
-  return postJson(
-    "/api/quote/recalc",
-    payload,
-    "Failed to recalculate quote."
-  );
+  const originalQuote = payload?.quote || {};
+  const compactPayload = {
+    ...payload,
+    quote: buildCompactRecalcQuote(originalQuote),
+  };
+
+  let response;
+
+  try {
+    response = await postJson(
+      "/api/quote/recalc-compact",
+      compactPayload,
+      "Failed to recalculate quote."
+    );
+  } catch (error) {
+    if (error?.status === 404) {
+      return postJson(
+        "/api/quote/recalc",
+        payload,
+        "Failed to recalculate quote."
+      );
+    }
+
+    throw error;
+  }
+
+  if (
+    response?.mode !== "recalc_patch_v1" ||
+    !response.patch ||
+    typeof response.patch !== "object" ||
+    Array.isArray(response.patch)
+  ) {
+    throw new Error("Invalid compact recalculation response.");
+  }
+
+  const patchHourlyModel =
+    response.patch.hourlyModel &&
+    typeof response.patch.hourlyModel === "object" &&
+    !Array.isArray(response.patch.hourlyModel)
+      ? response.patch.hourlyModel
+      : {};
+
+  return {
+    ...originalQuote,
+    ...response.patch,
+    hourlyModel: {
+      ...(originalQuote?.hourlyModel || {}),
+      ...patchHourlyModel,
+    },
+  };
 }
 
 export async function getPdfQuoteData(pdfId) {
