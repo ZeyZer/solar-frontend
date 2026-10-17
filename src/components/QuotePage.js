@@ -582,7 +582,11 @@ export default function QuotePage({
   const ta = quote?.tariffAfter || null;
 
   return (
-    <div className="quote-shell quote-shell--clean">
+    <div
+      className="quote-shell quote-shell--clean"
+      data-brand-id={ACTIVE_BRAND.id}
+      data-quote-mode={pdfMode ? "pdf" : "screen"}
+    >
       {!pdfMode && (
         <QuoteWelcomeGuide
           open={welcomeGuideOpen}
@@ -705,7 +709,7 @@ export default function QuotePage({
           {/* =======================
                 SUMMARY (SaaS UI)
             ======================= */}
-          <section id="summary" className={isPdf ? "pdf-summary-section" : "mt-[5.25rem]"}>
+          <section id="summary" className={isPdf ? "quote-main-section pdf-summary-section" : "quote-main-section mt-[5.25rem]"}>
             {!pdfMode && (
               <div className="quote-welcome-guide-reopen-wrap no-print">
                 <button
@@ -970,7 +974,13 @@ export default function QuotePage({
               const treesEquivalent = Math.round(lifetimeCO2 / 21);
 
               return (
-                <div className="mt-2 rounded-2xl bg-white p-5 pdf-keep-together">
+                <div
+                  className={
+                    pdfMode
+                      ? "mt-2 rounded-2xl bg-white p-5 pdf-keep-together"
+                      : "quote-environmental-impact mt-2 bg-white"
+                  }
+                >
 
                   <div className={pdfMode ? "text-h3 text-center font-semibold text-slate-900" : "text-h2 text-center font-semibold text-slate-900"}>
                     Environmental Impact
@@ -1048,8 +1058,8 @@ export default function QuotePage({
             id="system-choices"
             className={
               pdfMode
-                ? "mt-1"
-                : `quote-collapsible-section mt-[2rem] ${
+                ? "quote-main-section mt-1"
+                : `quote-main-section quote-collapsible-section mt-[2rem] ${
                     expandedSections.systemChoices ? "" : "is-collapsed"
                   }`
             }
@@ -1108,7 +1118,7 @@ export default function QuotePage({
                     mode={mode}
                     title="Home Energy Usage"
                     right={!pdfMode && (<ButtonLink onClick={() => onEdit(2)}>Edit</ButtonLink>)}
-                    className="h-full"
+                    className={pdfMode ? "h-full" : "quote-analysis-panel h-full"}
                   >
                   {/* Home summary rows (choice-card sentence style) */}
                   <div className={pdfMode ? "mt-1 space-y-1 text-sm text-slate-700" : "mt-3 space-y-2 text-body text-slate-700"}>
@@ -1149,7 +1159,7 @@ export default function QuotePage({
                     mode={mode}
                     title="Roof Information"
                     right={<ButtonLink onClick={() => onEdit(3)}>Edit</ButtonLink>}
-                    className="h-full"
+                    className={pdfMode ? "h-full" : "quote-analysis-panel h-full"}
                   >
                     {/* Roof summary rows (choice-card sentence style) */}
                     <div className={pdfMode ? "mt-1 space-y-1 text-sm text-slate-700" : "mt-3 space-y-2 text-body text-slate-700"}>
@@ -1338,8 +1348,8 @@ export default function QuotePage({
             id="performance"
             className={
               pdfMode
-                ? "mt-1 pdf-page-break-before"
-                : `quote-collapsible-section mt-[2rem] ${
+                ? "quote-main-section mt-1 pdf-page-break-before"
+                : `quote-main-section quote-collapsible-section mt-[2rem] ${
                     expandedSections.performance ? "" : "is-collapsed"
                   }`
             }
@@ -1475,7 +1485,7 @@ export default function QuotePage({
 
                       {/* Payback + IRR */}
                       <div className={pdfMode ? "mt-3 grid grid-cols-2 gap-2" : "mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2"}>
-                        <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "rounded-2xl border-2 border-teal-200 bg-white p-4 text-center"}>
+                        <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "quote-soft-info-card rounded-2xl border p-4 text-center"}>
                           <div className={pdfMode ? "text-[11px] font-medium leading-tight text-brand" : "flex items-center justify-center text-s font-medium text-brand"}>
                             <span>Self Consumption</span>
                             <InfoTooltip text="The share of your solar generation that is used in your home or stored in the battery instead of being exported to the grid." />
@@ -1488,7 +1498,7 @@ export default function QuotePage({
                           </div>
                         </div>
 
-                        <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "rounded-2xl border-2 border-teal-200 bg-white p-4 text-center"}>
+                        <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "quote-soft-info-card rounded-2xl border p-4 text-center"}>
                           <div className={pdfMode ? "text-[11px] font-medium leading-tight text-brand" : "flex items-center justify-center text-s font-medium text-brand"}>
                             <span>Energy Independence</span>
                             <InfoTooltip text="The share of your home’s annual electricity demand that is covered by solar energy, either used instantly or delivered later from the battery."/>
@@ -1575,8 +1585,8 @@ export default function QuotePage({
             id="financials"
             className={
               pdfMode
-                ? "mt-1 pdf-page-break-before"
-                : `quote-collapsible-section mt-[2rem] ${
+                ? "quote-main-section mt-1 pdf-page-break-before"
+                : `quote-main-section quote-collapsible-section mt-[2rem] ${
                     expandedSections.financials ? "" : "is-collapsed"
                   }`
             }
@@ -1879,7 +1889,7 @@ export default function QuotePage({
           {/* =======================
                 OPTIMISATIONS (SaaS UI)
             ======================= */}
-          <section id="optimisations" className={pdfMode ? "mt-1 pdf-page-break-before" : "mt-[2rem]"}>
+          <section id="optimisations" className={pdfMode ? "quote-main-section mt-1 pdf-page-break-before" : "quote-main-section mt-[2rem]"}>
             <SectionHeader
               title="Optimisations"
               description="Here you can edit your tariff, change battery setting and find your optimal battery size."
@@ -3051,7 +3061,7 @@ export default function QuotePage({
                 NEXT STEPS (SaaS UI)
             ======================= */}
           {!pdfMode && (
-          <section id="next-steps" className="mt-[2rem]">
+          <section id="next-steps" className="quote-main-section mt-[2rem]">
             <NextStepsPanel
               quote={quote}
               onEmailQuote={onEmailQuoteLead}

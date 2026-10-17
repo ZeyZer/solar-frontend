@@ -873,6 +873,67 @@ select:focus {
   }
 }
 
+/* Zion quote-page colour refinement (interactive screen only) */
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-main-section
+  > .flex
+  h1.text-h1,
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-main-section
+  > .next-steps-panel
+  > .flex
+  h1.text-h1 {
+  color: #b65f00;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-stat-screen {
+  border: 1px solid rgb(var(--theme-line));
+  border-radius: 12px;
+  background: rgb(var(--theme-surface));
+  box-shadow: none;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-stat-screen
+  > :first-child {
+  color: rgb(var(--theme-muted));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-stat-screen
+  > :nth-child(2) {
+  color: rgb(var(--theme-brand));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-environmental-impact {
+  border-top: 1px solid rgb(var(--theme-line));
+  border-radius: 0;
+  padding: 1.5rem 0 0;
+  box-shadow: none;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-analysis-panel {
+  border: 1px solid rgb(var(--theme-line));
+  border-radius: 14px;
+  background: rgb(var(--theme-surface));
+  box-shadow: none;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-analysis-panel
+  > .cardHeader {
+  border-bottom-color: rgb(var(--theme-line));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-soft-info-card {
+  border-color: #bae6fd;
+  background: #f0f9ff;
+}
+
 /* Quote welcome guide */
 .quote-welcome-guide-overlay {
   position: fixed;
