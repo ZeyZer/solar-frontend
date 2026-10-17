@@ -1243,6 +1243,303 @@ select:focus {
   border-bottom: 1px solid rgb(var(--theme-line));
 }
 
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-panel {
+  border: 1px solid rgb(var(--theme-line));
+  border-radius: 14px;
+  background: rgb(var(--theme-surface));
+  box-shadow: none;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-panel
+  > .cardHeader {
+  border-bottom: 1px solid rgb(var(--theme-line));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-comparison {
+  border-bottom: 1px solid rgb(var(--theme-line));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-comparison-group {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-comparison-group
+  + .quote-battery-comparison-group {
+  border-top: 1px solid rgb(var(--theme-line));
+}
+
+@media (min-width: 1024px) {
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+    .quote-battery-comparison-group
+    + .quote-battery-comparison-group {
+    border-top: 0;
+    border-left: 1px solid rgb(var(--theme-line));
+  }
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-metric {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-metric
+  > :last-child {
+  color: rgb(var(--theme-brand));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-empty {
+  border-top: 1px solid rgb(var(--theme-line));
+  background: transparent;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-options {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-inline: 0;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-option {
+  border: 1px solid rgb(var(--theme-line));
+  border-radius: 12px;
+  background: rgb(var(--theme-surface));
+  box-shadow: none;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-option:not(:disabled):hover,
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-option:focus-visible {
+  border-color: rgb(var(--theme-brand) / 0.55);
+  background: rgb(var(--theme-soft));
+  outline: none;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-option:focus-visible {
+  box-shadow: 0 0 0 3px rgb(var(--theme-brand) / 0.12);
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-option.is-selected {
+  border-color: rgb(var(--theme-brand));
+  background: rgb(var(--theme-brand-soft));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-custom {
+  border-top: 1px solid rgb(var(--theme-line));
+  padding-top: 1rem;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-financial-disclosure {
+  border: 0;
+  border-top: 1px solid rgb(var(--theme-line));
+  border-radius: 0;
+  background: transparent;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-financial-disclosure
+  > summary {
+  cursor: pointer;
+  padding: 1rem 0;
+  color: rgb(var(--theme-brand));
+  font-weight: 600;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-financial-disclosure
+  > summary::marker {
+  color: rgb(var(--theme-brand));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-financial-disclosure
+  > summary:focus-visible {
+  border-radius: 13px;
+  outline: 3px solid rgb(var(--theme-brand) / 0.15);
+  outline-offset: 2px;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-financial-content {
+  border-top: 1px solid rgb(var(--theme-line));
+  padding: 1rem 0 0;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-financial-metrics
+  > div {
+  padding: 0.75rem;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-financial-metrics
+  > div:nth-child(even) {
+  border-left: 1px solid rgb(var(--theme-line));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-financial-metrics
+  > div:nth-child(n + 3) {
+  border-top: 1px solid rgb(var(--theme-line));
+}
+
+@media (min-width: 1024px) {
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+    .quote-battery-financial-metrics
+    > div:nth-child(n + 3) {
+    border-top: 0;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+    .quote-battery-financial-metrics
+    > div:nth-child(n + 2) {
+    border-left: 1px solid rgb(var(--theme-line));
+  }
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-option-metrics {
+  border-top: 1px solid rgb(var(--theme-line));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-lifetime-control {
+  border-top: 1px solid rgb(var(--theme-line));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-payback-panel
+  > .cardHeader
+  .cardTitle {
+  color: rgb(var(--theme-brand));
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-payback-mcs-title {
+  color: rgb(var(--theme-muted));
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-payback-mcs-copy {
+  color: rgb(var(--theme-muted));
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-lifetime-title,
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-lifetime-selected {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-lifetime-title {
+  color: rgb(var(--theme-ink));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-lifetime-selected {
+  color: rgb(var(--theme-brand));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-lifetime-support {
+  color: rgb(var(--theme-muted));
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-lifetime-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(180px, 1fr);
+  gap: 2rem;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-lifetime-current {
+  border-left: 1px solid rgb(var(--theme-line));
+  padding-left: 1.5rem;
+}
+
+@media (max-width: 767px) {
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+    .quote-battery-lifetime-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+    .quote-battery-lifetime-current {
+    border-top: 1px solid rgb(var(--theme-line));
+    border-left: 0;
+    padding-top: 1.25rem;
+    padding-left: 0;
+  }
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-recalc-status:disabled,
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-recalc-status:disabled:hover {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: rgb(var(--theme-muted));
+  cursor: default;
+  opacity: 1;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-option-metrics
+  > div
+  + div:not(.col-span-2) {
+  border-left: 1px solid rgb(var(--theme-line));
+  padding-left: 0.75rem;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-controls {
+  border: 0;
+  border-top: 1px solid rgb(var(--theme-line));
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-inline: 0;
+}
+
 /* Quote welcome guide */
 .quote-welcome-guide-overlay {
   position: fixed;

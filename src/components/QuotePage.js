@@ -267,6 +267,14 @@ export default function QuotePage({
     );
   }
 
+  const isZionQuoteScreen =
+    ACTIVE_BRAND.id === "zion-energy" && !pdfMode;
+  const currentBatteryRecommendations =
+    quote?.batteryRecommendations || null;
+  const currentBatteryLifetimeYears = Number(
+    currentBatteryRecommendations?.assumptions?.lifetimeYears
+  ) || null;
+
   // === ENVIRONMENT ICONS ==== \\
   function EnvironmentalImpactIcon({ src }) {
     return (
@@ -1808,7 +1816,7 @@ export default function QuotePage({
               <Card 
                 mode={mode}
                 title="Payback (cumulative savings by year)"
-                className={pdfMode ? "" : "quote-financial-chart-panel"}
+                className={pdfMode ? "" : "quote-financial-chart-panel quote-payback-panel"}
                 right={
                     !pdfMode && (
                       <button
@@ -1842,11 +1850,17 @@ export default function QuotePage({
                     }
                     caption={
                       <>
-                        <div className="text-xs font-semibold uppercase tracking-wide text-test mt-6 ml-2">
+                        <div
+                          className={
+                            pdfMode
+                              ? "text-xs font-semibold uppercase tracking-wide text-test mt-6 ml-2"
+                              : "quote-payback-mcs-title mt-6 ml-2"
+                          }
+                        >
                           MCS projection note
                         </div>
 
-                        <p className={pdfMode ? "text-small text-slate-700 leading-6 p-2" : "text-sm text-slate-700 leading-6 p-2"}>
+                        <p className={pdfMode ? "text-small text-slate-700 leading-6 p-2" : "quote-payback-mcs-copy p-2"}>
                           Your projected energy cost is calculated by considering a{" "}
                           <strong>{Math.round((quote?.tariff?.energyInflationRate ?? 0.06) * 100)}% increase</strong>{" "}
                           in energy cost each year, due to trends in the raising cost of energy. This estimate is based on your selected
@@ -1861,6 +1875,72 @@ export default function QuotePage({
                 </>
                 ) : (
                   <p className="text-sm text-slate-500">Payback series not available.</p>
+                )}
+
+                {isZionQuoteScreen && currentBatteryRecommendations && (
+                  <div className="quote-battery-lifetime-control mt-5 pt-5">
+                    <div className="quote-battery-lifetime-grid px-2">
+                      <div className="min-w-0">
+                        <label
+                          className="quote-battery-lifetime-title"
+                          htmlFor="battery-savings-comparison-period"
+                        >
+                          Battery savings comparison period
+                        </label>
+
+                        <p className="quote-battery-lifetime-support mt-2">
+                          Choose the period used to evaluate the financial benefit of battery storage. This does not change the payback chart’s time axis.
+                        </p>
+
+                        <input
+                          id="battery-savings-comparison-period"
+                          type="range"
+                          min="5"
+                          max="30"
+                          step="1"
+                          value={batteryRecommendationLifetimeYears}
+                          onChange={(event) => {
+                            setBatteryRecommendationLifetimeYears(Number(event.target.value));
+                            setNeedsRecalc(true);
+                            setUpdatedSections([]);
+                          }}
+                          className="mt-4 block w-full"
+                        />
+
+                        <div className="quote-battery-lifetime-support mt-2 grid grid-cols-3">
+                          <span className="text-left">5 years</span>
+                          <strong className="quote-battery-lifetime-selected text-center">
+                            {batteryRecommendationLifetimeYears} years
+                          </strong>
+                          <span className="text-right">30 years</span>
+                        </div>
+                      </div>
+
+                      <div className="quote-battery-lifetime-current">
+                        <div className="text-body font-semibold uppercase tracking-wide text-accent">
+                          Current comparison period
+                        </div>
+                        <div className="mt-3 text-3xl font-semibold text-brand">
+                          {currentBatteryLifetimeYears
+                            ? `${currentBatteryLifetimeYears} years`
+                            : "Not available"}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={recalcWithTariff}
+                          disabled={recalcLoading || !needsRecalc}
+                          className={`${getRecalcButtonClass(needsRecalc)} ${!needsRecalc ? "quote-recalc-status" : ""} mt-4 min-h-11 w-full disabled:cursor-not-allowed disabled:opacity-60`}
+                        >
+                          {recalcLoading
+                            ? "Recalculating…"
+                            : needsRecalc
+                              ? "Recalculate quote"
+                              : "Quote up to date"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </Card>
             </div>
@@ -1882,6 +1962,7 @@ export default function QuotePage({
                 </p>
               </div>
             )}
+
             </div>
             )}
           </section>
@@ -2166,7 +2247,7 @@ export default function QuotePage({
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
+                  <div className={isZionQuoteScreen ? "quote-battery-controls mt-4 p-5" : "mt-4 rounded-2xl border border-slate-200 bg-white p-5"}>
                     {/* Header row: title/desc left, recalc right */}
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
@@ -2523,7 +2604,8 @@ export default function QuotePage({
               return (
                 <Card
                   mode={mode}
-                  title="Battery Settings & Options"
+                  title={isZionQuoteScreen ? "Choose your battery" : "Battery Settings & Options"}
+                  className={isZionQuoteScreen ? "quote-battery-panel" : ""}
                   right={
                     !pdfMode && (
                       <button
@@ -2550,7 +2632,9 @@ export default function QuotePage({
                     className={
                       pdfMode
                         ? "mt-1 grid grid-cols-2 gap-3"
-                        : "mt-1 grid grid-cols-1 gap-4 lg:grid-cols-2"
+                        : isZionQuoteScreen
+                          ? "quote-battery-comparison mt-1 grid grid-cols-1"
+                          : "mt-1 grid grid-cols-1 gap-4 lg:grid-cols-2"
                     }
                   >
                     {/* CURRENT BATTERY */}
@@ -2558,7 +2642,9 @@ export default function QuotePage({
                       className={
                         pdfMode
                           ? "rounded-2xl border border-slate-200 bg-white p-3"
-                          : "rounded-2xl border border-slate-200 bg-white p-5"
+                          : isZionQuoteScreen
+                            ? "quote-battery-comparison-group p-5"
+                            : "rounded-2xl border border-slate-200 bg-white p-5"
                       }
                     >
                       <div className="text-body font-semibold uppercase tracking-wide text-accent">
@@ -2581,6 +2667,8 @@ export default function QuotePage({
                         {activeRecommendationLabel}
                       </div>
 
+                      {!isZionQuoteScreen && (
+                      <>
                       <div
                         className={
                           pdfMode
@@ -2588,7 +2676,7 @@ export default function QuotePage({
                             : "mt-5 grid grid-cols-2 gap-3"
                         }
                       >
-                        <div className="rounded-xl bg-slate-50 p-3">
+                        <div className={pdfMode || !isZionQuoteScreen ? "rounded-xl bg-slate-50 p-3" : "quote-battery-metric p-3"}>
                           <div className="text-xs text-slate-500">
                             Whole-system payback
                           </div>
@@ -2599,7 +2687,7 @@ export default function QuotePage({
                           </div>
                         </div>
 
-                        <div className="rounded-xl bg-slate-50 p-3">
+                        <div className={pdfMode || !isZionQuoteScreen ? "rounded-xl bg-slate-50 p-3" : "quote-battery-metric p-3"}>
                           <div className="text-xs text-slate-500">
                             Annual benefit
                           </div>
@@ -2663,9 +2751,12 @@ export default function QuotePage({
                           </div>
                         </details>
                       )}
+                      </>
+                      )}
                     </div>
 
                     {/* BATTERY VS SOLAR ONLY */}
+                    {!isZionQuoteScreen && (
                     <div
                       className={
                         pdfMode
@@ -2777,6 +2868,7 @@ export default function QuotePage({
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
 
                   {/* ============================
@@ -2786,12 +2878,14 @@ export default function QuotePage({
                     className={
                       pdfMode
                         ? "mt-3 rounded-2xl border border-slate-200 bg-white p-3"
-                        : "mt-4 rounded-2xl border border-slate-200 bg-white p-5"
+                        : isZionQuoteScreen
+                          ? "quote-battery-options mt-4 p-5"
+                          : "mt-4 rounded-2xl border border-slate-200 bg-white p-5"
                     }
                   >
                     <div>
                       <div className="text-body font-semibold uppercase tracking-wide text-accent">
-                        Battery Size Options
+                        {isZionQuoteScreen ? "Battery recommendations" : "Battery Size Options"}
                       </div>
 
                       <div
@@ -2801,8 +2895,9 @@ export default function QuotePage({
                             : "mb-2 text-body text-slate-500"
                         }
                       >
-                        Choose the option that best matches what you
-                        value. The whole quote updates instantly.
+                        {isZionQuoteScreen
+                          ? "Compare the options for your home and choose the balance of payback and long-term savings that suits you."
+                          : "Choose the option that best matches what you value. The whole quote updates instantly."}
                       </div>
                     </div>
 
@@ -2847,12 +2942,12 @@ export default function QuotePage({
                             }
                             className={[
                               "relative rounded-2xl border p-4 text-left transition",
-                              isActive
-                                ? "border-accent bg-accent/5 ring-2 ring-accent/15"
-                                : "border-slate-200 bg-white",
-                              !pdfMode &&
-                              batteryKWh > 0 &&
-                              !isActive
+                              isZionQuoteScreen
+                                ? `quote-battery-option ${isActive ? "is-selected" : ""}`
+                                : isActive
+                                  ? "border-accent bg-accent/5 ring-2 ring-accent/15"
+                                  : "border-slate-200 bg-white",
+                              !isZionQuoteScreen && !pdfMode && batteryKWh > 0 && !isActive
                                 ? "hover:border-accent/40 hover:bg-slate-50"
                                 : "",
                               pdfMode
@@ -2874,7 +2969,7 @@ export default function QuotePage({
                               )}
                             </div>
 
-                            <div className="mt-2 text-2xl font-semibold text-slate-900">
+                            <div className={isZionQuoteScreen ? "quote-battery-capacity mt-3 text-3xl font-semibold text-brand" : "mt-2 text-2xl font-semibold text-slate-900"}>
                               {batteryKWh > 0
                                 ? `${batteryKWh} kWh`
                                 : "N/A"}
@@ -2884,7 +2979,30 @@ export default function QuotePage({
                               {option.reason}
                             </p>
 
-                            {recommendation && (
+                            {recommendation && (isZionQuoteScreen ? (
+                              <div className="quote-battery-option-metrics mt-4 grid grid-cols-2 pt-4">
+                                <div>
+                                  <div className="text-xs text-slate-500">Whole-system payback</div>
+                                  <div className="mt-1 text-xl font-semibold text-brand">
+                                    {recommendation.paybackYears ?? "—"} yrs
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-xs text-slate-500">{lifetimeYears}-year net savings</div>
+                                  <div className="mt-1 text-xl font-semibold text-brand">
+                                    £{Math.round(Number(recommendation.lifetimeNetSavings || 0)).toLocaleString()}
+                                  </div>
+                                </div>
+                                <div className="col-span-2 mt-3 text-xs text-slate-500">
+                                  System price:{" "}
+                                  <strong className="text-slate-900">
+                                    {recommendationScenario
+                                      ? `£${Math.round(Number(recommendationScenario.priceLow || 0)).toLocaleString()} – £${Math.round(Number(recommendationScenario.priceHigh || 0)).toLocaleString()}`
+                                      : "—"}
+                                  </strong>
+                                </div>
+                              </div>
+                            ) : (
                               <div className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-600">
                                 <div>
                                   System price:{" "}
@@ -2927,7 +3045,7 @@ export default function QuotePage({
                                   </strong>
                                 </div>
                               </div>
-                            )}
+                            ))}
 
                             {isActive && !pdfMode && (
                               <div className="mt-3 text-xs font-semibold text-accent">
@@ -2940,7 +3058,7 @@ export default function QuotePage({
                     </div>
 
                     {!pdfMode && (
-                      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                      <div className="quote-battery-custom mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
                         <label>
                           <div className="text-sm font-semibold text-slate-900">
                             Choose another size
@@ -3012,6 +3130,104 @@ export default function QuotePage({
                           No battery
                         </button>
                       </div>
+                    )}
+
+                    {isZionQuoteScreen && (
+                      <details className="quote-battery-financial-disclosure mt-5">
+                        <summary>Is adding a battery worth it?</summary>
+
+                        <div className="quote-battery-financial-content">
+                          {activeBatteryKWh > 0 && comparison ? (
+                            <>
+                              <p className="text-sm leading-6 text-slate-600">
+                                This isolates the additional value and cost of
+                                the currently selected battery compared with
+                                solar alone, using the current calculated quote.
+                              </p>
+
+                              <div className="quote-battery-financial-metrics mt-4 grid grid-cols-2 lg:grid-cols-4">
+                                <div>
+                                  <div className="text-xs text-slate-500">
+                                    Additional annual value
+                                  </div>
+                                  <div className="mt-1 text-lg font-semibold text-brand">
+                                    {Number(incremental.annualBenefit || 0) >= 0
+                                      ? "+"
+                                      : "-"}
+                                    £
+                                    {Math.abs(
+                                      Number(incremental.annualBenefit || 0)
+                                    ).toLocaleString()}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="text-xs text-slate-500">
+                                    Estimated battery cost
+                                  </div>
+                                  <div className="mt-1 text-lg font-semibold text-brand">
+                                    £
+                                    {Number(
+                                      incremental.estimatedBatteryCost ||
+                                        incremental.systemCost ||
+                                        0
+                                    ).toLocaleString()}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="text-xs text-slate-500">
+                                    Battery-only payback
+                                  </div>
+                                  <div className="mt-1 text-lg font-semibold text-brand">
+                                    {incremental.batteryPaybackYears
+                                      ? `${incremental.batteryPaybackYears} yrs`
+                                      : "N/A"}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="text-xs text-slate-500">
+                                    Extra lifetime savings
+                                  </div>
+                                  <div className="mt-1 text-lg font-semibold text-brand">
+                                    {Number(
+                                      incremental.lifetimeNetSavings || 0
+                                    ) >= 0
+                                      ? "+"
+                                      : "-"}
+                                    £
+                                    {Math.abs(
+                                      Number(
+                                        incremental.lifetimeNetSavings || 0
+                                      )
+                                    ).toLocaleString()}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <p className="mt-4 text-xs leading-5 text-slate-500">
+                                The recommendations above use the economics of
+                                the complete solar and battery system. This
+                                comparison is supporting information only and
+                                uses the currently calculated {lifetimeYears}-year
+                                comparison period.
+                              </p>
+                            </>
+                          ) : (
+                            <div>
+                              <div className="font-semibold text-slate-900">
+                                Solar-only selected
+                              </div>
+                              <p className="mt-1 text-sm leading-5 text-slate-500">
+                                Choose a battery above, then recalculate, to see
+                                how much additional value it could add compared
+                                with solar alone.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </details>
                     )}
                   </div>
                 </Card>
