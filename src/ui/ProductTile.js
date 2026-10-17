@@ -56,15 +56,18 @@ export default function ConfigChoiceCard({
   aboutText,
   mode,
   pdfMode = false,
+  variant,
 }) {
   const resolvedMode = mode || (pdfMode ? "pdf" : "screen");
   const isPdf = resolvedMode === "pdf";
+  const isCleanQuoteScreen = !isPdf && variant === "clean-quote-screen";
 
   return (
     <div
       className={cx(
         styles.outerBase,
-        isPdf ? styles.outerPdf : styles.outerScreen
+        isPdf ? styles.outerPdf : styles.outerScreen,
+        isCleanQuoteScreen && "product-tile-screen--clean"
       )}
     >
       <div>
@@ -116,7 +119,8 @@ export default function ConfigChoiceCard({
           <div
             className={cx(
               styles.aboutBoxBase,
-              isPdf ? styles.aboutBoxPdf : styles.aboutBoxScreen
+              isPdf ? styles.aboutBoxPdf : styles.aboutBoxScreen,
+              isCleanQuoteScreen && "product-tile-about-screen--clean"
             )}
           >
             <div

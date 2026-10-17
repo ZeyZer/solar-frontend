@@ -8,9 +8,10 @@ function FlowMediaCard({
   imageSrc,
   imageAlt,
   isPdf,
+  isCleanQuoteScreen,
 }) {
   return (
-    <div className="rounded-2xl bg-white p-4">
+    <div className={isCleanQuoteScreen ? "quote-energy-flow-item" : "rounded-2xl bg-white p-4"}>
       <div className="text-center text-body font-semibold text-accent">
         {title}
       </div>
@@ -19,7 +20,7 @@ function FlowMediaCard({
         {subtitle}
       </div>
 
-      <div className="mt-4 flex items-center justify-center rounded-xl border-1 border-sky-200 bg-slate-50 p-3">
+      <div className={isCleanQuoteScreen ? "quote-energy-flow-media mt-4 flex items-center justify-center p-3" : "mt-4 flex items-center justify-center rounded-xl border-1 border-sky-200 bg-slate-50 p-3"}>
         {isPdf ? (
           <img
             className="block aspect-square w-full max-w-[260px] object-contain"
@@ -42,8 +43,9 @@ function FlowMediaCard({
   );
 }
 
-export default function EnergyFlowCards({ hasBattery, mode }) {
+export default function EnergyFlowCards({ hasBattery, mode, variant }) {
   const isPdf = mode === "pdf";
+  const isCleanQuoteScreen = !isPdf && variant === "clean-quote-screen";
 
   const media = {
     excess: {
@@ -73,8 +75,12 @@ export default function EnergyFlowCards({ hasBattery, mode }) {
   };
 
   return (
-    <CardAlt mode={mode} title="How Your System Works">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <CardAlt
+      mode={mode}
+      title="How Your System Works"
+      className={isCleanQuoteScreen ? "quote-energy-flow-panel" : ""}
+    >
+      <div className={isCleanQuoteScreen ? "quote-energy-flow-grid grid grid-cols-1 sm:grid-cols-3" : "grid grid-cols-1 gap-4 sm:grid-cols-3"}>
         <FlowMediaCard
           title="Excess solar"
           subtitle={
@@ -86,6 +92,7 @@ export default function EnergyFlowCards({ hasBattery, mode }) {
           imageSrc={media.excess.image}
           imageAlt="Illustration showing excess solar energy flow"
           isPdf={isPdf}
+          isCleanQuoteScreen={isCleanQuoteScreen}
         />
 
         <FlowMediaCard
@@ -95,6 +102,7 @@ export default function EnergyFlowCards({ hasBattery, mode }) {
           imageSrc={media.partial.image}
           imageAlt="Illustration showing partial solar energy offset"
           isPdf={isPdf}
+          isCleanQuoteScreen={isCleanQuoteScreen}
         />
 
         <FlowMediaCard
@@ -108,6 +116,7 @@ export default function EnergyFlowCards({ hasBattery, mode }) {
           imageSrc={media.night.image}
           imageAlt="Illustration showing night-time energy flow"
           isPdf={isPdf}
+          isCleanQuoteScreen={isCleanQuoteScreen}
         />
       </div>
 

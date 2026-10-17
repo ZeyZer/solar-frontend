@@ -1271,6 +1271,7 @@ export default function QuotePage({
                 mode={mode}
                 title="System Preferences"
                 right={!pdfMode && (<ButtonLink onClick={() => onEdit(4)}>Edit system</ButtonLink>)}
+                className={!pdfMode ? "quote-system-preferences-panel" : ""}
               >
                 {(() => {
                   const totalPanels = (roofs || []).reduce((s, r) => s + Number(r?.panels || 0), 0);
@@ -1286,6 +1287,7 @@ export default function QuotePage({
                       <div className={pdfMode ? "grid grid-cols-2 gap-3" : "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6"}>
                         <ConfigChoiceCard
                           mode={mode}
+                          variant={ACTIVE_BRAND.id === "zion-energy" && !pdfMode ? "clean-quote-screen" : undefined}
                           title="Solar panels"
                           summary={`You have selected the ${humanPanelOption(form.panelOption)} solar panel option and added ${totalPanels} total panels across your roof${totalPanels === 1 ? "" : "s"}.`}
                           imageSrc={panelUI.image}
@@ -1295,6 +1297,7 @@ export default function QuotePage({
 
                         <ConfigChoiceCard
                           mode={mode}
+                          variant={ACTIVE_BRAND.id === "zion-energy" && !pdfMode ? "clean-quote-screen" : undefined}
                           title="Battery"
                           summary={
                             batteryCapacityKWh > 0
@@ -1308,6 +1311,7 @@ export default function QuotePage({
 
                         <ConfigChoiceCard
                           mode={mode}
+                          variant={ACTIVE_BRAND.id === "zion-energy" && !pdfMode ? "clean-quote-screen" : undefined}
                           title="EV charger"
                           summary={
                             form.evCharger
@@ -1321,6 +1325,7 @@ export default function QuotePage({
 
                         <ConfigChoiceCard
                           mode={mode}
+                          variant={ACTIVE_BRAND.id === "zion-energy" && !pdfMode ? "clean-quote-screen" : undefined}
                           title="Bird protection"
                           summary={
                             form.birdProtection
@@ -1432,7 +1437,7 @@ export default function QuotePage({
                     <CardAlt2 
                       title="Energy Snapshot"
                       mode={mode} 
-                      className="h-full"
+                      className={pdfMode ? "h-full" : "quote-performance-panel h-full"}
                       right={
                         !pdfMode && (
                           <button
@@ -1484,8 +1489,8 @@ export default function QuotePage({
 
 
                       {/* Payback + IRR */}
-                      <div className={pdfMode ? "mt-3 grid grid-cols-2 gap-2" : "mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2"}>
-                        <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "quote-soft-info-card rounded-2xl border p-4 text-center"}>
+                      <div className={pdfMode ? "mt-3 grid grid-cols-2 gap-2" : "quote-secondary-metrics mt-6 grid grid-cols-1 sm:grid-cols-2"}>
+                        <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "quote-secondary-metric p-4 text-center"}>
                           <div className={pdfMode ? "text-[11px] font-medium leading-tight text-brand" : "flex items-center justify-center text-s font-medium text-brand"}>
                             <span>Self Consumption</span>
                             <InfoTooltip text="The share of your solar generation that is used in your home or stored in the battery instead of being exported to the grid." />
@@ -1498,7 +1503,7 @@ export default function QuotePage({
                           </div>
                         </div>
 
-                        <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "quote-soft-info-card rounded-2xl border p-4 text-center"}>
+                        <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "quote-secondary-metric p-4 text-center"}>
                           <div className={pdfMode ? "text-[11px] font-medium leading-tight text-brand" : "flex items-center justify-center text-s font-medium text-brand"}>
                             <span>Energy Independence</span>
                             <InfoTooltip text="The share of your home’s annual electricity demand that is covered by solar energy, either used instantly or delivered later from the battery."/>
@@ -1519,7 +1524,7 @@ export default function QuotePage({
                     <CardAlt2
                       title="How Your Home Is Powered"
                       mode={mode}
-                      className={pdfMode ? "h-full flex flex-col shadow-none" : "h-full flex flex-col"}
+                      className={pdfMode ? "h-full flex flex-col shadow-none" : "quote-performance-panel h-full flex flex-col"}
                       bodyClassName="flex h-full flex-col items-center justify-center"
                     >
                       <p className={pdfMode ? "mt-1 text-xs text-center leading-snug text-slate-600" : "mt-1 text-sm text-center text-slate-600"}>
@@ -1544,7 +1549,8 @@ export default function QuotePage({
                 <div className="mt-6">
                   <Card
                     mode={mode} 
-                    title="How Your Solar Energy Is Used">
+                    title="How Your Solar Energy Is Used"
+                    className={pdfMode ? "" : "quote-chart-panel"}>
                       <StackedMonthlyBarChart
                         labels={months}
                         series={[
@@ -1562,7 +1568,8 @@ export default function QuotePage({
                 <div className="mt-6">
                   <EnergyFlowCards
                     mode={mode} 
-                    hasBattery={hasBattery} />
+                    hasBattery={hasBattery}
+                    variant={ACTIVE_BRAND.id === "zion-energy" && !pdfMode ? "clean-quote-screen" : undefined} />
                 </div>
               </>
             );
