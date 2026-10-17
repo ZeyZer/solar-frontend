@@ -16,6 +16,7 @@ import EnergyFlowCards from "./EnergyFlowCards";
 import StickyQuoteNav from "./StickyQuoteNav";
 import NextStepsPanel from "./NextStepsPanel";
 import QuoteWelcomeGuide from "./QuoteWelcomeGuide";
+import QuoteContactCta from "./QuoteContactCta";
 
 import LegalNotice from "./LegalNotice";
 import TariffWarningsPanel from "./TariffWarningsPanel";
@@ -1030,6 +1031,15 @@ export default function QuotePage({
                         
           </section>
 
+          {!pdfMode && (
+            <QuoteContactCta
+              heading="Like what you see?"
+              description="Our team can help turn your estimate into a solar system designed for your home."
+              buttonLabel="Get in contact"
+              onClick={() => jumpToQuoteSection("next-steps")}
+            />
+          )}
+
 
           {/* =======================
                 SYSTEM CHOICES (SaaS UI — grouped cards)
@@ -1320,7 +1330,6 @@ export default function QuotePage({
             </div>
             )}
           </section>
-
 
           {/* =======================
                 SYSTEM PERFORMANCE (SaaS UI)
@@ -1856,6 +1865,15 @@ export default function QuotePage({
             </div>
             )}
           </section>
+
+          {!pdfMode && (
+            <QuoteContactCta
+              heading="Want to make these savings a reality?"
+              description="We can confirm the best system for your home and provide a tailored installation proposal."
+              buttonLabel="Get in contact"
+              onClick={() => jumpToQuoteSection("next-steps")}
+            />
+          )}
 
 
           {/* =======================
@@ -2978,6 +2996,16 @@ export default function QuotePage({
                 </Card>
               );
             })()}
+
+            {!pdfMode && quote?.batteryRecommendations && (
+              <QuoteContactCta
+                heading="Not sure which battery is right?"
+                description="We'll help you choose the right balance of cost, storage and savings."
+                buttonLabel="Get in contact"
+                onClick={() => jumpToQuoteSection("next-steps")}
+                variant="subtle"
+              />
+            )}
           </div>
 
           {/* ====================
