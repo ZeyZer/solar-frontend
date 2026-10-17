@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
 
 import {
@@ -151,6 +151,26 @@ function App() {
   );
 
   const [quote, setQuote] = useState(() => (savedState?.quote ? savedState.quote : null));
+  const [quoteWelcomeGuideOpen, setQuoteWelcomeGuideOpen] = useState(
+    () => savedState?.page === "quote" && Boolean(savedState?.quote)
+  );
+  const previousQuoteRef = useRef(quote);
+
+  useEffect(() => {
+    if (!previousQuoteRef.current && quote) {
+      setQuoteWelcomeGuideOpen(true);
+    }
+
+    previousQuoteRef.current = quote;
+  }, [quote]);
+
+  const openQuoteWelcomeGuide = useCallback(() => {
+    setQuoteWelcomeGuideOpen(true);
+  }, []);
+
+  const closeQuoteWelcomeGuide = useCallback(() => {
+    setQuoteWelcomeGuideOpen(false);
+  }, []);
 
   const [rentingBlocked, setRentingBlocked] = useState(() =>
     savedState && typeof savedState.rentingBlocked === "boolean"
@@ -229,6 +249,7 @@ function App() {
     } catch {}
 
     setQuote(null);
+    setQuoteWelcomeGuideOpen(false);
     setRentingBlocked(false);
     setLoading(false);
     setError("");
@@ -353,6 +374,9 @@ function App() {
               setNeedsRecalc={setNeedsRecalc}
               updatedSections={updatedSections}
               setUpdatedSections={setUpdatedSections}
+              welcomeGuideOpen={quoteWelcomeGuideOpen}
+              onOpenWelcomeGuide={openQuoteWelcomeGuide}
+              onCloseWelcomeGuide={closeQuoteWelcomeGuide}
             />
           ) : (
             <>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ACTIVE_BRAND, ADVICE_URL } from "../config/siteConfig";
 
 import SectionHeader from "../ui/SectionHeader";
@@ -15,6 +15,7 @@ import McsPerformanceModal from "./McsPerformanceModal";
 import EnergyFlowCards from "./EnergyFlowCards";
 import StickyQuoteNav from "./StickyQuoteNav";
 import NextStepsPanel from "./NextStepsPanel";
+import QuoteWelcomeGuide from "./QuoteWelcomeGuide";
 
 import LegalNotice from "./LegalNotice";
 import TariffWarningsPanel from "./TariffWarningsPanel";
@@ -87,6 +88,9 @@ export default function QuotePage({
   setNeedsRecalc,
   updatedSections,
   setUpdatedSections,
+  welcomeGuideOpen = false,
+  onOpenWelcomeGuide,
+  onCloseWelcomeGuide,
 }) {
 
   // MCS Table Chart
@@ -111,6 +115,7 @@ export default function QuotePage({
   // PDF Loading Pages
   const [pdfLoading, setPdfLoading] = useState(false);
   const [recalcLoading, setRecalcLoading] = useState(false);
+  const welcomeGuideTriggerRef = useRef(null);
 
   // Charge types (charge from grid and energy trading)
   const [batteryControls, setBatteryControls] = useState(() => ({
@@ -577,6 +582,13 @@ export default function QuotePage({
 
   return (
     <div className="quote-shell quote-shell--clean">
+      {!pdfMode && (
+        <QuoteWelcomeGuide
+          open={welcomeGuideOpen}
+          onClose={onCloseWelcomeGuide}
+          returnFocusRef={welcomeGuideTriggerRef}
+        />
+      )}
       
       {!isPdf && exitConfirmOpen && (
         <div
@@ -692,7 +704,19 @@ export default function QuotePage({
           {/* =======================
                 SUMMARY (SaaS UI)
             ======================= */}
-          <section id="summary" className={isPdf ? "pdf-summary-section" : "mt-[6rem]"}>
+          <section id="summary" className={isPdf ? "pdf-summary-section" : "mt-[5.25rem]"}>
+            {!pdfMode && (
+              <div className="quote-welcome-guide-reopen-wrap no-print">
+                <button
+                  ref={welcomeGuideTriggerRef}
+                  type="button"
+                  className="quote-welcome-guide-reopen"
+                  onClick={onOpenWelcomeGuide}
+                >
+                  How to read your quote
+                </button>
+              </div>
+            )}
             <SectionHeader
               title="System Summary"
               description="Here is a summary of your new system and how it would perform."

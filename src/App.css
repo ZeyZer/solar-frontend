@@ -873,6 +873,281 @@ select:focus {
   }
 }
 
+/* Quote welcome guide */
+.quote-welcome-guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.quote-welcome-guide {
+  position: relative;
+  width: min(1180px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border: 1px solid rgb(var(--theme-line));
+  border-radius: 18px;
+  background: rgb(var(--theme-surface));
+  padding: 44px 40px 36px;
+  color: rgb(var(--theme-ink));
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
+}
+
+.quote-welcome-guide-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: rgb(var(--theme-muted));
+  cursor: pointer;
+}
+
+.quote-welcome-guide-close svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.quote-welcome-guide-close:hover,
+.quote-welcome-guide-close:focus-visible {
+  background: rgb(var(--theme-brand-soft));
+  color: rgb(var(--theme-brand));
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(var(--theme-accent) / 0.14);
+}
+
+.quote-welcome-guide-brand {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-right: 52px;
+}
+
+.quote-welcome-guide-brand-logo {
+  display: block;
+  width: auto;
+  max-width: 148px;
+  height: 32px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.quote-welcome-guide-heading {
+  max-width: 680px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.quote-welcome-guide-heading h2 {
+  margin: 0;
+  color: rgb(var(--theme-brand));
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.quote-welcome-guide-heading p {
+  margin: 12px 0 0;
+  color: rgb(var(--theme-muted));
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.quote-welcome-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin: 30px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quote-welcome-guide-item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid rgb(var(--theme-line));
+  border-radius: 14px;
+  padding: 20px 14px;
+  text-align: center;
+}
+
+.quote-welcome-guide-icon {
+  display: inline-flex;
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: rgb(var(--theme-brand));
+}
+
+.quote-welcome-guide-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.quote-welcome-guide-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.quote-welcome-guide-copy strong {
+  color: rgb(var(--theme-brand));
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.quote-welcome-guide-copy span {
+  color: rgb(var(--theme-muted));
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.quote-welcome-guide-reassurance {
+  margin: 26px auto 0;
+  color: rgb(var(--theme-muted));
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.quote-welcome-guide-primary {
+  display: block;
+  min-height: 46px;
+  margin: 20px auto 0;
+  border: 1px solid rgb(var(--theme-pop));
+  border-radius: 11px;
+  background: rgb(var(--theme-pop));
+  padding: 11px 28px;
+  color: rgb(var(--theme-brand));
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.quote-welcome-guide-primary:hover,
+.quote-welcome-guide-primary:focus-visible {
+  filter: brightness(0.96);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(var(--theme-pop) / 0.25);
+}
+
+.quote-welcome-guide-reopen-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.quote-welcome-guide-reopen {
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  padding: 8px 10px;
+  color: rgb(var(--theme-brand));
+  font-size: 0.875rem;
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--theme-pop));
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.quote-welcome-guide-reopen:hover,
+.quote-welcome-guide-reopen:focus-visible {
+  background: rgb(var(--theme-brand-soft));
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(var(--theme-accent) / 0.12);
+}
+
+@media (max-width: 960px) {
+  .quote-welcome-guide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .quote-welcome-guide-overlay {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .quote-welcome-guide {
+    max-height: calc(100vh - 24px);
+    border-radius: 14px;
+    padding: 48px 18px 24px;
+  }
+
+  .quote-welcome-guide-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .quote-welcome-guide-item {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    text-align: left;
+  }
+
+  .quote-welcome-guide-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+  }
+
+  .quote-welcome-guide-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .quote-welcome-guide-brand {
+    min-height: 32px;
+    margin-bottom: 10px;
+  }
+
+  .quote-welcome-guide-brand-logo {
+    max-width: 132px;
+    height: 28px;
+  }
+
+  .quote-welcome-guide-primary {
+    width: 100%;
+  }
+}
+
+@media print {
+  .quote-welcome-guide-overlay,
+  .quote-welcome-guide-reopen-wrap {
+    display: none !important;
+  }
+}
+
 .roof-summary-text {
   display: flex;
   flex-direction: column;
