@@ -732,7 +732,11 @@ export default function QuotePage({
             )}
             <SectionHeader
               title="System Summary"
-              description="Here is a summary of your new system and how it would perform."
+              description={
+                isZionQuoteScreen
+                  ? "Here's what your solar system could look like and what it could mean for your home."
+                  : "Here is a summary of your new system and how it would perform."
+              }
               mode={mode}
               action={
                 <div className="flex items-center gap-3">
@@ -1078,7 +1082,11 @@ export default function QuotePage({
           >
             <SectionHeader
               title="System Choices"
-              description="Review your home assumptions and system configuration. Edit any section to compare options."
+              description={
+                isZionQuoteScreen
+                  ? "Explore the panels, battery and other equipment included in your estimate. You can change your choices at any time."
+                  : "Review your home assumptions and system configuration. Edit any section to compare options."
+              }
               mode={mode}
               action={
                 <div className="flex items-center gap-3">
@@ -1162,7 +1170,9 @@ export default function QuotePage({
                   </div>
 
                   <p className={pdfMode ? "mt-2 text-[11px] leading-snug text-slate-500" : "mt-3 text-small text-slate-500"}>
-                    This curve is based on your occupancy profile and annual consumption.
+                    {isZionQuoteScreen
+                      ? "This chart estimates when your home uses electricity, based on your household routine and annual usage."
+                      : "This curve is based on your occupancy profile and annual consumption."}
                   </p>
                   </Card>
                 </div>
@@ -1303,7 +1313,11 @@ export default function QuotePage({
                           mode={mode}
                           variant={ACTIVE_BRAND.id === "zion-energy" && !pdfMode ? "clean-quote-screen" : undefined}
                           title="Solar panels"
-                          summary={`You have selected the ${humanPanelOption(form.panelOption)} solar panel option and added ${totalPanels} total panels across your roof${totalPanels === 1 ? "" : "s"}.`}
+                          summary={
+                            isZionQuoteScreen
+                              ? `Your estimate includes ${totalPanels} ${humanPanelOption(form.panelOption)} solar panel${totalPanels === 1 ? "" : "s"} across your roof.`
+                              : `You have selected the ${humanPanelOption(form.panelOption)} solar panel option and added ${totalPanels} total panels across your roof${totalPanels === 1 ? "" : "s"}.`
+                          }
                           imageSrc={panelUI.image}
                           aboutTitle={panelUI.aboutTitle}
                           aboutText={panelUI.aboutText}
@@ -1315,7 +1329,9 @@ export default function QuotePage({
                           title="Battery"
                           summary={
                             batteryCapacityKWh > 0
-                              ? `You have included a ${batteryCapacityKWh} kWh home battery to store excess solar for later use. A battery opens the door to a lot more avenues for savings.`
+                              ? isZionQuoteScreen
+                                ? `Your estimate includes a ${batteryCapacityKWh} kWh home battery, which can store spare solar electricity for use later in the day.`
+                                : `You have included a ${batteryCapacityKWh} kWh home battery to store excess solar for later use. A battery opens the door to a lot more avenues for savings.`
                               : "You have not included a battery — excess solar is exported and night-time usage comes from the grid."
                           }
                           imageSrc={batteryUI.image}
@@ -1375,7 +1391,11 @@ export default function QuotePage({
           >
             <SectionHeader
               title="System Performance"
-              description="How your new solar PV system affects your home's energy usage."
+              description={
+                isZionQuoteScreen
+                  ? "See how much electricity your solar panels could generate and how your home could use it."
+                  : "How your new solar PV system affects your home's energy usage."
+              }
               mode={mode}
               action={!pdfMode && (
                 <ButtonLink onClick={() => onEdit(3)}>Edit</ButtonLink>)}
@@ -1495,9 +1515,9 @@ export default function QuotePage({
                         </div>
 
                         <p className={pdfMode ? "mt-3 mb-4 text-center text-xs leading-snug text-brand" : "mt-6 mb-9 text-center text-body text-brand"}>
-                          Above is the data on how the electricity generated by your solar system is used over the year.
-                          The energy you use and export will depend on your battery size and control settings, you can change 
-                          the battery control setting further down and see how these figures change!
+                          {isZionQuoteScreen
+                            ? "This shows how your estimated solar generation could be used throughout the year. The amount used at home or exported will depend on your battery size and settings, which you can explore in Optimisations."
+                            : "Above is the data on how the electricity generated by your solar system is used over the year. The energy you use and export will depend on your battery size and control settings, you can change the battery control setting further down and see how these figures change!"}
                         </p>
                       </div>
 
@@ -1542,8 +1562,9 @@ export default function QuotePage({
                       bodyClassName="flex h-full flex-col items-center justify-center"
                     >
                       <p className={pdfMode ? "mt-1 text-xs text-center leading-snug text-slate-600" : "mt-1 text-sm text-center text-slate-600"}>
-                        Yearly share of your home’s electricity supplied by direct solar, 
-                        battery power and direct grid import.
+                        {isZionQuoteScreen
+                          ? "An estimate of how your home could be powered by solar, stored battery energy and electricity from the grid over a year."
+                          : "Yearly share of your home’s electricity supplied by direct solar, battery power and direct grid import."}
                       </p>
 
                       <div className={pdfMode ? "mt-2 flex-1 flex items-center shadow-none justify-center w-full" : "mt-5 flex-1 flex items-center justify-center w-full"}>
@@ -1614,7 +1635,11 @@ export default function QuotePage({
           >
             <SectionHeader
               title="Financials"
-              description="How your system changes your energy bills and savings in the short and long term."
+              description={
+                isZionQuoteScreen
+                  ? "Explore your estimated bill savings, export earnings and how long the system could take to pay for itself."
+                  : "How your system changes your energy bills and savings in the short and long term."
+              }
               mode={mode}
               action={!pdfMode && (<ButtonLink onClick={() => onEdit(2)}>Edit</ButtonLink>)}
             />
@@ -1991,7 +2016,11 @@ export default function QuotePage({
           <section id="optimisations" className={pdfMode ? "quote-main-section mt-1 pdf-page-break-before" : "quote-main-section mt-[2rem]"}>
             <SectionHeader
               title="Optimisations"
-              description="Here you can edit your tariff, change battery setting and find your optimal battery size."
+              description={
+                isZionQuoteScreen
+                  ? "Try different tariffs and battery sizes to find the combination that works best for your home."
+                  : "Here you can edit your tariff, change battery setting and find your optimal battery size."
+              }
               mode={mode}
               action={!pdfMode && (<ButtonLink onClick={() => onEdit(2)}>Edit</ButtonLink>)}
             />
@@ -2031,7 +2060,9 @@ export default function QuotePage({
                         <div className="text-body font-semibold uppercase tracking-wide text-accent">
                           Your Current Tariffs</div>
                         <div className={pdfMode ? "mb-1 text-sm text-slate-500" : "mb-2 text-body text-slate-500"}>
-                          You can adjust these to see how savings change (no need to rerun the solar simulation).
+                          {isZionQuoteScreen
+                            ? "Adjust your tariffs to see how they could affect your estimated savings. Your solar generation estimate stays the same."
+                            : "You can adjust these to see how savings change (no need to rerun the solar simulation)."}
                         </div>
                       </div>
 
@@ -2570,16 +2601,18 @@ export default function QuotePage({
                 {
                   strategy: "fastest_payback",
                   title: "Fastest payback",
-                  reason:
-                    "The battery with the shortest whole-system payback.",
+                  reason: isZionQuoteScreen
+                    ? "Prioritises the shortest estimated payback for the complete system."
+                    : "The battery with the shortest whole-system payback.",
                   recommendation:
                     recommendations.bestPayback,
                 },
                 {
                   strategy: "balanced",
                   title: "Balanced",
-                  reason:
-                    "A balance of whole-system payback and long-term savings.",
+                  reason: isZionQuoteScreen
+                    ? "Balances estimated whole-system payback with potential long-term savings."
+                    : "A balance of whole-system payback and long-term savings.",
                   recommendation:
                     recommendations.balanced,
                   recommended: true,
@@ -2587,8 +2620,9 @@ export default function QuotePage({
                 {
                   strategy: "max_savings",
                   title: "Maximum savings",
-                  reason:
-                    `The highest estimated net savings over ${lifetimeYears} years.`,
+                  reason: isZionQuoteScreen
+                    ? `Prioritises the highest estimated net savings over ${lifetimeYears} years.`
+                    : `The highest estimated net savings over ${lifetimeYears} years.`,
                   recommendation:
                     recommendations.bestLifetimeSavings,
                 },
@@ -3150,9 +3184,9 @@ export default function QuotePage({
                           {activeBatteryKWh > 0 && comparison ? (
                             <>
                               <p className="text-sm leading-6 text-slate-600">
-                                This isolates the additional value and cost of
-                                the currently selected battery compared with
-                                solar alone, using the current calculated quote.
+                                See the estimated extra value and cost of your
+                                selected battery compared with solar panels
+                                alone, using your current calculated quote.
                               </p>
 
                               <div className="quote-battery-financial-metrics mt-4 grid grid-cols-2 lg:grid-cols-4">
@@ -3308,6 +3342,11 @@ export default function QuotePage({
               initialName={form.name}
               initialEmail={form.email}
               initialPhone={form.phone}
+              description={
+                isZionQuoteScreen
+                  ? "Ready to take things further? Email your quote or speak to our team about your options."
+                  : undefined
+              }
             />
           </section>
           )}

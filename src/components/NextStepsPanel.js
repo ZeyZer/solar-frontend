@@ -4,7 +4,7 @@ import Card from "../ui/Card.js";
 import LegalNotice from "./LegalNotice";
 import { ACTIVE_BRAND } from "../config/siteConfig";
 
-export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, infoUrl, initialName, initialEmail, initialPhone }) {
+export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, infoUrl, initialName, initialEmail, initialPhone, description }) {
   const brandName = ACTIVE_BRAND.name;
 
   const [name, setName] = useState(initialName || "");
@@ -58,7 +58,10 @@ export default function NextStepsPanel({ quote, onEmailQuote, onRequestCall, inf
     <section className="next-steps-panel mt-10">
       <SectionHeader
         title="Next Steps"
-        description={`Choose what you’d like to do next. We can email your quote, arrange a call with ${brandName}, or point you to useful guides.`}
+        description={
+          description ||
+          `Choose what you’d like to do next. We can email your quote, arrange a call with ${brandName}, or point you to useful guides.`
+        }
       />
       {/* Badge row (subtle polish) */}
       <div className="next-steps-badges mt-4 mb-8 flex items-center gap-2">
