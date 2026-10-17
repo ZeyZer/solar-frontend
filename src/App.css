@@ -1120,6 +1120,129 @@ select:focus {
   }
 }
 
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-panel,
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-chart-panel,
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-tariff-settings-panel {
+  border: 1px solid rgb(var(--theme-line));
+  border-radius: 14px;
+  background: rgb(var(--theme-surface));
+  box-shadow: none;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-panel
+  > .cardHeaderAlt,
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-chart-panel
+  > .cardHeader,
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-tariff-settings-panel
+  > .cardHeader {
+  border-bottom: 1px solid rgb(var(--theme-line));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-summary-card {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-summary-card
+  > :first-child {
+  color: rgb(var(--theme-brand));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-summary-card--total {
+  border-radius: 12px;
+  background: rgb(var(--theme-brand));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-summary-card--total
+  > div {
+  color: rgb(var(--theme-surface));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-summary-card--total
+  > :first-child {
+  color: rgb(var(--theme-surface));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-operator {
+  color: rgb(var(--theme-muted));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-secondary-grid {
+  border-top: 1px solid rgb(var(--theme-line));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-secondary {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-secondary
+  > :nth-child(2) {
+  color: rgb(var(--theme-brand));
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-secondary
+  + .quote-financial-secondary {
+  border-top: 1px solid rgb(var(--theme-line));
+}
+
+@media (min-width: 640px) {
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+    .quote-financial-secondary
+    + .quote-financial-secondary {
+    border-top: 0;
+    border-left: 1px solid rgb(var(--theme-line));
+  }
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-financial-chart-panel
+  .chart-card {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-tariff-settings-content {
+  border-radius: 0;
+  padding-inline: 0;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-tariff-comparison {
+  border: 1px solid rgb(var(--theme-line));
+  background: rgb(var(--theme-surface));
+  box-shadow: none;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-tariff-comparison
+  > :first-child {
+  border-bottom: 1px solid rgb(var(--theme-line));
+}
+
 /* Quote welcome guide */
 .quote-welcome-guide-overlay {
   position: fixed;

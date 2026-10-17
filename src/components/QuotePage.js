@@ -1635,7 +1635,7 @@ export default function QuotePage({
               <div className={pdfMode ? "col-span-2 h-full" : "lg:col-span-2 h-full"}>
               <CardAlt2 
                 title="Financial Snapshot" 
-                className="h-full"
+                className={pdfMode ? "h-full" : "quote-financial-panel h-full"}
                 mode={mode}
                 right={
                       !pdfMode && (
@@ -1709,7 +1709,9 @@ export default function QuotePage({
 
                       <div className="quote-financial-summary-card quote-financial-summary-card--total rounded-2xl bg-blue-300 px-6 py-4 text-center">
                         <div className="text-3xl font-semibold text-slate-900">
-                          £{Number(quote.totalAnnualBenefit || 0).toLocaleString()}
+                          £{Number(quote.totalAnnualBenefit || 0) === 0
+                            ? "0.00"
+                            : Number(quote.totalAnnualBenefit).toLocaleString()}
                         </div>
                         <div className="mt-1 text-s text-slate-600">Total annual saving</div>
                       </div>
@@ -1732,7 +1734,7 @@ export default function QuotePage({
                 </div>
 
                 {/* Payback + IRR */}
-                <div className={pdfMode ? "mt-3 grid grid-cols-2 gap-2" : "mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2"}>
+                <div className={pdfMode ? "mt-3 grid grid-cols-2 gap-2" : "quote-financial-secondary-grid mt-6 grid grid-cols-1 sm:grid-cols-2"}>
                   <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "quote-financial-secondary rounded-2xl border-2 border-teal-200 bg-white p-4 text-center"}>
                     <div className={pdfMode ? "text-[11px] font-medium leading-tight text-slate-500" : "flex items-center justify-center text-s font-medium text-slate-500"}>
                       <span>Projected payback</span>
@@ -1771,7 +1773,7 @@ export default function QuotePage({
               <Card
                 mode={mode} 
                 title="Before vs After Solar" 
-                className="h-full flex flex-col" 
+                className={pdfMode ? "h-full flex flex-col" : "quote-financial-chart-panel h-full flex flex-col"}
                 bodyClassName="flex flex-col">
                   <p className={pdfMode ? "mt-1 text-[11px] leading-snug text-slate-600 text-center" : "mt-1 text-small text-slate-600 text-centre"}>
                     Your 1st Year bill saving:{" "}
@@ -1806,6 +1808,7 @@ export default function QuotePage({
               <Card 
                 mode={mode}
                 title="Payback (cumulative savings by year)"
+                className={pdfMode ? "" : "quote-financial-chart-panel"}
                 right={
                     !pdfMode && (
                       <button
@@ -1916,6 +1919,7 @@ export default function QuotePage({
               <Card
                 mode={mode}
                 title="System Settings & Options"
+                className={pdfMode ? "" : "quote-tariff-settings-panel"}
                 right={!pdfMode && (<button
                 type="button"
                 onClick={() => recalcWithTariff()}
@@ -1929,7 +1933,7 @@ export default function QuotePage({
                       : "Results up to date"}
                 </button>)}
               >
-              <div className={pdfMode ? "mt-1 rounded-2xl bg-white p-2" : "mt-1 rounded-2xl bg-white p-4"}>
+              <div className={pdfMode ? "mt-1 rounded-2xl bg-white p-2" : "quote-tariff-settings-content mt-1 bg-white p-4"}>
                   <div className={pdfMode ? "rounded-2xl bg-white p-0" : "rounded-2xl bg-white p-1"}>
                     <div className={pdfMode ? "flex items-start justify-between gap-3" : "flex items-start justify-between gap-4"}>
                       <div>
@@ -1955,7 +1959,7 @@ export default function QuotePage({
                   <div className={isPdf ? "tariff-block tariff-block--pdf grid grid-cols-2 gap-3 text-sm" : "tariff-block grid grid-cols-1 md:grid-cols-2 gap-6 text-sm"}>
 
                     {/* ================= BEFORE TARIFF ================= */}
-                    <div className={pdfMode ? "rounded-xl border border-white p-3 bg-slate-100" : "rounded-xl border border-white p-4 bg-slate-100"}>
+                    <div className={pdfMode ? "rounded-xl border border-white p-3 bg-slate-100" : "quote-tariff-comparison rounded-xl p-4"}>
                       <div className={pdfMode ? 
                           "flex items-start justify-between gap-2 border-b-2 border-slate-200 text-sm font-semibold text-slate-900 mb-1" :
                           "flex items-start justify-between gap-2 border-b-2 border-slate-200 text-body font-semibold text-slate-900 mb-2"}>
@@ -2037,7 +2041,7 @@ export default function QuotePage({
                     </div>
 
                     {/* ================= AFTER TARIFF ================= */}
-                    <div className={pdfMode ? "rounded-xl border border-white p-3 bg-blue-50" : "quote-tariff-after rounded-xl border border-white p-4 bg-blue-50"}>
+                    <div className={pdfMode ? "rounded-xl border border-white p-3 bg-blue-50" : "quote-tariff-comparison quote-tariff-after rounded-xl p-4"}>
                       <div className={pdfMode ? 
                         "flex items-start justify-between gap-2 border-b-2 border-blue-100 text-sm font-semibold text-slate-900 mb-1" : 
                         "flex items-start justify-between gap-2 border-b-2 border-blue-100 text-body font-semibold text-slate-900 mb-2"}>
