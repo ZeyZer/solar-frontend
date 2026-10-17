@@ -736,9 +736,11 @@ export default function QuotePage({
               mode={mode}
               action={
                 <div className="flex items-center gap-3">
-                  <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
-                    Estimate
-                  </span>
+                  {!isZionQuoteScreen && (
+                    <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
+                      Estimate
+                    </span>
+                  )}
                   {!pdfMode && (
                   <ButtonLink onClick={() => onEdit(4)}>Edit</ButtonLink>
                   )}
@@ -746,14 +748,16 @@ export default function QuotePage({
               }
             />
             {/* Badge row (subtle polish) */}
-            <div className={pdfMode ? "mt-3 mb-5 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
-              <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
-                Store Your Quote
-              </span>
-              <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
-                Get you system installed
-              </span>
-            </div>
+            {!isZionQuoteScreen && (
+              <div className={pdfMode ? "mt-3 mb-5 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
+                <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
+                  Store Your Quote
+                </span>
+                <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
+                  Get you system installed
+                </span>
+              </div>
+            )}
 
             {/* Key Results Panel */}
             <div
@@ -1085,14 +1089,16 @@ export default function QuotePage({
               }
             />
             {/* Badge row (subtle polish) */}
-            <div className={pdfMode ? "mt-2 mb-3 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
-              <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
-                Your Home & Energy Use
-              </span>
-              <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
-                System Choices
-              </span>
-            </div>
+            {!isZionQuoteScreen && (
+              <div className={pdfMode ? "mt-2 mb-3 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
+                <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
+                  Your Home & Energy Use
+                </span>
+                <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
+                  System Choices
+                </span>
+              </div>
+            )}
 
             {renderDetailToggle(
               "systemChoices",
@@ -1375,7 +1381,7 @@ export default function QuotePage({
                 <ButtonLink onClick={() => onEdit(3)}>Edit</ButtonLink>)}
             />
 
-            {!pdfMode && hasHourlyModel && (
+            {!isZionQuoteScreen && !pdfMode && hasHourlyModel && (
               <div className="mt-4 mb-8 flex items-center gap-2">
                 <span className="rounded-full bg-accent px-3 py-2 text-xs font-medium text-white">
                   PVGIS hourly simulation
@@ -1613,14 +1619,16 @@ export default function QuotePage({
               action={!pdfMode && (<ButtonLink onClick={() => onEdit(2)}>Edit</ButtonLink>)}
             />
             {/* Badge row (subtle polish) */}
-            <div className={pdfMode ? "mt-2 mb-3 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
-              <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
-                Annual bill savings
-              </span>
-              <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
-                Payback period & ROI
-              </span>
-            </div>
+            {!isZionQuoteScreen && (
+              <div className={pdfMode ? "mt-2 mb-3 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
+                <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
+                  Annual bill savings
+                </span>
+                <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
+                  Payback period & ROI
+                </span>
+              </div>
+            )}
 
             {renderDetailToggle(
               "financials",
@@ -1988,14 +1996,16 @@ export default function QuotePage({
               action={!pdfMode && (<ButtonLink onClick={() => onEdit(2)}>Edit</ButtonLink>)}
             />
             {/* Badge row (subtle polish) */}
-            <div className={pdfMode ? "mt-2 mb-3 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
-              <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
-                Change your tariff
-              </span>
-              <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
-                Perfect your battery
-              </span>
-            </div>
+            {!isZionQuoteScreen && (
+              <div className={pdfMode ? "mt-2 mb-3 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
+                <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
+                  Change your tariff
+                </span>
+                <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
+                  Perfect your battery
+                </span>
+              </div>
+            )}
             <div className={pdfMode ? "mt-4" : "mt-6"}>
               <Card
                 mode={mode}
