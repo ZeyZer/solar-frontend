@@ -1,6 +1,6 @@
 import React from "react";
 
-function StackedMonthlyBarChart({ title, labels, series, pdfMode = false }) {
+function StackedMonthlyBarChart({ title, labels, series, pdfMode = false, staticPdfCaption = false }) {
   // series = [{ name, data, className }]
   // data arrays must be length 12
 
@@ -54,7 +54,9 @@ function StackedMonthlyBarChart({ title, labels, series, pdfMode = false }) {
       </div>
 
       <p className="small-print">
-        Hover a bar segment to see the exact monthly kWh.
+        {staticPdfCaption
+          ? "Monthly values are shown by category in the chart above."
+          : "Hover a bar segment to see the exact monthly kWh."}
       </p>
     </div>
   );

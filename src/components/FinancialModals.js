@@ -38,9 +38,10 @@ function FinanceDetailsModal({ open, onClose, rows }) {
   );
 }
 
-function FinanceDetailsTable({ rows, pdfMode = false }) {
+function FinanceDetailsTable({ rows, pdfMode = false, reliablePdfPagination = false }) {
+  const useReliablePdfPagination = pdfMode && reliablePdfPagination;
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200">
+    <div className={`${useReliablePdfPagination ? "pdf-financial-table overflow-visible" : "overflow-hidden"} rounded-xl border border-slate-200`}>
       <div
         className={
           pdfMode
@@ -58,7 +59,7 @@ function FinanceDetailsTable({ rows, pdfMode = false }) {
 
       <div className={pdfMode ? "divide-y divide-slate-200 text-[11px]" : "divide-y divide-slate-200 text-sm"}>
         {(rows || []).map((r) => (
-          <div key={r.year} className={pdfMode ? "grid grid-cols-6 px-3 py-2" : "grid grid-cols-6 px-3 py-2"}>
+          <div key={r.year} className={useReliablePdfPagination ? "pdf-financial-table-row grid grid-cols-6 px-3 py-2" : "grid grid-cols-6 px-3 py-2"}>
             <div className="font-medium text-slate-900">{r.year}</div>
             <div className="text-right">{Number(r.solarGenerationKWh || 0).toLocaleString()}</div>
             <div className="text-right">£{Number(r.billBefore || 0).toLocaleString()}</div>

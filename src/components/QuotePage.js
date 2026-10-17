@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ACTIVE_BRAND, ADVICE_URL } from "../config/siteConfig";
+import { ACTIVE_BRAND, ADVICE_URL, getBrandLogo } from "../config/siteConfig";
 
 import SectionHeader from "../ui/SectionHeader";
 import Card from "../ui/Card";
@@ -269,6 +269,8 @@ export default function QuotePage({
 
   const isZionQuoteScreen =
     ACTIVE_BRAND.id === "zion-energy" && !pdfMode;
+  const isZionPdf = ACTIVE_BRAND.id === "zion-energy" && pdfMode;
+  const pdfBrandLogo = getBrandLogo(ACTIVE_BRAND, "light") || "/logo.png";
   const currentBatteryRecommendations =
     quote?.batteryRecommendations || null;
   const currentBatteryLifetimeYears = Number(
@@ -315,6 +317,15 @@ export default function QuotePage({
     const irr = calculateIRR(cashflows);
     irrPct = irr != null ? irr * 100 : null;
   }
+  const irrProjectionYears = Array.isArray(payback?.cumulativeSavings)
+    ? Math.max(0, payback.cumulativeSavings.length - 1)
+    : null;
+  const financialProjectionRows = Array.isArray(payback?.yearly)
+    ? payback.yearly
+    : [];
+  const financialProjectionFinalYear = financialProjectionRows.length > 0
+    ? Number(financialProjectionRows[financialProjectionRows.length - 1]?.year || 0)
+    : null;
 
   const baselineAnnualBill =
     toNumber(quote?.financialSeries?.monthly?.annualBaseline) ||
@@ -665,18 +676,21 @@ export default function QuotePage({
           <div className={quoteContentClass}>
 
           {isPdf && (
-            <section className="pdf-cover-section pdf-cover-page">
+            <section className={`pdf-cover-section pdf-cover-page ${isZionPdf ? "pdf-zion-cover" : ""}`}>
               <div className="pdf-cover-inner">
                 <div className="pdf-cover-logo-wrap">
                   <img
-                    src="/logo.png"
-                    alt="Zeyzer Solar"
+                    src={pdfBrandLogo}
+                    alt={`${ACTIVE_BRAND.name} logo`}
                     className="pdf-cover-logo"
                   />
                 </div>
 
-                <h1 className="text-PDF text-accent text-center ">Your Solar Quote,<p>Bespoke To Your Home</p></h1>
-                <p className="mt-2 text-h3 text-center text-brand">
+                <h1 className={isZionPdf ? "pdf-cover-title" : "text-PDF text-accent text-center"}>
+                  Your Solar Quote
+                  <span>Bespoke To Your Home</span>
+                </h1>
+                <p className={isZionPdf ? "pdf-cover-subtitle" : "mt-2 text-h3 text-center text-brand"}>
                   Bespoke solar PV & battery system design, performance and savings for your home.
                 </p>
 
@@ -694,16 +708,17 @@ export default function QuotePage({
               </div>
              
               {/* Hero image */}
-              <div className="mt-6 mb-10">
-                <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-2xl border-2 border-gentle">
+              <div className={isZionPdf ? "pdf-cover-hero" : "mt-6 mb-10"}>
+                <div className={isZionPdf ? "pdf-cover-hero-frame" : "mx-auto w-full max-w-5xl overflow-hidden rounded-2xl border-2 border-gentle"}>
                   <div className="relative">
                     <img
                       src="/images/solar-home.jpeg"
                       alt="Solar panels on a residential home"
-                      className="h-[200px] w-full object-cover sm:h-[240px] lg:h-[350px]"
+                      className={isZionPdf ? "pdf-cover-hero-image" : "h-[200px] w-full object-cover sm:h-[240px] lg:h-[350px]"}
                     />
-                    {/* subtle fade for polish */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent" />
+                    {!isZionPdf && (
+                      <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent" />
+                    )}
                   </div>
                 </div>
               </div>
@@ -735,12 +750,14 @@ export default function QuotePage({
               description={
                 isZionQuoteScreen
                   ? "Here's what your solar system could look like and what it could mean for your home."
+                  : isZionPdf
+                    ? "Here's what your solar system could look like and what it could mean for your home."
                   : "Here is a summary of your new system and how it would perform."
               }
               mode={mode}
               action={
                 <div className="flex items-center gap-3">
-                  {!isZionQuoteScreen && (
+                  {!isZionQuoteScreen && !isZionPdf && (
                     <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
                       Estimate
                     </span>
@@ -752,7 +769,7 @@ export default function QuotePage({
               }
             />
             {/* Badge row (subtle polish) */}
-            {!isZionQuoteScreen && (
+            {!isZionQuoteScreen && !isZionPdf && (
               <div className={pdfMode ? "mt-3 mb-5 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
                 <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
                   Store Your Quote
@@ -766,13 +783,15 @@ export default function QuotePage({
             {/* Key Results Panel */}
             <div
               className={
-                isPdf
+                isZionPdf
+                  ? "pdf-zion-summary-results mt-5 pdf-keep-together"
+                  : isPdf
                   ? "mt-6 rounded-2xl border border-teal-200 bg-teal-50 p-4 pdf-keep-together"
                   : "mt-6"
               }
             >
 
-              {isPdf && (
+              {isPdf && !isZionPdf && (
                 <div className="text-body font-semibold uppercase tracking-wide text-accent mb-3">
                   Key Results
                 </div>
@@ -783,7 +802,9 @@ export default function QuotePage({
                   label="Estimated price"
                   mode={mode}
                   value={
-                    isPdf
+                    isZionPdf
+                      ? `£${quote.priceLow.toLocaleString()} – £${quote.priceHigh.toLocaleString()}`
+                      : isPdf
                       ? `£${(quote.priceLow / 1000).toFixed(1)}k – £${(quote.priceHigh / 1000).toFixed(1)}k`
                       : `£${quote.priceLow.toLocaleString()} – £${quote.priceHigh.toLocaleString()}`
                   }
@@ -875,12 +896,13 @@ export default function QuotePage({
                   System components + home supply
               ======================= */}
             {isPdf && (
-              <div className={pdfMode ? "mt-6 grid grid-cols-2 gap-4 shadow-none" : "mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6"}>
+              <div className={pdfMode ? `mt-5 grid grid-cols-2 gap-4 shadow-none ${isZionPdf ? "pdf-zion-summary-secondary" : ""}` : "mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6"}>
 
                 {/* LEFT: System components */}
                 <CardAlt2
                   mode={mode}
-                  title="System components">
+                  title="System components"
+                  className={isZionPdf ? "pdf-zion-summary-panel" : ""}>
 
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
 
@@ -934,7 +956,7 @@ export default function QuotePage({
                   <CardAlt2
                     mode={mode}
                     title="How Your Home Is Powered"
-                    className="h-full flex flex-col"
+                    className={`h-full flex flex-col ${isZionPdf ? "pdf-zion-summary-panel" : ""}`}
                     bodyClassName="flex h-full flex-col items-center justify-center"
                   >
                     <p className="mt-1 text-sm text-center text-slate-600">
@@ -993,7 +1015,7 @@ export default function QuotePage({
                 <div
                   className={
                     pdfMode
-                      ? "mt-2 rounded-2xl bg-white p-5 pdf-keep-together"
+                      ? `mt-2 rounded-2xl bg-white p-5 pdf-keep-together ${isZionPdf ? "pdf-zion-environment" : ""}`
                       : "quote-environmental-impact mt-2 bg-white"
                   }
                 >
@@ -1073,40 +1095,46 @@ export default function QuotePage({
           <section
             id="system-choices"
             className={
-              pdfMode
+              isZionPdf
+                ? "quote-main-section mt-1 pdf-system-choices-page"
+                : pdfMode
                 ? "quote-main-section mt-1"
                 : `quote-main-section quote-collapsible-section mt-[2rem] ${
                     expandedSections.systemChoices ? "" : "is-collapsed"
                   }`
             }
           >
-            <SectionHeader
-              title="System Choices"
-              description={
-                isZionQuoteScreen
-                  ? "Explore the panels, battery and other equipment included in your estimate. You can change your choices at any time."
-                  : "Review your home assumptions and system configuration. Edit any section to compare options."
-              }
-              mode={mode}
-              action={
-                <div className="flex items-center gap-3">
-                  {!pdfMode && (
-                  <ButtonLink onClick={() => onEdit(2)}>Edit</ButtonLink>
-                  )}
+            <>
+              <SectionHeader
+                title="System Choices"
+                description={
+                  isZionQuoteScreen
+                    ? "Explore the panels, battery and other equipment included in your estimate. You can change your choices at any time."
+                    : isZionPdf
+                      ? "The panels, battery and other equipment included in your estimate."
+                      : "Review your home assumptions and system configuration. Edit any section to compare options."
+                }
+                mode={mode}
+                action={
+                  <div className="flex items-center gap-3">
+                    {!pdfMode && (
+                    <ButtonLink onClick={() => onEdit(2)}>Edit</ButtonLink>
+                    )}
+                  </div>
+                }
+              />
+              {/* Badge row (subtle polish) */}
+              {!isZionQuoteScreen && !isZionPdf && (
+                <div className={pdfMode ? "mt-2 mb-3 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
+                  <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
+                    Your Home & Energy Use
+                  </span>
+                  <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
+                    System Choices
+                  </span>
                 </div>
-              }
-            />
-            {/* Badge row (subtle polish) */}
-            {!isZionQuoteScreen && (
-              <div className={pdfMode ? "mt-2 mb-3 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
-                <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
-                  Your Home & Energy Use
-                </span>
-                <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
-                  System Choices
-                </span>
-              </div>
-            )}
+              )}
+            </>
 
             {renderDetailToggle(
               "systemChoices",
@@ -1123,7 +1151,7 @@ export default function QuotePage({
             <div
               className={
                 pdfMode
-                  ? "mt-3 rounded-2xl bg-white pdf-two-card-group"
+                  ? `mt-3 rounded-2xl bg-white pdf-two-card-group ${isZionPdf ? "pdf-zion-system-choices" : ""}`
                   : "mt-6 rounded-2xl bg-white"
               }
             >
@@ -1140,7 +1168,7 @@ export default function QuotePage({
                     mode={mode}
                     title="Home Energy Usage"
                     right={!pdfMode && (<ButtonLink onClick={() => onEdit(2)}>Edit</ButtonLink>)}
-                    className={pdfMode ? "h-full" : "quote-analysis-panel h-full"}
+                    className={pdfMode ? `h-full ${isZionPdf ? "pdf-zion-choice-panel" : ""}` : "quote-analysis-panel h-full"}
                   >
                   {/* Home summary rows (choice-card sentence style) */}
                   <div className={pdfMode ? "mt-1 space-y-1 text-sm text-slate-700" : "mt-3 space-y-2 text-body text-slate-700"}>
@@ -1183,7 +1211,7 @@ export default function QuotePage({
                     mode={mode}
                     title="Roof Information"
                     right={<ButtonLink onClick={() => onEdit(3)}>Edit</ButtonLink>}
-                    className={pdfMode ? "h-full" : "quote-analysis-panel h-full"}
+                    className={pdfMode ? `h-full ${isZionPdf ? "pdf-zion-choice-panel" : ""}` : "quote-analysis-panel h-full"}
                   >
                     {/* Roof summary rows (choice-card sentence style) */}
                     <div className={pdfMode ? "mt-1 space-y-1 text-sm text-slate-700" : "mt-3 space-y-2 text-body text-slate-700"}>
@@ -1207,7 +1235,7 @@ export default function QuotePage({
                         <div
                           className={
                             pdfMode
-                              ? "overflow-hidden rounded-xl border border-slate-200"
+                              ? `overflow-hidden rounded-xl border border-slate-200 ${isZionPdf ? "pdf-zion-roof-table" : ""}`
                               : "overflow-hidden rounded-xl border border-slate-200 shadow-bubble"
                           }
                         >
@@ -1274,7 +1302,7 @@ export default function QuotePage({
                     </p>
 
                     {/* Things to consider */}
-                    <div className={pdfMode ? "mt-3 rounded-2xl bg-white p-2" : "mt-6 rounded-2xl p-4 bg-white"}>
+                    <div className={pdfMode ? `mt-3 rounded-2xl bg-white p-2 ${isZionPdf ? "pdf-zion-considerations" : ""}` : "mt-6 rounded-2xl p-4 bg-white"}>
                       <div className={pdfMode ? "text-sm font-semibold text-slate-900" : "text-body font-semibold text-slate-900"}>Things to consider</div>
                       <ul className={pdfMode ? "mt-2 list-disc space-y-1 pl-4 text-small leading-snug text-slate-700" : "mt-2 list-disc space-y-1 pl-5 text-body text-slate-700"}>
                         <li>Shading can reduce generation — There are a few ways we can mitigate shade and a site survey helps confirm this.</li>
@@ -1295,7 +1323,7 @@ export default function QuotePage({
                 mode={mode}
                 title="System Preferences"
                 right={!pdfMode && (<ButtonLink onClick={() => onEdit(4)}>Edit system</ButtonLink>)}
-                className={!pdfMode ? "quote-system-preferences-panel" : ""}
+                className={isZionPdf ? "pdf-zion-product-panel" : !pdfMode ? "quote-system-preferences-panel" : ""}
               >
                 {(() => {
                   const totalPanels = (roofs || []).reduce((s, r) => s + Number(r?.panels || 0), 0);
@@ -1336,7 +1364,11 @@ export default function QuotePage({
                           }
                           imageSrc={batteryUI.image}
                           aboutTitle={batteryUI.aboutTitle}
-                          aboutText={batteryUI.aboutText}
+                          aboutText={
+                            isZionPdf && batteryCapacityKWh > 0
+                              ? "A home battery stores spare solar electricity for use later, helping reduce grid imports and giving you more flexibility over when your energy is used. The recommendations in this quote compare the financial options for your home."
+                              : batteryUI.aboutText
+                          }
                         />
 
                         <ConfigChoiceCard
@@ -1444,7 +1476,7 @@ export default function QuotePage({
                 <>
 
                 {/* BADGES */}
-                {pdfMode && (
+                {pdfMode && !isZionPdf && (
                 <div className="mt-2 mb-3 flex items-center gap-2">
                   <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
                     PVGIS hourly simulation
@@ -1471,7 +1503,7 @@ export default function QuotePage({
                     <CardAlt2 
                       title="Energy Snapshot"
                       mode={mode} 
-                      className={pdfMode ? "h-full" : "quote-performance-panel h-full"}
+                      className={isZionPdf ? "pdf-zion-performance-panel h-full" : pdfMode ? "h-full" : "quote-performance-panel h-full"}
                       right={
                         !pdfMode && (
                           <button
@@ -1486,7 +1518,7 @@ export default function QuotePage({
 
                       {/* Energy summary bubbles */}
                       <div className={pdfMode ? "mt-2" : "mt-4"}>
-                        <div className={pdfMode ? "grid grid-cols-3 gap-2" : "grid grid-cols-1 gap-4 sm:grid-cols-3"}>
+                        <div className={isZionPdf ? "pdf-zion-performance-stats grid grid-cols-3 gap-2" : pdfMode ? "grid grid-cols-3 gap-2" : "grid grid-cols-1 gap-4 sm:grid-cols-3"}>
 
                           {/* Annual generation */}
                           <div className={pdfMode ? "rounded-2xl border-2 border-amber-500 bg-amber-200 px-3 py-3 text-center" : "quote-performance-stat quote-performance-stat--generation rounded-2xl border-2 border-amber-500 bg-amber-200 px-6 py-5 text-center"}>
@@ -1517,13 +1549,15 @@ export default function QuotePage({
                         <p className={pdfMode ? "mt-3 mb-4 text-center text-xs leading-snug text-brand" : "mt-6 mb-9 text-center text-body text-brand"}>
                           {isZionQuoteScreen
                             ? "This shows how your estimated solar generation could be used throughout the year. The amount used at home or exported will depend on your battery size and settings, which you can explore in Optimisations."
+                            : isZionPdf
+                              ? "This shows how the estimated solar generation is used throughout the year using the battery size and control settings included in this quote."
                             : "Above is the data on how the electricity generated by your solar system is used over the year. The energy you use and export will depend on your battery size and control settings, you can change the battery control setting further down and see how these figures change!"}
                         </p>
                       </div>
 
 
                       {/* Payback + IRR */}
-                      <div className={pdfMode ? "mt-3 grid grid-cols-2 gap-2" : "quote-secondary-metrics mt-6 grid grid-cols-1 sm:grid-cols-2"}>
+                      <div className={isZionPdf ? "pdf-zion-performance-secondary mt-3 grid grid-cols-2 gap-2" : pdfMode ? "mt-3 grid grid-cols-2 gap-2" : "quote-secondary-metrics mt-6 grid grid-cols-1 sm:grid-cols-2"}>
                         <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "quote-secondary-metric p-4 text-center"}>
                           <div className={pdfMode ? "text-[11px] font-medium leading-tight text-brand" : "flex items-center justify-center text-s font-medium text-brand"}>
                             <span>Self Consumption</span>
@@ -1558,7 +1592,7 @@ export default function QuotePage({
                     <CardAlt2
                       title="How Your Home Is Powered"
                       mode={mode}
-                      className={pdfMode ? "h-full flex flex-col shadow-none" : "quote-performance-panel h-full flex flex-col"}
+                      className={isZionPdf ? "pdf-zion-performance-panel h-full flex flex-col" : pdfMode ? "h-full flex flex-col shadow-none" : "quote-performance-panel h-full flex flex-col"}
                       bodyClassName="flex h-full flex-col items-center justify-center"
                     >
                       <p className={pdfMode ? "mt-1 text-xs text-center leading-snug text-slate-600" : "mt-1 text-sm text-center text-slate-600"}>
@@ -1575,6 +1609,11 @@ export default function QuotePage({
                           pdfMode={pdfMode}
                         />
                       </div>
+                      {isZionPdf && hasBattery && (
+                        <p className="pdf-zion-energy-note mt-2 text-center">
+                          Battery-supplied energy may include electricity charged from the grid. Energy independence counts the contribution from solar electricity.
+                        </p>
+                      )}
                     </CardAlt2>
                   </div>
                 </div>
@@ -1585,7 +1624,7 @@ export default function QuotePage({
                   <Card
                     mode={mode} 
                     title="How Your Solar Energy Is Used"
-                    className={pdfMode ? "" : "quote-chart-panel"}>
+                    className={isZionPdf ? "pdf-zion-chart-panel" : pdfMode ? "" : "quote-chart-panel"}>
                       <StackedMonthlyBarChart
                         labels={months}
                         series={[
@@ -1594,13 +1633,14 @@ export default function QuotePage({
                           { name: "Exported directly", data: pvExportDirect, className: "seg-export" },
                         ]}
                         pdfMode={pdfMode}
+                        staticPdfCaption={isZionPdf}
                       />
                   </Card>
                 </div>
                 </div>
 
                 {/* FLOW VISUALS */}
-                <div className="mt-6">
+                <div className={isZionPdf ? "pdf-zion-energy-flow mt-6" : "mt-6"}>
                   <EnergyFlowCards
                     mode={mode} 
                     hasBattery={hasBattery}
@@ -1615,7 +1655,11 @@ export default function QuotePage({
 
           {isPdf && (
             <section id="mcs-performance" className="mt-1 pdf-page-break-before pdf-no-divider">
-              <McsPerformanceTable data={mcsTableData} pdfMode={true} />
+              <McsPerformanceTable
+                data={mcsTableData}
+                pdfMode={true}
+                compactPdf={isZionPdf}
+              />
             </section>
           )}
 
@@ -1644,7 +1688,7 @@ export default function QuotePage({
               action={!pdfMode && (<ButtonLink onClick={() => onEdit(2)}>Edit</ButtonLink>)}
             />
             {/* Badge row (subtle polish) */}
-            {!isZionQuoteScreen && (
+            {!isZionQuoteScreen && !isZionPdf && (
               <div className={pdfMode ? "mt-2 mb-3 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
                 <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
                   Annual bill savings
@@ -1676,7 +1720,7 @@ export default function QuotePage({
               <div className={pdfMode ? "col-span-2 h-full" : "lg:col-span-2 h-full"}>
               <CardAlt2 
                 title="Financial Snapshot" 
-                className={pdfMode ? "h-full" : "quote-financial-panel h-full"}
+                className={isZionPdf ? "pdf-zion-financial-panel h-full" : pdfMode ? "h-full" : "quote-financial-panel h-full"}
                 mode={mode}
                 right={
                       !pdfMode && (
@@ -1693,7 +1737,7 @@ export default function QuotePage({
                 {/* Benefit equation: 3 equal bubbles with operators */}
                 <div className={pdfMode ? "mt-2" : "mt-4"}>
                   {pdfMode ? (
-                    <div className="grid grid-cols-3 gap-2 items-stretch">
+                    <div className={isZionPdf ? "pdf-zion-financial-equation grid grid-cols-3 gap-2 items-stretch" : "grid grid-cols-3 gap-2 items-stretch"}>
                       <div className="rounded-2xl bg-blue-100 px-2 py-3 text-center">
                         <div className="text-base font-normal leading-tight text-slate-900">
                           £{Number(quote.annualBillSavings || 0).toLocaleString()}
@@ -1775,7 +1819,7 @@ export default function QuotePage({
                 </div>
 
                 {/* Payback + IRR */}
-                <div className={pdfMode ? "mt-3 grid grid-cols-2 gap-2" : "quote-financial-secondary-grid mt-6 grid grid-cols-1 sm:grid-cols-2"}>
+                <div className={isZionPdf ? "pdf-zion-financial-secondary mt-3 grid grid-cols-2 gap-2" : pdfMode ? "mt-3 grid grid-cols-2 gap-2" : "quote-financial-secondary-grid mt-6 grid grid-cols-1 sm:grid-cols-2"}>
                   <div className={pdfMode ? "rounded-2xl border-2 border-teal-200 bg-white p-2 text-center" : "quote-financial-secondary rounded-2xl border-2 border-teal-200 bg-white p-4 text-center"}>
                     <div className={pdfMode ? "text-[11px] font-medium leading-tight text-slate-500" : "flex items-center justify-center text-s font-medium text-slate-500"}>
                       <span>Projected payback</span>
@@ -1800,7 +1844,9 @@ export default function QuotePage({
                       {irrPct != null ? `${irrPct.toFixed(1)}%` : "N/A"}
                     </div>
                     <div className={pdfMode ? "mt-1 text-[10px] leading-tight text-slate-500" : "mt-1 text-xs text-slate-500"}>
-                      Based on the 25-year system lifetime
+                      {isZionPdf && irrProjectionYears
+                        ? `Based on the ${irrProjectionYears}-year financial projection`
+                        : "Based on the 25-year system lifetime"}
                     </div>
                   </div>
                 </div>
@@ -1814,10 +1860,10 @@ export default function QuotePage({
               <Card
                 mode={mode} 
                 title="Before vs After Solar" 
-                className={pdfMode ? "h-full flex flex-col" : "quote-financial-chart-panel h-full flex flex-col"}
+                className={isZionPdf ? "pdf-zion-financial-panel pdf-zion-before-after h-full flex flex-col" : pdfMode ? "h-full flex flex-col" : "quote-financial-chart-panel h-full flex flex-col"}
                 bodyClassName="flex flex-col">
                   <p className={pdfMode ? "mt-1 text-[11px] leading-snug text-slate-600 text-center" : "mt-1 text-small text-slate-600 text-centre"}>
-                    Your 1st Year bill saving:{" "}
+                    {isZionPdf ? "Year 1 benefit vs previous annual bill: " : "Your 1st Year bill saving: "}
                     <span className="font-semibold text-slate-900">
                       {billSavingPctYear1 != null ? `${billSavingPctYear1.toFixed(1)}%` : "N/A"}
                     </span>
@@ -1838,6 +1884,12 @@ export default function QuotePage({
                   <p className="text-sm text-slate-500">Monthly financial series not available.</p>
                 )}
 
+                  {isZionPdf && Number(quote?.financialSeries?.monthly?.annualSystemNet) < 0 && (
+                    <p className="pdf-zion-net-cost-note mt-1 text-center">
+                      The after-solar figure is the estimated net annual electricity cost after export earnings; it is not a negative supplier bill.
+                    </p>
+                  )}
+
               </Card>
             </div>
             </div>
@@ -1849,7 +1901,7 @@ export default function QuotePage({
               <Card 
                 mode={mode}
                 title="Payback (cumulative savings by year)"
-                className={pdfMode ? "" : "quote-financial-chart-panel quote-payback-panel"}
+                className={isZionPdf ? "pdf-zion-financial-panel pdf-zion-payback-panel" : pdfMode ? "" : "quote-financial-chart-panel quote-payback-panel"}
                 right={
                     !pdfMode && (
                       <button
@@ -1980,14 +2032,17 @@ export default function QuotePage({
             </div>
 
             {pdfMode && Array.isArray(quote?.financialSeries?.payback?.yearly) && (
-              <div className="mt-4 pdf-full-calculation-page">
+              <div className={isZionPdf ? "mt-4 pdf-full-calculation-page pdf-zion-financial-table" : "mt-4 pdf-full-calculation-page"}>
                 <div className="mb-2 text-sm font-semibold text-slate-900">
-                  Full calculation details
+                  {isZionPdf && financialProjectionFinalYear
+                    ? `Full calculation details — ${financialProjectionFinalYear}-year projection`
+                    : "Full calculation details"}
                 </div>
 
                 <FinanceDetailsTable
-                  rows={quote.financialSeries.payback.yearly}
+                  rows={financialProjectionRows}
                   pdfMode={true}
+                  reliablePdfPagination={isZionPdf}
                 />
 
                 <p className="mt-2 text-[11px] leading-snug text-slate-500">
@@ -2028,13 +2083,15 @@ export default function QuotePage({
               description={
                 isZionQuoteScreen
                   ? "Try different tariffs and battery sizes to find the combination that works best for your home."
+                  : isZionPdf
+                    ? "This section summarises the tariffs and battery options used in this estimate."
                   : "Here you can edit your tariff, change battery setting and find your optimal battery size."
               }
               mode={mode}
               action={!pdfMode && (<ButtonLink onClick={() => onEdit(2)}>Edit</ButtonLink>)}
             />
             {/* Badge row (subtle polish) */}
-            {!isZionQuoteScreen && (
+            {!isZionQuoteScreen && !isZionPdf && (
               <div className={pdfMode ? "mt-2 mb-3 flex items-center gap-2" : "mt-4 mb-8 flex items-center gap-2"}>
                 <span className={pdfMode ? "rounded-full bg-accent px-2 py-1 text-[10px] font-medium text-white" : "rounded-full bg-accent px-3 py-2 text-xs font-medium text-white"}>
                   Change your tariff
@@ -2048,7 +2105,7 @@ export default function QuotePage({
               <Card
                 mode={mode}
                 title="System Settings & Options"
-                className={pdfMode ? "" : "quote-tariff-settings-panel"}
+                className={isZionPdf ? "pdf-zion-settings-panel" : pdfMode ? "" : "quote-tariff-settings-panel"}
                 right={!pdfMode && (<button
                 type="button"
                 onClick={() => recalcWithTariff()}
@@ -2062,7 +2119,7 @@ export default function QuotePage({
                       : "Results up to date"}
                 </button>)}
               >
-              <div className={pdfMode ? "mt-1 rounded-2xl bg-white p-2" : "quote-tariff-settings-content mt-1 bg-white p-4"}>
+              <div className={isZionPdf ? "pdf-zion-settings-content mt-1 p-2" : pdfMode ? "mt-1 rounded-2xl bg-white p-2" : "quote-tariff-settings-content mt-1 bg-white p-4"}>
                   <div className={pdfMode ? "rounded-2xl bg-white p-0" : "rounded-2xl bg-white p-1"}>
                     <div className={pdfMode ? "flex items-start justify-between gap-3" : "flex items-start justify-between gap-4"}>
                       <div>
@@ -2071,6 +2128,8 @@ export default function QuotePage({
                         <div className={pdfMode ? "mb-1 text-sm text-slate-500" : "mb-2 text-body text-slate-500"}>
                           {isZionQuoteScreen
                             ? "Adjust your tariffs to see how they could affect your estimated savings. Your solar generation estimate stays the same."
+                            : isZionPdf
+                              ? "These tariffs are used in the savings and payback estimates shown in this quote."
                             : "You can adjust these to see how savings change (no need to rerun the solar simulation)."}
                         </div>
                       </div>
@@ -2090,7 +2149,7 @@ export default function QuotePage({
                   <div className={isPdf ? "tariff-block tariff-block--pdf grid grid-cols-2 gap-3 text-sm" : "tariff-block grid grid-cols-1 md:grid-cols-2 gap-6 text-sm"}>
 
                     {/* ================= BEFORE TARIFF ================= */}
-                    <div className={pdfMode ? "rounded-xl border border-white p-3 bg-slate-100" : "quote-tariff-comparison rounded-xl p-4"}>
+                    <div className={isZionPdf ? "pdf-zion-tariff-panel rounded-xl p-3" : pdfMode ? "rounded-xl border border-white p-3 bg-slate-100" : "quote-tariff-comparison rounded-xl p-4"}>
                       <div className={pdfMode ? 
                           "flex items-start justify-between gap-2 border-b-2 border-slate-200 text-sm font-semibold text-slate-900 mb-1" :
                           "flex items-start justify-between gap-2 border-b-2 border-slate-200 text-body font-semibold text-slate-900 mb-2"}>
@@ -2172,7 +2231,7 @@ export default function QuotePage({
                     </div>
 
                     {/* ================= AFTER TARIFF ================= */}
-                    <div className={pdfMode ? "rounded-xl border border-white p-3 bg-blue-50" : "quote-tariff-comparison quote-tariff-after rounded-xl p-4"}>
+                    <div className={isZionPdf ? "pdf-zion-tariff-panel rounded-xl p-3" : pdfMode ? "rounded-xl border border-white p-3 bg-blue-50" : "quote-tariff-comparison quote-tariff-after rounded-xl p-4"}>
                       <div className={pdfMode ? 
                         "flex items-start justify-between gap-2 border-b-2 border-blue-100 text-sm font-semibold text-slate-900 mb-1" : 
                         "flex items-start justify-between gap-2 border-b-2 border-blue-100 text-body font-semibold text-slate-900 mb-2"}>
@@ -2262,7 +2321,7 @@ export default function QuotePage({
                 </div>
 
                 {pdfMode ? (
-                  <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3 pdf-keep-together">
+                  <div className={isZionPdf ? "pdf-zion-battery-controls mt-3 p-3 pdf-keep-together" : "mt-3 rounded-2xl border border-slate-200 bg-white p-3 pdf-keep-together"}>
                     <div className="text-sm font-semibold uppercase tracking-wide text-accent">
                       Battery controls
                     </div>
@@ -2271,26 +2330,26 @@ export default function QuotePage({
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <div className={isZionPdf ? "pdf-zion-control-item rounded-xl p-3" : "rounded-2xl border border-slate-200 bg-slate-50 p-3"}>
                         <div className="text-sm font-semibold text-slate-900">
                           Allow grid charging
                         </div>
                         <div className="mt-1 text-xs leading-snug text-slate-600">
                           Battery can charge from the grid during cheap hours, then discharge later to reduce imports.
                         </div>
-                        <div className="mt-2 inline-block rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-800">
+                        <div className={isZionPdf ? "pdf-zion-control-status mt-2 inline-block px-3 py-1 text-xs font-semibold" : "mt-2 inline-block rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-800"}>
                           {batteryControls.allowGridCharging ? "ON" : "OFF"}
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <div className={isZionPdf ? "pdf-zion-control-item rounded-xl p-3" : "rounded-2xl border border-slate-200 bg-slate-50 p-3"}>
                         <div className="text-sm font-semibold text-slate-900">
                           Allow energy trading
                         </div>
                         <div className="mt-1 text-xs leading-snug text-slate-600">
                           Battery may charge cheap and export when profitable, depending on tariff settings and supplier rules.
                         </div>
-                        <div className="mt-2 inline-block rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-800">
+                        <div className={isZionPdf ? "pdf-zion-control-status mt-2 inline-block px-3 py-1 text-xs font-semibold" : "mt-2 inline-block rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-800"}>
                           {batteryControls.allowEnergyTrading ? "ON" : "OFF"}
                         </div>
                       </div>
@@ -2521,9 +2580,13 @@ export default function QuotePage({
 
                 
                 {isPdf && (
-                  <Card>
+                  <Card
+                    mode={mode}
+                    title={isZionPdf ? "Typical Daily Power Flows" : undefined}
+                    className={isZionPdf ? "pdf-powerflow-pair pdf-page-break-before pdf-zion-powerflow-panel" : ""}
+                  >
                   <div className="mt-4 space-y-4">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-3 pdf-keep-together">
+                    <div className={isZionPdf ? "pdf-zion-powerflow-chart p-3 pdf-keep-together" : "rounded-2xl border border-slate-200 bg-white p-3 pdf-keep-together"}>
                       <div className="text-sm text-centre font-semibold text-slate-900">Winter day power flow</div>
                       <div className="mt-1 text-xs text-centre text-slate-600">
                         Typical winter day showing solar generation, home demand, battery charge/discharge and grid interaction.
@@ -2544,7 +2607,7 @@ export default function QuotePage({
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200 bg-white p-3 pdf-keep-together">
+                    <div className={isZionPdf ? "pdf-zion-powerflow-chart p-3 pdf-keep-together" : "rounded-2xl border border-slate-200 bg-white p-3 pdf-keep-together"}>
                       <div className="text-sm text-centre font-semibold text-slate-900">Summer day power flow</div>
                       <div className="mt-1 text-xs text-centre text-slate-600">
                         Typical summer day showing solar generation, home demand, battery charge/discharge and grid interaction.
@@ -2644,6 +2707,13 @@ export default function QuotePage({
                     recommendations.bestLifetimeSavings,
                 },
               ];
+              const displayedRecommendationOptions = isZionPdf
+                ? recommendationOptions.filter(
+                    (option) =>
+                      option.recommendation &&
+                      Number(option.recommendation.batteryKWhUsable) > 0
+                  )
+                : recommendationOptions;
 
               const comparison =
                 recommendations.noBatteryComparison;
@@ -2652,7 +2722,9 @@ export default function QuotePage({
                 comparison?.incremental || {};
 
               const activeRecommendationLabel =
-                activeMode === "none"
+                isZionPdf && activeBatteryKWh <= 0
+                  ? ""
+                  : activeMode === "none"
                   ? "No battery"
                   : activeMode === "custom"
                     ? "Custom battery size"
@@ -2665,8 +2737,8 @@ export default function QuotePage({
               return (
                 <Card
                   mode={mode}
-                  title={isZionQuoteScreen ? "Choose Your Battery" : "Battery Settings & Options"}
-                  className={isZionQuoteScreen ? "quote-battery-panel" : ""}
+                  title={isZionQuoteScreen ? "Choose Your Battery" : isZionPdf ? "Battery Options" : "Battery Settings & Options"}
+                  className={isZionPdf ? "pdf-zion-battery-panel" : isZionQuoteScreen ? "quote-battery-panel" : ""}
                   right={
                     !pdfMode && (
                       <button
@@ -2702,7 +2774,9 @@ export default function QuotePage({
                     <div
                       className={
                         pdfMode
-                          ? "rounded-2xl border border-slate-200 bg-white p-3"
+                          ? isZionPdf
+                            ? "pdf-zion-battery-summary p-3"
+                            : "rounded-2xl border border-slate-200 bg-white p-3"
                           : isZionQuoteScreen
                             ? "quote-battery-comparison-group p-5"
                             : "rounded-2xl border border-slate-200 bg-white p-5"
@@ -2724,9 +2798,11 @@ export default function QuotePage({
                           : "No battery"}
                       </div>
 
-                      <div className="mt-1 text-sm font-medium text-slate-600">
-                        {activeRecommendationLabel}
-                      </div>
+                      {activeRecommendationLabel && (
+                        <div className="mt-1 text-sm font-medium text-slate-600">
+                          {activeRecommendationLabel}
+                        </div>
+                      )}
 
                       {!isZionQuoteScreen && (
                       <>
@@ -2821,7 +2897,9 @@ export default function QuotePage({
                     <div
                       className={
                         pdfMode
-                          ? "rounded-2xl border border-slate-200 bg-white p-3"
+                          ? isZionPdf
+                            ? "pdf-zion-battery-summary p-3"
+                            : "rounded-2xl border border-slate-200 bg-white p-3"
                           : "rounded-2xl border border-slate-200 bg-white p-5"
                       }
                     >
@@ -2938,7 +3016,9 @@ export default function QuotePage({
                   <div
                     className={
                       pdfMode
-                        ? "mt-3 rounded-2xl border border-slate-200 bg-white p-3"
+                        ? isZionPdf
+                          ? "pdf-zion-battery-recommendations mt-3 p-3"
+                          : "mt-3 rounded-2xl border border-slate-200 bg-white p-3"
                         : isZionQuoteScreen
                           ? "quote-battery-options mt-4 p-5"
                           : "mt-4 rounded-2xl border border-slate-200 bg-white p-5"
@@ -2946,7 +3026,7 @@ export default function QuotePage({
                   >
                     <div>
                       <div className="text-body font-semibold uppercase tracking-wide text-accent">
-                        {isZionQuoteScreen ? "Battery recommendations" : "Battery Size Options"}
+                        {isZionQuoteScreen || isZionPdf ? "Battery recommendations" : "Battery Size Options"}
                       </div>
 
                       <div
@@ -2958,6 +3038,8 @@ export default function QuotePage({
                       >
                         {isZionQuoteScreen
                           ? "Compare the options for your home and choose the balance of payback and long-term savings that suits you."
+                          : isZionPdf
+                            ? "These recommendations compare whole-system payback and long-term savings using the calculated quote data."
                           : "Choose the option that best matches what you value. The whole quote updates instantly."}
                       </div>
                     </div>
@@ -2969,7 +3051,7 @@ export default function QuotePage({
                           : "mt-5 grid grid-cols-1 gap-3 lg:grid-cols-3"
                       }
                     >
-                      {recommendationOptions.map((option) => {
+                      {displayedRecommendationOptions.map((option) => {
                         const recommendation =
                           option.recommendation;
 
@@ -2985,22 +3067,24 @@ export default function QuotePage({
                           recommendations?.scenarios?.[
                             String(batteryKWh)
                           ] || null;
+                        const OptionElement = isZionPdf ? "div" : "button";
+                        const optionInteractionProps = isZionPdf
+                          ? {}
+                          : {
+                              type: "button",
+                              disabled: pdfMode || !(batteryKWh > 0),
+                              onClick: () =>
+                                selectBatteryScenario({
+                                  batteryKWh,
+                                  mode: "recommend",
+                                  strategy: option.strategy,
+                                }),
+                            };
 
                         return (
-                          <button
+                          <OptionElement
                             key={option.strategy}
-                            type="button"
-                            disabled={
-                              pdfMode ||
-                              !(batteryKWh > 0)
-                            }
-                            onClick={() =>
-                              selectBatteryScenario({
-                                batteryKWh,
-                                mode: "recommend",
-                                strategy: option.strategy,
-                              })
-                            }
+                            {...optionInteractionProps}
                             className={[
                               "relative rounded-2xl border p-4 text-left transition",
                               isZionQuoteScreen
@@ -3011,8 +3095,10 @@ export default function QuotePage({
                               !isZionQuoteScreen && !pdfMode && batteryKWh > 0 && !isActive
                                 ? "hover:border-accent/40 hover:bg-slate-50"
                                 : "",
-                              pdfMode
-                                ? "cursor-default"
+                              isZionPdf
+                                ? `pdf-battery-option-static cursor-default ${isActive ? "pdf-battery-option--selected" : ""}`
+                                : pdfMode
+                                  ? "cursor-default"
                                 : "",
                             ]
                               .filter(Boolean)
@@ -3024,7 +3110,7 @@ export default function QuotePage({
                               </div>
 
                               {option.recommended && (
-                                <span className="rounded-full bg-accent/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-accent">
+                                <span className={isZionPdf ? "pdf-zion-recommended-label px-2 py-1 text-[10px] font-semibold uppercase tracking-wide" : "rounded-full bg-accent/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-accent"}>
                                   Recommended
                                 </span>
                               )}
@@ -3113,9 +3199,14 @@ export default function QuotePage({
                                 Currently selected
                               </div>
                             )}
-                          </button>
+                          </OptionElement>
                         );
                       })}
+                      {isZionPdf && displayedRecommendationOptions.length === 0 && (
+                        <div className="col-span-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                          Battery recommendation data is not available for this quote.
+                        </div>
+                      )}
                     </div>
 
                     {!pdfMode && (

@@ -2856,6 +2856,834 @@ select:focus {
     page-break-before: always !important;
   }
 
+  .pdf-financial-table {
+    overflow: visible !important;
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .pdf-financial-table-row,
+  .pdf-battery-option-static {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .pdf-financial-table-row {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+  }
+
+  .pdf-mcs-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .pdf-mcs-eess-group {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    #system-choices.pdf-system-choices-page {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-powerflow-pair {
+    break-before: page;
+    page-break-before: always;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    #financials {
+    overflow: visible !important;
+  }
+
+  /* Zion V1.1 PDF: cover, summary and System Choices only. */
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-cover {
+    border-bottom: 0;
+    padding: 8px 0 10px !important;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-cover
+    .pdf-cover-logo-wrap {
+    margin-bottom: 14px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-cover
+    .pdf-cover-logo {
+    width: auto;
+    max-width: 220px;
+    max-height: 64px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-cover
+    .pdf-cover-title {
+    color: #000066;
+    font-size: 30px;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-cover
+    .pdf-cover-title
+    span {
+    display: block;
+    margin-top: 4px;
+    color: #b65f00;
+    font-size: 22px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-cover
+    .pdf-cover-subtitle {
+    max-width: 620px;
+    margin: 10px auto 0;
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-cover
+    .pdf-cover-customer {
+    margin-top: 16px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-cover
+    .pdf-cover-customer-name {
+    color: #000066;
+    font-size: 17px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-cover-hero {
+    margin: 22px 0 24px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-cover-hero-frame {
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-cover-hero-image {
+    display: block;
+    width: 100%;
+    height: 350px !important;
+    object-fit: cover;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    #summary
+    > .flex
+    h1,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    #system-choices
+    > .flex
+    h1 {
+    color: #b65f00;
+    font-size: 25px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    #summary
+    > .flex
+    .mode-pdf-copy,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    #system-choices
+    > .flex
+    .mode-pdf-copy {
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-summary-results {
+    border: 0;
+    border-radius: 0;
+    background: #ffffff;
+    padding: 0;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-summary-results
+    .mode-pdf-tight {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 12px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-summary-results
+    .mode-pdf-tight
+    > :first-child {
+    color: #64748b;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-summary-results
+    .mode-pdf-tight
+    > :nth-child(2) {
+    color: #000066;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-summary-results
+    > .grid {
+    grid-template-columns: 1.35fr 1fr 1fr 1fr;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-summary-results
+    .mode-pdf-tight:first-child
+    > :nth-child(2) {
+    font-size: clamp(15px, 2.15vw, 18px);
+    letter-spacing: -0.015em;
+    overflow-wrap: anywhere;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-summary-panel,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-choice-panel {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-summary-panel
+    > .cardHeaderAlt,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-choice-panel
+    > .cardHeader {
+    border-bottom: 1px solid #e2e8f0;
+    background: #ffffff;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-summary-panel
+    .cardTitleAlt,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-choice-panel
+    .cardTitle {
+    color: #000066;
+    font-weight: 650;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-environment {
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+    border-radius: 0;
+    padding: 16px 0 0;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-environment
+    > :first-child {
+    color: #000066;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-environment
+    .text-xl {
+    color: #000066;
+    font-weight: 700;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-roof-table {
+    border-color: #e2e8f0;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-roof-table
+    thead
+    tr {
+    background: #f8fafc;
+    color: #000066;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-roof-table
+    tbody
+    tr {
+    background: #ffffff;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-considerations {
+    border-top: 1px solid #e2e8f0;
+    border-radius: 0;
+    padding: 12px 0 0;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-considerations
+    > :first-child {
+    color: #000066;
+  }
+
+  /* Zion V1.1 PDF: products, performance and financials. */
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    #performance
+    > .flex
+    h1,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    #financials
+    > .flex
+    h1 {
+    color: #b65f00;
+    font-size: 25px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    #performance
+    > .flex
+    .mode-pdf-copy,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    #financials
+    > .flex
+    .mode-pdf-copy {
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-product-panel,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-performance-panel,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-chart-panel,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-panel {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-product-panel
+    > .cardHeaderAlt,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-performance-panel
+    > .cardHeaderAlt,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-chart-panel
+    > .cardHeader,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-panel
+    > .cardHeader,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-panel
+    > .cardHeaderAlt {
+    border-bottom: 1px solid #e2e8f0;
+    background: #ffffff;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-product-panel
+    .cardTitleAlt,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-performance-panel
+    .cardTitleAlt,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-chart-panel
+    .cardTitle,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-panel
+    .cardTitle,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-panel
+    .cardTitleAlt {
+    color: #000066;
+    font-weight: 650;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-product-panel
+    .pdf-system-pref-group
+    > .grid
+    > div {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-product-panel
+    .pdf-system-pref-group
+    > .grid
+    > div
+    > .grid
+    > :last-child
+    > div {
+    border: 0;
+    border-left: 1px solid #e2e8f0;
+    border-radius: 0;
+    background: #ffffff;
+    box-shadow: none;
+    padding-left: 12px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-product-panel
+    img {
+    max-width: 100%;
+    height: 170px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-performance-stats
+    > div {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: inset 0 3px 0 #e28f19;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-performance-stats
+    > div:nth-child(2) {
+    box-shadow: inset 0 3px 0 #0284c7;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-performance-stats
+    > div:nth-child(3) {
+    box-shadow: inset 0 3px 0 #64748b;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-performance-stats
+    > div
+    > :first-child,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-performance-secondary
+    > div
+    > :nth-child(2) {
+    color: #000066;
+    font-weight: 700;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-performance-secondary
+    > div {
+    border: 0;
+    border-radius: 0;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-performance-secondary
+    > div + div {
+    border-left: 1px solid #e2e8f0;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-energy-note,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-net-cost-note {
+    color: #64748b;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-energy-flow
+    > .cardAlt {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-energy-flow
+    > .cardAlt
+    > .cardHeaderAlt {
+    border-bottom: 1px solid #e2e8f0;
+    background: #ffffff;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-energy-flow
+    .cardTitleAlt,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-energy-flow
+    .text-accent {
+    color: #000066;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-energy-flow
+    .cardBody
+    > .grid
+    > div {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-energy-flow
+    .cardBody
+    > .grid
+    > div + div {
+    border-left: 1px solid #e2e8f0;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-energy-flow
+    .cardBody
+    > .grid
+    > div
+    > .rounded-xl {
+    border: 0;
+    background: #ffffff;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-equation
+    > div {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-equation
+    > div
+    > :first-child {
+    color: #000066;
+    font-weight: 700;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-equation
+    > div:last-child {
+    border-color: #000066;
+    background: #000066;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-equation
+    > div:last-child
+    > * {
+    color: #ffffff;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-secondary
+    > div {
+    border: 0;
+    border-radius: 0;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-secondary
+    > div + div {
+    border-left: 1px solid #e2e8f0;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-secondary
+    > div
+    > :nth-child(2) {
+    color: #000066;
+    font-weight: 700;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-table
+    > :first-child {
+    color: #000066;
+    font-weight: 700;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-financial-table
+    .pdf-financial-table {
+    border-color: #e2e8f0;
+    box-shadow: none;
+  }
+
+  /* Zion V1.1 PDF: Optimisations, power flows and battery options. */
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    #optimisations
+    > .flex
+    h1 {
+    color: #b65f00;
+    font-size: 25px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    #optimisations
+    > .flex
+    .mode-pdf-copy {
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-settings-panel,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-powerflow-panel,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-panel {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-settings-panel
+    > .cardHeader,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-powerflow-panel
+    > .cardHeader,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-panel
+    > .cardHeader {
+    border-bottom: 1px solid #e2e8f0;
+    background: #ffffff;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-settings-panel
+    .cardTitle,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-powerflow-panel
+    .cardTitle,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-panel
+    .cardTitle {
+    color: #000066;
+    font-weight: 650;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-settings-content {
+    border: 0;
+    border-radius: 0;
+    background: #ffffff;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-settings-content
+    .text-accent,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-controls
+    .text-accent,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-panel
+    .text-accent {
+    color: #000066;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-tariff-panel {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-tariff-panel
+    > :first-child {
+    border-bottom: 1px solid #e2e8f0;
+    color: #000066;
+    font-weight: 650 !important;
+    padding-bottom: 5px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-tariff-panel
+    .font-semibold,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-tariff-panel
+    .font-bold {
+    color: #000066;
+    font-weight: 600 !important;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-controls {
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+    border-radius: 0;
+    background: #ffffff;
+    box-shadow: none;
+    padding-top: 14px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-control-item {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-control-status {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #334155;
+    letter-spacing: 0.04em;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-powerflow-panel
+    > .cardBody {
+    padding-top: 8px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-powerflow-chart {
+    border: 0;
+    border-radius: 0;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-powerflow-chart + .pdf-zion-powerflow-chart {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 16px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-powerflow-chart
+    > :first-child {
+    color: #000066;
+    font-weight: 650;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-panel
+    > .cardBody {
+    background: #ffffff;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-summary,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-recommendations {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-summary
+    .bg-slate-50 {
+    border-radius: 0;
+    background: #ffffff;
+    padding: 6px 8px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-summary
+    .grid
+    > div:nth-child(even) {
+    border-left: 1px solid #e2e8f0;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-summary
+    .text-2xl,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-summary
+    .text-lg,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-summary
+    .font-semibold {
+    color: #000066;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-battery-recommendations
+    > :first-child
+    > :first-child {
+    color: #000066;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-battery-option-static {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: none;
+    padding: 12px;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-battery-option-static.pdf-battery-option--selected {
+    border-color: #000066;
+    background: #eef0f9;
+    box-shadow: none;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-battery-option-static
+    .text-2xl,
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-battery-option-static
+    strong {
+    color: #000066;
+    font-weight: 700;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-battery-option-static
+    > .border-t {
+    border-color: #e2e8f0;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="pdf"]
+    .pdf-zion-recommended-label {
+    border: 1px solid #000066;
+    border-radius: 999px;
+    background: #eef0f9;
+    color: #000066;
+    white-space: nowrap;
+  }
+
   .payback-chart .chart-bars {
     height: 155px !important;
     min-height: 155px !important;
