@@ -5254,7 +5254,12 @@ select:focus {
   .quote-content--clean
   > .quote-collapsible-section.is-collapsed
   + .quote-collapsible-section.is-collapsed {
-  margin-top: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+  .quote-battery-selection-panel {
+  margin-top: 1.5rem;
 }
 
 .quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
@@ -5310,7 +5315,12 @@ select:focus {
     .quote-content--clean
     > .quote-collapsible-section.is-collapsed
     + .quote-collapsible-section.is-collapsed {
-    margin-top: 0.5rem;
+    margin-top: 1.125rem;
+  }
+
+  .quote-shell[data-brand-id="zion-energy"][data-quote-mode="screen"]
+    .quote-battery-selection-panel {
+    margin-top: 1rem;
   }
 }
 

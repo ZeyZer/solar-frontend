@@ -1996,11 +1996,20 @@ export default function QuotePage({
               </div>
             )}
 
+            {isZionQuoteScreen && (
+              <QuoteContactCta
+                heading="Want to make these savings a reality?"
+                description="We can confirm the best system for your home and provide a tailored installation proposal."
+                buttonLabel="Get in contact"
+                onClick={() => jumpToQuoteSection("next-steps")}
+              />
+            )}
+
             </div>
             )}
           </section>
 
-          {!pdfMode && (
+          {!pdfMode && !isZionQuoteScreen && (
             <QuoteContactCta
               heading="Want to make these savings a reality?"
               description="We can confirm the best system for your home and provide a tailored installation proposal."
@@ -2565,7 +2574,15 @@ export default function QuotePage({
           {/* ============================
               Battery settings & options
           ============================ */}
-          <div className={pdfMode ? "pdf-keep-together mb-4" : ""}>
+          <div
+            className={
+              pdfMode
+                ? "pdf-keep-together mb-4"
+                : isZionQuoteScreen
+                  ? "quote-battery-selection-panel"
+                  : ""
+            }
+          >
             {quote?.batteryRecommendations && (() => {
               const recommendations =
                 quote.batteryRecommendations;
@@ -2648,7 +2665,7 @@ export default function QuotePage({
               return (
                 <Card
                   mode={mode}
-                  title={isZionQuoteScreen ? "Choose your battery" : "Battery Settings & Options"}
+                  title={isZionQuoteScreen ? "Choose Your Battery" : "Battery Settings & Options"}
                   className={isZionQuoteScreen ? "quote-battery-panel" : ""}
                   right={
                     !pdfMode && (
