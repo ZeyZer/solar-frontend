@@ -1,8 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { analyseSolarTargetBuildings } from "../../api/solarRoofApi";
+import { createRoofDiagnostics, reportRoofDiagnostics } from "../../api/roofPerformance";
 import { loadGoogleMapsLibrary } from "../../utils/googleMapsLoader";
 import { ACTIVE_BRAND } from "../../config/siteConfig";
+import RoofAnalysisOverlay from "./RoofAnalysisOverlay";
 
 const DEFAULT_CENTER = {
   lat: 51.2362,
@@ -1110,7 +1112,10 @@ export default function SolarTargetBuildingSelector({
     value?.solarApiAnalysis || null
   );
 
-  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisKind, setAnalysisKind] = useState(null);
+  const activeAnalysisRef = useRef(null);
+  const pendingAnalysisTimingRef = useRef(null);
+  const analysisLoading = analysisKind !== null;
   const [analysisError, setAnalysisError] = useState("");
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
   const restoredRoofSegmentKeys =
@@ -1145,6 +1150,49 @@ export default function SolarTargetBuildingSelector({
   const pendingSecondaryTargetRef = useRef(null);
   const solarTargetBuildingsRef = useRef(solarTargetBuildings);
   const solarApiAnalysisRef = useRef(solarApiAnalysis);
+
+  const abortActiveAnalysis = useCallback(() => {
+    const active = activeAnalysisRef.current;
+
+    if (!active) {
+      return false;
+    }
+
+    activeAnalysisRef.current = null;
+    active.abort();
+    return true;
+  }, []);
+
+  const invalidateAnalysis = useCallback(() => {
+    if (abortActiveAnalysis()) {
+      setAnalysisKind(null);
+      setMapStatus("Roof analysis cancelled. You can try again.");
+    }
+  }, [abortActiveAnalysis]);
+
+  // Clear ownership synchronously when the workflow unmounts.
+  useLayoutEffect(() => {
+    return () => {
+      abortActiveAnalysis();
+      const pending = pendingAnalysisTimingRef.current;
+      if (pending) {
+        pendingAnalysisTimingRef.current = null;
+        reportRoofDiagnostics(pending.diagnostics, "applied");
+      }
+    };
+  }, [abortActiveAnalysis]);
+
+  const hasRoofGeometry = Boolean(value);
+  useLayoutEffect(() => {
+    invalidateAnalysis();
+  }, [
+    hasRoofGeometry,
+    invalidateAnalysis,
+    propertyType,
+    selectedAddress?.latitude,
+    selectedAddress?.longitude,
+    selectedAddress?.placeId,
+  ]);
 
   useEffect(() => {
     selectedAddressRef.current = selectedAddress;
@@ -1401,6 +1449,7 @@ export default function SolarTargetBuildingSelector({
   }
 
   function resetPropertyBoundary({ keepDrawingMode = false } = {}) {
+    invalidateAnalysis();
     propertyBoundaryRef.current = null;
     boundaryPointsRef.current = [];
 
@@ -1530,6 +1579,10 @@ export default function SolarTargetBuildingSelector({
   }
 
   function handleMapClick(latLng) {
+    if (activeAnalysisRef.current) {
+      return;
+    }
+
     if (boundaryDrawingModeRef.current) {
       addBoundaryPointFromMapClick(latLng);
       return;
@@ -1670,7 +1723,7 @@ export default function SolarTargetBuildingSelector({
     );
   }
 
-  async function confirmSecondaryBuilding() {
+  function confirmSecondaryBuilding() {
     const pendingTarget = pendingSecondaryTargetRef.current;
 
     if (!pendingTarget) {
@@ -1699,34 +1752,25 @@ export default function SolarTargetBuildingSelector({
       pendingTarget,
     ];
 
-    const result = await analyseTargets({
+    analyseTargets({
       targetsOverride: nextTargets,
+      kind: "additional",
+      onSuccess: () => {
+        solarTargetBuildingsRef.current = nextTargets;
+        setSolarTargetBuildings(nextTargets);
+        renderMarkers(nextTargets);
+
+        addingSecondaryBuildingRef.current = false;
+        pendingSecondaryTargetRef.current = null;
+        setAddingSecondaryBuilding(false);
+        setPendingSecondaryTarget(null);
+        setMapStatus("Additional building included in the roof assessment.");
+      },
     });
-
-    if (!result) {
-      return;
-    }
-
-    solarTargetBuildingsRef.current = nextTargets;
-    setSolarTargetBuildings(nextTargets);
-    renderMarkers(nextTargets);
-
-    addingSecondaryBuildingRef.current = false;
-    pendingSecondaryTargetRef.current = null;
-
-    setAddingSecondaryBuilding(false);
-    setPendingSecondaryTarget(null);
-
-    setMapStatus(
-      "Additional building included in the roof assessment."
-    );
   }
 
-  async function removeSecondaryBuilding() {
-    const currentTargets = Array.isArray(solarTargetBuildingsRef.current)
-      ? solarTargetBuildingsRef.current
-      : [];
-
+  function removeSecondaryBuilding() {
+    const currentTargets = solarTargetBuildingsRef.current;
     const mainTarget = currentTargets[0];
 
     if (!mainTarget || currentTargets.length <= 1) {
@@ -1735,21 +1779,16 @@ export default function SolarTargetBuildingSelector({
 
     const nextTargets = [mainTarget];
 
-    const result = await analyseTargets({
+    analyseTargets({
       targetsOverride: nextTargets,
+      kind: "additional",
+      onSuccess: () => {
+        solarTargetBuildingsRef.current = nextTargets;
+        setSolarTargetBuildings(nextTargets);
+        renderMarkers(nextTargets);
+        setMapStatus("Additional building removed from the roof assessment.");
+      },
     });
-
-    if (!result) {
-      return;
-    }
-
-    solarTargetBuildingsRef.current = nextTargets;
-    setSolarTargetBuildings(nextTargets);
-    renderMarkers(nextTargets);
-
-    setMapStatus(
-      "Additional building removed from the roof assessment."
-    );
   }
 
   function removeTarget(targetId) {
@@ -1810,6 +1849,10 @@ export default function SolarTargetBuildingSelector({
   }
 
   async function analyseTargets(options = {}) {
+    if (activeAnalysisRef.current) {
+      return;
+    }
+
     const currentTargets = Array.isArray(options?.targetsOverride)
       ? options.targetsOverride
       : Array.isArray(solarTargetBuildingsRef.current)
@@ -1827,21 +1870,19 @@ export default function SolarTargetBuildingSelector({
       propertyBoundary ||
       null;
 
-    console.log("Solar roof analysis request", {
-      targetCount: currentTargets.length,
-      propertyType: currentPropertyType,
-      boundaryFilterRequested: !!currentPropertyBoundary,
-      boundaryLineCount: currentPropertyBoundary?.boundaryLines?.length || 0,
-    });
-
     if (!currentTargets.length) {
       setAnalysisError("Click your home on the satellite image first.");
       return;
     }
 
-    setAnalysisLoading(true);
+    const diagnostics = createRoofDiagnostics(currentTargets.length);
+    let outcome = "failed";
+    const controller = new AbortController();
+    activeAnalysisRef.current = controller;
+    setAnalysisKind(
+      options.kind || (currentPropertyBoundary ? "boundary" : "roof")
+    );
     setAnalysisError("");
-    clearRoofOptionMarkers();
 
     setMapStatus(
       currentPropertyBoundary
@@ -1855,15 +1896,19 @@ export default function SolarTargetBuildingSelector({
         requiredQuality: "BASE",
         propertyType: currentPropertyType,
         propertyBoundary: currentPropertyBoundary,
+        signal: controller.signal,
+        ...(diagnostics && { diagnostics }),
       });
 
-      console.log("Solar roof analysis response", {
-        boundaryFilterApplied:
-          result?.solarBuildingModels?.[0]?.propertyBoundaryFilter?.applied || false,
-        propertyBoundaryFilter:
-          result?.solarBuildingModels?.[0]?.propertyBoundaryFilter || null,
-      });
+      if (activeAnalysisRef.current !== controller) {
+        return;
+      }
 
+      if (!result?.summary) {
+        throw new Error("We could not read the roof analysis. Please try again.");
+      }
+
+      const applyStartedAt = diagnostics && performance.now();
       solarApiAnalysisRef.current = result;
 
       setSolarApiAnalysis(result);
@@ -1871,6 +1916,7 @@ export default function SolarTargetBuildingSelector({
         setSelectedRoofSegmentKeys(buildDefaultRoofSelectionSegmentKeys(result));
       setRoofSelectionConfirmed(false);
 
+      const overlayStartedAt = diagnostics && performance.now();
       if (currentPropertyBoundary) {
         propertyBoundaryRef.current = currentPropertyBoundary;
         setPropertyBoundary(currentPropertyBoundary);
@@ -1882,6 +1928,9 @@ export default function SolarTargetBuildingSelector({
         clearBoundaryOverlays();
       }
 
+      if (diagnostics) {
+        diagnostics.boundaryOverlayMs = performance.now() - overlayStartedAt;
+      }
       emitChange(currentTargets, result, currentPropertyBoundary);
 
       setMapStatus(
@@ -1892,17 +1941,33 @@ export default function SolarTargetBuildingSelector({
             : "Analysis completed, but no unique roof models were returned."
       );
 
-      return result;
+      options.onSuccess?.();
+      if (diagnostics) {
+        diagnostics.applyMs = performance.now() - applyStartedAt;
+        pendingAnalysisTimingRef.current = {
+          result,
+          diagnostics,
+          appliedAt: performance.now(),
+        };
+        outcome = "applied";
+      }
     } catch (err) {
-      console.warn("Solar roof target analysis failed:", err);
+      if (activeAnalysisRef.current !== controller) {
+        return;
+      }
+
       setAnalysisError(
         err?.message || "Could not analyse the selected buildings."
       );
       setMapStatus("We could not check this roof right now. Please try again.");
-
-      return null;
     } finally {
-      setAnalysisLoading(false);
+      if (diagnostics && outcome !== "applied") {
+        reportRoofDiagnostics(diagnostics, controller.signal.aborted ? "cancelled" : outcome);
+      }
+      if (activeAnalysisRef.current === controller) {
+        activeAnalysisRef.current = null;
+        setAnalysisKind(null);
+      }
     }
   }
 
@@ -2007,8 +2072,23 @@ export default function SolarTargetBuildingSelector({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useLayoutEffect(() => {
+    const pending = pendingAnalysisTimingRef.current;
+    if (pending && pending.result === solarApiAnalysis) {
+      pending.diagnostics.applyToCommitMs = performance.now() - pending.appliedAt;
+    }
+  }, [solarApiAnalysis]);
+
   useEffect(() => {
+    const pending = pendingAnalysisTimingRef.current;
+    const diagnostics = pending && pending.result === solarApiAnalysis ? pending.diagnostics : null;
+    const markersStartedAt = diagnostics && performance.now();
     renderRoofOptionMarkers(solarApiAnalysis);
+    if (diagnostics) {
+      diagnostics.mapMarkersMs = performance.now() - markersStartedAt;
+      pendingAnalysisTimingRef.current = null;
+      reportRoofDiagnostics(diagnostics, "applied");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [solarApiAnalysis]);
 
@@ -2113,7 +2193,10 @@ export default function SolarTargetBuildingSelector({
   }
 
   return (
-    <div className="space-y-4">
+    <div aria-busy={analysisLoading} className="space-y-4">
+      {analysisLoading && (
+        <RoofAnalysisOverlay kind={analysisKind} onCancel={invalidateAnalysis} />
+      )}
       <div className="rounded-xl border border-slate-200 bg-white p-4">
         {homeSelectionComplete ? (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
